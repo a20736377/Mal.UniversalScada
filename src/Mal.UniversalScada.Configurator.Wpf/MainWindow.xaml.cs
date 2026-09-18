@@ -18,4 +18,28 @@ public partial class MainWindow : Window
             vm.SelectedTreeNode = node;
         }
     }
+
+    private void ChannelRow_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is System.Windows.Controls.DataGridRow row && row.Item is Core.Models.ChannelConfig ch && DataContext is MainViewModel vm)
+        {
+            vm.OpenChannelDetail(ch);
+        }
+    }
+
+    private void DeviceRow_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is System.Windows.Controls.DataGridRow row && row.Item is Core.Models.DeviceNode dev && DataContext is MainViewModel vm)
+        {
+            vm.OpenDeviceDetail(dev);
+        }
+    }
+
+    private void TagRow_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is System.Windows.Controls.DataGridRow row && row.Item is Core.Models.TagNode tag && DataContext is MainViewModel vm)
+        {
+            vm.OpenTagDetail(tag);
+        }
+    }
 }

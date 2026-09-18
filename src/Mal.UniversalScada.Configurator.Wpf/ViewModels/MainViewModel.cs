@@ -87,6 +87,75 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// 从预览列表打开指定通道的详细编辑视图
+    /// </summary>
+    [RelayCommand]
+    public void OpenChannelDetail(ChannelConfig? channel)
+    {
+        if (channel == null) return;
+        SelectedChannel = channel;
+        CurrentViewMode = ViewMode.ChannelDetail;
+        StatusMessage = $"正在配置通道: {channel.Name} ({channel.ChannelId})";
+
+        var chRoot = TreeRoots.FirstOrDefault(r => r.NodeType == TreeNodeType.ChannelRoot);
+        var targetNode = chRoot?.Children.FirstOrDefault(c => c.Id == channel.ChannelId);
+        if (targetNode != null)
+        {
+            SelectedTreeNode = targetNode;
+            targetNode.IsSelected = true;
+        }
+    }
+
+    /// <summary>
+    /// 从预览列表打开指定设备的详细编辑视图
+    /// </summary>
+    [RelayCommand]
+    public void OpenDeviceDetail(DeviceNode? device)
+    {
+        if (device == null) return;
+        SelectedDevice = device;
+        CurrentViewMode = ViewMode.DeviceDetail;
+        RefreshCurrentDeviceTags();
+        StatusMessage = $"正在配置设备: {device.Name} ({device.DeviceId})";
+
+        var devRoot = TreeRoots.FirstOrDefault(r => r.NodeType == TreeNodeType.DeviceRoot);
+        var targetNode = devRoot?.Children.FirstOrDefault(c => c.Id == device.DeviceId);
+        if (targetNode != null)
+        {
+            SelectedTreeNode = targetNode;
+            targetNode.IsSelected = true;
+        }
+    }
+
+    /// <summary>
+    /// 从预览列表打开指定点位的详细编辑视图
+    /// </summary>
+    [RelayCommand]
+    public void OpenTagDetail(TagNode? tag)
+    {
+        if (tag == null) return;
+        SelectedTag = tag;
+        CurrentViewMode = ViewMode.TagDetail;
+        StatusMessage = $"正在配置点位: {tag.Name} ({tag.TagId})";
+
+        var devRoot = TreeRoots.FirstOrDefault(r => r.NodeType == TreeNodeType.DeviceRoot);
+        if (devRoot != null)
+        {
+            foreach (var devNode in devRoot.Children)
+            {
+                var tagNode = devNode.Children.FirstOrDefault(t => t.Id == tag.TagId);
+                if (tagNode != null)
+                {
+                    devNode.IsExpanded = true;
+                    SelectedTreeNode = tagNode;
+                    tagNode.IsSelected = true;
+                    break;
+                }
+            }
+        }
+    }
+
     #endregion
 
     #region 数据实体集合与当前选中项

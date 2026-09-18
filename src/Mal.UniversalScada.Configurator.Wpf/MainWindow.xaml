@@ -471,7 +471,7 @@
                     <Border Grid.Row="1" Style="{StaticResource LightCardBorder}" Padding="16">
                         <DockPanel>
                             <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-                                <TextBlock Text="📋 设备关联数据点位总览" FontSize="14" FontWeight="Bold" Foreground="#0369A1" VerticalAlignment="Center"/>
+                                <TextBlock Text="📋 设备关联数据点位总览 (只读预览，双击行可编辑)" FontSize="14" FontWeight="Bold" Foreground="#0369A1" VerticalAlignment="Center"/>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                     <Button Content="📥 导入点位 (CSV)" Padding="10,4" Height="28" Margin="0,0,8,0" 
                                             Background="#F1F5F9" Foreground="#0284C7" BorderBrush="#CBD5E1" BorderThickness="1" FontWeight="SemiBold"
@@ -483,7 +483,14 @@
                             </DockPanel>
 
                             <DataGrid ItemsSource="{Binding CurrentDeviceTags}" SelectedItem="{Binding SelectedTag}"
-                                      AutoGenerateColumns="False" CanUserAddRows="False">
+                                      AutoGenerateColumns="False" CanUserAddRows="False"
+                                      IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow"
+                                      ToolTip="点位预览列表（双击任意行可在右侧进入该点位的详细属性编辑界面）">
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <EventSetter Event="MouseDoubleClick" Handler="TagRow_MouseDoubleClick"/>
+                                    </Style>
+                                </DataGrid.RowStyle>
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="点位 ID" Binding="{Binding TagId}" Width="160" FontWeight="Bold"/>
                                     <DataGridTextColumn Header="点位名称 / 描述" Binding="{Binding Name}" Width="180"/>
@@ -494,12 +501,6 @@
                                                 <TextBlock Text="{Binding DataType}" VerticalAlignment="Center" Margin="4,0" FontWeight="SemiBold" Foreground="#0284C7"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
-                                        <DataGridTemplateColumn.CellEditingTemplate>
-                                            <DataTemplate>
-                                                <ComboBox SelectedItem="{Binding DataType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          ItemsSource="{Binding DataContext.TagDataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellEditingTemplate>
                                     </DataGridTemplateColumn>
 
                                     <DataGridTemplateColumn Header="读写权限" Width="100">
@@ -508,17 +509,11 @@
                                                 <TextBlock Text="{Binding AccessMode}" VerticalAlignment="Center" Margin="4,0" Foreground="#334155"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
-                                        <DataGridTemplateColumn.CellEditingTemplate>
-                                            <DataTemplate>
-                                                <ComboBox SelectedItem="{Binding AccessMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          ItemsSource="{Binding DataContext.TagAccessModes, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellEditingTemplate>
                                     </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="比例(k)" Binding="{Binding ScaleFactor}" Width="75"/>
                                     <DataGridTextColumn Header="偏移(b)" Binding="{Binding Offset}" Width="75"/>
                                     <DataGridTextColumn Header="单位" Binding="{Binding Unit}" Width="65"/>
-                                    <DataGridCheckBoxColumn Header="历史归档" Binding="{Binding IsHistorical}" Width="75"/>
+                                    <DataGridCheckBoxColumn Header="历史归档" Binding="{Binding IsHistorical}" Width="75" IsReadOnly="True"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </DockPanel>
@@ -642,7 +637,7 @@
                     </Border.Style>
                     <DockPanel>
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
-                            <TextBlock Text="📡 通信通道总览管理" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
+                            <TextBlock Text="📡 通信通道总览管理 (只读预览，双击行可编辑)" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Button Content="🌐 新建以太网通道" Padding="12,6" Height="32" Margin="0,0,8,0"
                                         Background="#0284C7" Foreground="#FFF" FontWeight="SemiBold" BorderThickness="0"
@@ -654,7 +649,14 @@
                         </DockPanel>
 
                         <DataGrid ItemsSource="{Binding Channels}" SelectedItem="{Binding SelectedChannel}"
-                                  AutoGenerateColumns="False" CanUserAddRows="False">
+                                  AutoGenerateColumns="False" CanUserAddRows="False"
+                                  IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow"
+                                  ToolTip="通道预览列表（双击任意行可在右侧进入该通道的详细属性编辑界面）">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <EventSetter Event="MouseDoubleClick" Handler="ChannelRow_MouseDoubleClick"/>
+                                </Style>
+                            </DataGrid.RowStyle>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="通道唯一 ID" Binding="{Binding ChannelId}" Width="140" FontWeight="Bold"/>
                                 <DataGridTextColumn Header="通道名称" Binding="{Binding Name}" Width="200"/>
@@ -683,21 +685,28 @@
                     </Border.Style>
                     <DockPanel>
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
-                            <TextBlock Text="📟 下位机设备总览管理" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
+                            <TextBlock Text="📟 下位机设备总览管理 (只读预览，双击行可编辑)" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
                             <Button Content="➕ 新建设备" HorizontalAlignment="Right" Padding="14,6" Height="32" Background="#059669" Foreground="#FFF" FontWeight="SemiBold" BorderThickness="0"
                                     Command="{Binding CreateDeviceCommand}"/>
                         </DockPanel>
 
                         <DataGrid ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
-                                  AutoGenerateColumns="False" CanUserAddRows="False">
+                                  AutoGenerateColumns="False" CanUserAddRows="False"
+                                  IsReadOnly="True" SelectionMode="Single" SelectionUnit="FullRow"
+                                  ToolTip="设备预览列表（双击任意行可在右侧进入该设备的详细属性编辑界面）">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <EventSetter Event="MouseDoubleClick" Handler="DeviceRow_MouseDoubleClick"/>
+                                </Style>
+                            </DataGrid.RowStyle>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="设备唯一 ID" Binding="{Binding DeviceId}" Width="140" FontWeight="Bold"/>
                                 <DataGridTextColumn Header="设备友好名称" Binding="{Binding Name}" Width="200"/>
-                                <DataGridTextColumn Header="所属通道 (ChannelId)" Binding="{Binding ChannelId}" Width="140" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="协议类型 (ProtocolType)" Binding="{Binding ProtocolType}" Width="150" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="所属通道 (ChannelId)" Binding="{Binding ChannelId}" Width="140"/>
+                                <DataGridTextColumn Header="协议类型 (ProtocolType)" Binding="{Binding ProtocolType}" Width="150"/>
                                 <DataGridTextColumn Header="站号 (StationAddress)" Binding="{Binding StationAddress}" Width="100"/>
                                 <DataGridTextColumn Header="轮询周期(ms)" Binding="{Binding DefaultPollIntervalMs}" Width="110"/>
-                                <DataGridCheckBoxColumn Header="是否启用" Binding="{Binding IsEnabled}" Width="80"/>
+                                <DataGridCheckBoxColumn Header="是否启用" Binding="{Binding IsEnabled}" Width="80" IsReadOnly="True"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
