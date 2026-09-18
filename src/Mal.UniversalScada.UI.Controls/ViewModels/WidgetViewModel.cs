@@ -127,6 +127,43 @@ public partial class WidgetViewModel : ObservableObject
     /// </summary>
     public virtual PanelContainerProps? PanelProps => (this as PanelContainerWidgetViewModel)?.Props;
 
+    /// <summary>
+    /// 当前组件类型可用的样式与行业预设模板列表
+    /// </summary>
+    public IReadOnlyList<WidgetStylePreset> AvailablePresets => WidgetStylePresetCatalog.GetPresets(Type);
+
+    private WidgetStylePreset? _selectedPreset;
+    /// <summary>
+    /// 当前选择的样式预设（设置时即刻套用预设模板并同步刷新）
+    /// </summary>
+    public WidgetStylePreset? SelectedPreset
+    {
+        get => _selectedPreset;
+        set
+        {
+            if (_selectedPreset != value)
+            {
+                _selectedPreset = value;
+                OnPropertyChanged();
+                if (value != null)
+                {
+                    ApplyPreset(value);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 一键套用样式预设模板
+    /// </summary>
+    public void ApplyPreset(WidgetStylePreset preset)
+    {
+        if (preset == null) return;
+        preset.Apply(this);
+        SyncPropertiesFromFields();
+        OnPropertyChanged(string.Empty); // 通知全部属性更新，驱动 UI 刷新
+    }
+
     // ==========================================
     // 4. 虚拟兼容属性（允许 XAML 或老测试代码直接平滑访问，且与组合类双向联动）
     // ==========================================

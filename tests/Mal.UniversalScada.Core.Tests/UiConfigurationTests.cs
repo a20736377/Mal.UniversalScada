@@ -684,6 +684,108 @@ public class UiConfigurationTests
         Assert.Equal("#0284C7", restored.MidColor);
         Assert.Equal("#EF4444", restored.HighColor);
     }
+
+    [Fact]
+    public void WidgetStylePresets_ApplyPreset_UpdatesPropertiesAndBehaviorsCorrectly_Test()
+    {
+        // 1. 270度仪表盘 - 套用 "交流电压表 (0~500V)" 预设
+        var gauge = (CircularGaugeWidgetViewModel)WidgetViewModel.Create(WidgetType.GaugeCircular);
+        var gaugePresets = gauge.AvailablePresets;
+        Assert.NotEmpty(gaugePresets);
+        Assert.Contains(gaugePresets, p => p.Id == "Gauge_AC_Voltage_380");
+
+        var voltPreset = gaugePresets.First(p => p.Id == "Gauge_AC_Voltage_380");
+        gauge.SelectedPreset = voltPreset;
+
+        Assert.Equal("交流动力电压", gauge.Title);
+        Assert.Equal("V", gauge.Unit);
+        Assert.Equal(0, gauge.MinValue);
+        Assert.Equal(500, gauge.MaxValue);
+        Assert.True(gauge.Props.EnableThresholdColor);
+        Assert.Equal(340, gauge.Props.LowValue);
+        Assert.Equal(380, gauge.Props.MidValue);
+        Assert.Equal(420, gauge.Props.HighValue);
+        Assert.Equal("#F59E0B", gauge.Props.LowColor);
+        Assert.Equal("#10B981", gauge.Props.MidColor);
+        Assert.Equal("#EF4444", gauge.Props.HighColor);
+        Assert.False(string.IsNullOrWhiteSpace(gauge.Props.LowArcData));
+        Assert.False(string.IsNullOrWhiteSpace(gauge.Props.MidArcData));
+        Assert.False(string.IsNullOrWhiteSpace(gauge.Props.HighArcData));
+
+        // 2. 270度仪表盘 - 切换套用 "电机负载电流表 (0~100A)" 预设
+        var currentPreset = gaugePresets.First(p => p.Id == "Gauge_Motor_Current_100");
+        gauge.ApplyPreset(currentPreset);
+
+        Assert.Equal("主电机工作电流", gauge.Title);
+        Assert.Equal("A", gauge.Unit);
+        Assert.Equal(0, gauge.MinValue);
+        Assert.Equal(100, gauge.MaxValue);
+        Assert.Equal(10, gauge.Props.LowValue);
+        Assert.Equal(50, gauge.Props.MidValue);
+        Assert.Equal(85, gauge.Props.HighValue);
+        Assert.Equal("#38BDF8", gauge.Props.LowColor);
+        Assert.Equal("#10B981", gauge.Props.MidColor);
+        Assert.Equal("#EF4444", gauge.Props.HighColor);
+
+        // 3. 普通按钮 - 套用 "紧急停止按钮 (急停红+确认)" 预设
+        var button = (ControlButtonWidgetViewModel)WidgetViewModel.Create(WidgetType.ControlButton);
+        var buttonPresets = button.AvailablePresets;
+        Assert.NotEmpty(buttonPresets);
+        Assert.Contains(buttonPresets, p => p.Id == "Btn_Emergency_Stop");
+
+        var esPreset = buttonPresets.First(p => p.Id == "Btn_Emergency_Stop");
+        button.SelectedPreset = esPreset;
+
+        Assert.Equal("紧急停止", button.Title);
+        Assert.Equal("急停", button.ButtonText);
+        Assert.Equal("#DC2626", button.ColorHex);
+        Assert.Equal("DirectWrite", button.ButtonMode);
+        Assert.True(button.RequireConfirm);
+        Assert.Contains("紧急停止", button.ConfirmMessage);
+
+        // 4. 普通按钮 - 套用 "启动 / 运行按钮 (工业绿)" 预设
+        var startPreset = buttonPresets.First(p => p.Id == "Btn_Start_Success");
+        button.ApplyPreset(startPreset);
+
+        Assert.Equal("启动控制", button.Title);
+        Assert.Equal("启动", button.ButtonText);
+        Assert.Equal("#16A34A", button.ColorHex);
+        Assert.Equal("DirectWrite", button.ButtonMode);
+        Assert.False(button.RequireConfirm);
+
+        // 5. 液体储罐 - 套用 "卧式储油槽罐 (0~5000L)" 预设 (自动适配横向布局与尺寸)
+        var tank = (TankLevelWidgetViewModel)WidgetViewModel.Create(WidgetType.LevelTank);
+        tank.Width = 120;
+        tank.Height = 180;
+        var tankPresets = tank.AvailablePresets;
+        Assert.NotEmpty(tankPresets);
+        Assert.Contains(tankPresets, p => p.Id == "Tank_Oil_Horizontal");
+
+        var fuelPreset = tankPresets.First(p => p.Id == "Tank_Oil_Horizontal");
+        tank.SelectedPreset = fuelPreset;
+
+        Assert.Equal("日用储油槽罐", tank.Title);
+        Assert.Equal("L", tank.Unit);
+        Assert.Equal("Horizontal", tank.Orientation);
+        Assert.True(tank.IsHorizontal);
+        Assert.Equal(220, tank.Width); // 卧式横向自适应为宽 >= 220
+        Assert.Equal(120, tank.Height); // 高自适应为 <= 140
+        Assert.Equal(800, tank.LowAlarm);
+        Assert.Equal(4500, tank.HighAlarm);
+        Assert.Equal("#DC2626", tank.LowColor);
+        Assert.Equal("#F59E0B", tank.MidColor);
+        Assert.Equal("#EF4444", tank.HighColor);
+
+        // 6. 套用预设后序列化与反序列化完整闭环验证
+        tank.SyncPropertiesFromFields();
+        var restoredTank = (TankLevelWidgetViewModel)WidgetViewModel.Create(WidgetType.LevelTank);
+        restoredTank.LoadProperties(tank.Properties);
+        Assert.Equal("Horizontal", restoredTank.Orientation);
+        Assert.True(restoredTank.IsHorizontal);
+        Assert.Equal(800, restoredTank.LowAlarm);
+        Assert.Equal(4500, restoredTank.HighAlarm);
+        Assert.Equal("#F59E0B", restoredTank.MidColor);
+    }
 }
 
 

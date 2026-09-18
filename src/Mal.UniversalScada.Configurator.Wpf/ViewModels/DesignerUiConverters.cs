@@ -16,6 +16,20 @@ public static class DesignerUiConverters
     public static IValueConverter InverseBoolToVisibility { get; } = new BooleanToVisibilityConverter(Visibility.Collapsed, Visibility.Visible);
     public static IValueConverter InverseBool { get; } = new InverseBooleanConverter();
     public static IValueConverter DataTypeVisibility { get; } = new DataTypeToVisibilityConverter();
+    public static IValueConverter CountToVisibility { get; } = new CountToVisibilityConverterImpl();
+
+    private class CountToVisibilityConverterImpl : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int count && count > 0) return Visibility.Visible;
+            if (value is System.Collections.ICollection coll && coll.Count > 0) return Visibility.Visible;
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            throw new NotSupportedException();
+    }
 
     private class NullToVisibilityConverter : IValueConverter
     {
