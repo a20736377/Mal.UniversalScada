@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Mal.UniversalScada.Core\Mal.UniversalScada.Core.csproj" />
     <ProjectReference Include="..\Mal.UniversalScada.Storage.Sqlite\Mal.UniversalScada.Storage.Sqlite.csproj" />
     <ProjectReference Include="..\Mal.UniversalScada.Drivers.Modbus\Mal.UniversalScada.Drivers.Modbus.csproj" />
+    <ProjectReference Include="..\Mal.UniversalScada.Drivers.Siemens\Mal.UniversalScada.Drivers.Siemens.csproj" />
   </ItemGroup>
 
   <ItemGroup>

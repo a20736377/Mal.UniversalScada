@@ -40,13 +40,13 @@ public class DefaultDriverFactory : IDriverFactory
 
         if (_registeredDriverTypes.TryGetValue(protocolType, out var driverType))
         {
-            return (IDriver)ActivatorUtilities.GetServiceOrCreateInstance(_serviceProvider, driverType);
+            return InstantiateDriver(driverType);
         }
 
         var fallbackName = protocolType.ToString();
         if (_namedDriverTypes.TryGetValue(fallbackName, out var namedType))
         {
-            return (IDriver)ActivatorUtilities.GetServiceOrCreateInstance(_serviceProvider, namedType);
+            return InstantiateDriver(namedType);
         }
 
         throw new NotSupportedException($"未注册针对协议类型 [{protocolType}] 的驱动实现。");
@@ -57,7 +57,7 @@ public class DefaultDriverFactory : IDriverFactory
     {
         if (_namedDriverTypes.TryGetValue(protocolName, out var driverType))
         {
-            return (IDriver)ActivatorUtilities.GetServiceOrCreateInstance(_serviceProvider, driverType);
+            return InstantiateDriver(driverType);
         }
 
         if (Enum.TryParse<ProtocolType>(protocolName, true, out var pType))
@@ -66,6 +66,16 @@ public class DefaultDriverFactory : IDriverFactory
         }
 
         throw new NotSupportedException($"未注册针对协议名称 [{protocolName}] 的驱动实现。");
+    }
+
+    private IDriver InstantiateDriver(Type driverType)
+    {
+        if (_serviceProvider != null)
+        {
+            return (IDriver)ActivatorUtilities.GetServiceOrCreateInstance(_serviceProvider, driverType);
+        }
+
+        return (IDriver)Activator.CreateInstance(driverType)!;
     }
 
     /// <inheritdoc />

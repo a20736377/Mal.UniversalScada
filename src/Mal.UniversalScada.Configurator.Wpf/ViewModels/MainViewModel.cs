@@ -33,6 +33,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IAdminAuthService _authService;
     private readonly ITagImportExportService _importExportService;
     private readonly IChannelTester _channelTester;
+    private readonly ITagTester _tagTester;
 
     [ObservableProperty]
     private string _currentAdmin = "admin";
@@ -42,6 +43,22 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private ViewMode _currentViewMode = ViewMode.DeviceRoot;
+
+    #region 点位在线读写测试属性
+
+    [ObservableProperty]
+    private string _testWriteInput = "1";
+
+    [ObservableProperty]
+    private string _testResultInfo = string.Empty;
+
+    [ObservableProperty]
+    private bool _isTestingTag = false;
+
+    [ObservableProperty]
+    private bool? _lastTestSuccess = null;
+
+    #endregion
 
     #region 拓扑树 (TreeView)
 
@@ -82,6 +99,9 @@ public partial class MainViewModel : ObservableObject
             case TreeNodeType.TagItem when value.DataPayload is TagNode tag:
                 SelectedTag = tag;
                 CurrentViewMode = ViewMode.TagDetail;
+                TestResultInfo = string.Empty;
+                LastTestSuccess = null;
+                TestWriteInput = tag.DataType == TagDataType.Bool ? "1" : "0";
                 StatusMessage = $"正在配置点位: {tag.Name} ({tag.TagId})";
                 break;
         }
@@ -137,6 +157,9 @@ public partial class MainViewModel : ObservableObject
         if (tag == null) return;
         SelectedTag = tag;
         CurrentViewMode = ViewMode.TagDetail;
+        TestResultInfo = string.Empty;
+        LastTestSuccess = null;
+        TestWriteInput = tag.DataType == TagDataType.Bool ? "1" : "0";
         StatusMessage = $"正在配置点位: {tag.Name} ({tag.TagId})";
 
         var devRoot = TreeRoots.FirstOrDefault(r => r.NodeType == TreeNodeType.DeviceRoot);
@@ -197,12 +220,14 @@ public partial class MainViewModel : ObservableObject
         IConfigurationService configService,
         IAdminAuthService authService,
         ITagImportExportService importExportService,
-        IChannelTester channelTester)
+        IChannelTester channelTester,
+        ITagTester tagTester)
     {
         _configService = configService;
         _authService = authService;
         _importExportService = importExportService;
         _channelTester = channelTester;
+        _tagTester = tagTester;
 
         CurrentAdmin = _authService.CurrentUser ?? "admin";
 
@@ -486,6 +511,122 @@ public partial class MainViewModel : ObservableObject
             CurrentViewMode = ViewMode.DeviceDetail;
         }
         StatusMessage = $"已删除点位: {id}";
+    }
+
+    /// <summary>
+    /// 【测试读取点位】向 PLC / 下位机发起单次在线读取并返回当前工程值与原始值
+    /// </summary>
+    [RelayCommand]
+    public async Task TestReadTagAsync()
+    {
+        if (SelectedTag == null)
+        {
+            TestResultInfo = "请先选择待测试的点位";
+            LastTestSuccess = false;
+            return;
+        }
+
+        var device = Devices.FirstOrDefault(d => d.DeviceId == SelectedTag.DeviceId);
+        if (device == null)
+        {
+            TestResultInfo = $"未找到该点位所属的设备 [{SelectedTag.DeviceId}]";
+            LastTestSuccess = false;
+            return;
+        }
+
+        var channel = Channels.FirstOrDefault(c => c.ChannelId == device.ChannelId);
+        if (channel == null)
+        {
+            TestResultInfo = $"未找到该设备绑定的通道 [{device.ChannelId}]";
+            LastTestSuccess = false;
+            return;
+        }
+
+        IsTestingTag = true;
+        TestResultInfo = $"正在连接通道 [{channel.ChannelId}] 并读取点位 [{SelectedTag.Address}]...";
+        LastTestSuccess = null;
+
+        try
+        {
+            var res = await _tagTester.TestReadTagAsync(SelectedTag, device, channel);
+            LastTestSuccess = res.IsSuccess;
+            TestResultInfo = res.Message;
+            StatusMessage = $"点位 [{SelectedTag.TagId}] 在线读取测试: {(res.IsSuccess ? "成功" : "失败")}";
+        }
+        catch (Exception ex)
+        {
+            LastTestSuccess = false;
+            TestResultInfo = $"测试读取异常: {ex.Message}";
+        }
+        finally
+        {
+            IsTestingTag = false;
+        }
+    }
+
+    /// <summary>
+    /// 【测试写入点位】向 PLC / 下位机发起控制指令写入
+    /// </summary>
+    [RelayCommand]
+    public async Task TestWriteTagAsync()
+    {
+        if (SelectedTag == null)
+        {
+            TestResultInfo = "请先选择待测试的点位";
+            LastTestSuccess = false;
+            return;
+        }
+
+        if (SelectedTag.AccessMode == TagAccessMode.ReadOnly)
+        {
+            TestResultInfo = "当前点位权限为只读 (ReadOnly)，禁止下发写入！";
+            LastTestSuccess = false;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(TestWriteInput))
+        {
+            TestResultInfo = "请输入要下发的测试控制数值";
+            LastTestSuccess = false;
+            return;
+        }
+
+        var device = Devices.FirstOrDefault(d => d.DeviceId == SelectedTag.DeviceId);
+        if (device == null)
+        {
+            TestResultInfo = $"未找到该点位所属的设备 [{SelectedTag.DeviceId}]";
+            LastTestSuccess = false;
+            return;
+        }
+
+        var channel = Channels.FirstOrDefault(c => c.ChannelId == device.ChannelId);
+        if (channel == null)
+        {
+            TestResultInfo = $"未找到该设备绑定的通道 [{device.ChannelId}]";
+            LastTestSuccess = false;
+            return;
+        }
+
+        IsTestingTag = true;
+        TestResultInfo = $"正在向设备 [{device.DeviceId}] 下发数值 [{TestWriteInput}] 到地址 [{SelectedTag.Address}]...";
+        LastTestSuccess = null;
+
+        try
+        {
+            var res = await _tagTester.TestWriteTagAsync(SelectedTag, TestWriteInput, device, channel);
+            LastTestSuccess = res.IsSuccess;
+            TestResultInfo = res.Message;
+            StatusMessage = $"点位 [{SelectedTag.TagId}] 在线写入测试: {(res.IsSuccess ? "成功" : "失败")}";
+        }
+        catch (Exception ex)
+        {
+            LastTestSuccess = false;
+            TestResultInfo = $"测试写入异常: {ex.Message}";
+        }
+        finally
+        {
+            IsTestingTag = false;
+        }
     }
 
     #endregion

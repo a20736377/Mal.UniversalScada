@@ -17,6 +17,9 @@ public static class ConfigurationServiceExtensions
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddSingleton<ITagImportExportService, CsvTagImportExportService>();
         services.AddSingleton<IChannelTester, DefaultChannelTester>();
+        services.AddSingleton<Abstractions.IChannelFactory, Abstractions.DefaultChannelFactory>();
+        services.AddSingleton<Abstractions.IDriverFactory, Abstractions.DefaultDriverFactory>();
+        services.AddSingleton<ITagTester, DefaultTagTester>();
         return services;
     }
 }
