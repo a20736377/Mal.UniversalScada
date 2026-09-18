@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mal.UniversalScada.Core\Mal.UniversalScada.Core.csproj" />
+    <ProjectReference Include="..\Mal.UniversalScada.Drivers.Modbus\Mal.UniversalScada.Drivers.Modbus.csproj" />
+    <ProjectReference Include="..\Mal.UniversalScada.Drivers.Siemens\Mal.UniversalScada.Drivers.Siemens.csproj" />
+    <ProjectReference Include="..\Mal.UniversalScada.Drivers.CustomSerial\Mal.UniversalScada.Drivers.CustomSerial.csproj" />
+    <ProjectReference Include="..\Mal.UniversalScada.Storage.Sqlite\Mal.UniversalScada.Storage.Sqlite.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+</Project>

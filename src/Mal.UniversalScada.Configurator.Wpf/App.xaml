@@ -1,0 +1,14 @@
+<Application x:Class="Mal.UniversalScada.Configurator.Wpf.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Mal.UniversalScada.Configurator.Wpf">
+    <Application.Resources>
+        <!-- 全局字体与控件默认样式 (亮色工业风格) -->
+        <Style TargetType="Control">
+            <Setter Property="FontFamily" Value="Microsoft YaHei, PingFang SC, Segoe UI, sans-serif"/>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Microsoft YaHei, PingFang SC, Segoe UI, sans-serif"/>
+        </Style>
+    </Application.Resources>
+</Application>

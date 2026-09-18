@@ -1,0 +1,712 @@
+<Window x:Class="Mal.UniversalScada.Configurator.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Mal.UniversalScada.Configurator.Wpf.ViewModels"
+        xmlns:models="clr-namespace:Mal.UniversalScada.Configurator.Wpf.Models"
+        xmlns:enums="clr-namespace:Mal.UniversalScada.Core.Enums;assembly=Mal.UniversalScada.Core"
+        mc:Ignorable="d"
+        Title="SCADA 工业工程组态管理系统 (Mal.UniversalScada)"
+        Height="840" Width="1350"
+        WindowStartupLocation="CenterScreen"
+        Background="#F1F5F9"
+        Foreground="#0F172A">
+
+    <Window.Resources>
+        <!-- 通用文本框样式 (亮色) -->
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- 通用下拉框样式 (亮色) -->
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- 表格通用样式 (亮色) -->
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="RowBackground" Value="#FFFFFF"/>
+            <Setter Property="AlternatingRowBackground" Value="#F8FAFC"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E2E8F0"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#E2E8F0"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        </Style>
+
+        <!-- 通用卡片容器样式 (白色卡片带浅边框) -->
+        <Style x:Key="LightCardBorder" TargetType="Border">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="20"/>
+        </Style>
+
+        <!-- 表单分组容器样式 -->
+        <Style x:Key="SubSectionBorder" TargetType="Border">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="58" />   <!-- 顶部纯白导航栏 -->
+            <RowDefinition Height="*" />    <!-- 主体：左侧树 + 右侧内容卡片 -->
+            <RowDefinition Height="32" />   <!-- 底部状态条 -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. 顶部操作栏 (亮色质感) -->
+        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="20,0">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="🛠️ SCADA 工程组态配置中心" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
+                    <Border Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="14,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="管理员授权模式" FontSize="11" Foreground="#15803D" FontWeight="SemiBold"/>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="当前管理员: " FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding CurrentAdmin}" FontSize="13" FontWeight="Bold" Foreground="#0369A1" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                    <Button Content="🔄 从库刷新" Padding="12,6" Height="34" Margin="0,0,8,0"
+                            Background="#F1F5F9" Foreground="#334155" BorderBrush="#CBD5E1" BorderThickness="1" FontWeight="SemiBold"
+                            Command="{Binding LoadFromDbCommand}"/>
+
+                    <Button Content="💾 保存当前组态" Padding="14,6" Height="34" Margin="0,0,8,0"
+                            Background="#0284C7" Foreground="#FFFFFF" FontWeight="Bold" BorderThickness="0"
+                            Command="{Binding SaveAllCommand}"/>
+
+                    <Button Content="🔑 修改密码" Padding="10,6" Height="34" Margin="0,0,8,0"
+                            Background="#F8FAFC" Foreground="#475569" BorderBrush="#CBD5E1" BorderThickness="1"
+                            Command="{Binding OpenChangePasswordDialogCommand}"/>
+
+                    <Button Content="🚪 注销登录" Padding="10,6" Height="34"
+                            Background="#FEE2E2" Foreground="#B91C1C" BorderBrush="#FECACA" BorderThickness="1" FontWeight="SemiBold"
+                            Command="{Binding LogoutCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 2. 主体左右分栏 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340" MinWidth="260" MaxWidth="520" />
+                <ColumnDefinition Width="6" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 左侧：层级树导航 (亮白卡片式) -->
+            <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0">
+                <DockPanel Margin="12">
+                    <DockPanel DockPanel.Dock="Top" Margin="4,4,4,10">
+                        <TextBlock Text="📁 工程拓扑结构" FontSize="14" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
+                        <TextBlock Text="*支持节点右键操作" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <!-- 树形控件 (亮色系) -->
+                    <TreeView ItemsSource="{Binding TreeRoots}" 
+                              Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" Foreground="#1E293B" Padding="6"
+                              SelectedItemChanged="TreeView_SelectedItemChanged">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="{x:Type TreeViewItem}">
+                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                <Setter Property="Padding" Value="4,5" />
+                                <Setter Property="FontSize" Value="13" />
+                                <Setter Property="Foreground" Value="#1E293B" />
+                                
+                                <!-- 右键 ContextMenu (亮色) -->
+                                <Style.Triggers>
+                                    <!-- 一级节点：设备管理右键 -->
+                                    <DataTrigger Binding="{Binding NodeType}" Value="{x:Static models:TreeNodeType.DeviceRoot}">
+                                        <Setter Property="ContextMenu">
+                                            <Setter.Value>
+                                                <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
+                                                    <MenuItem Header="➕ 新建设备" Foreground="#0F172A"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateDeviceCommand}"/>
+                                                </ContextMenu>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+
+                                    <!-- 一级节点：通道管理右键 -->
+                                    <DataTrigger Binding="{Binding NodeType}" Value="{x:Static models:TreeNodeType.ChannelRoot}">
+                                        <Setter Property="ContextMenu">
+                                            <Setter.Value>
+                                                <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
+                                                    <MenuItem Header="🌐 新建以太网通道 (TCP)" Foreground="#0F172A"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateChannelCommand}"
+                                                              CommandParameter="TcpClient"/>
+                                                    <MenuItem Header="🔌 新建串口通道 (SerialPort)" Foreground="#0F172A"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateChannelCommand}"
+                                                              CommandParameter="SerialPort"/>
+                                                </ContextMenu>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+
+                                    <!-- 二级节点：具体设备右键 -->
+                                    <DataTrigger Binding="{Binding NodeType}" Value="{x:Static models:TreeNodeType.DeviceItem}">
+                                        <Setter Property="ContextMenu">
+                                            <Setter.Value>
+                                                <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
+                                                    <MenuItem Header="🏷️ 新建点位" Foreground="#0F172A"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateTagCommand}"
+                                                              CommandParameter="{Binding DataPayload}"/>
+                                                    <Separator Background="#E2E8F0"/>
+                                                    <MenuItem Header="➕ 新建同级设备" Foreground="#0F172A"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateDeviceCommand}"/>
+                                                    <MenuItem Header="🗑️ 删除设备" Foreground="#DC2626"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.DeleteDeviceCommand}"
+                                                              CommandParameter="{Binding DataPayload}"/>
+                                                </ContextMenu>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+
+                                    <!-- 二级节点：具体通道右键 -->
+                                    <DataTrigger Binding="{Binding NodeType}" Value="{x:Static models:TreeNodeType.ChannelItem}">
+                                        <Setter Property="ContextMenu">
+                                            <Setter.Value>
+                                                <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
+                                                    <MenuItem Header="🌐 新建以太网通道 (TCP)" Foreground="#0F172A"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateChannelCommand}"
+                                                              CommandParameter="TcpClient"/>
+                                                    <MenuItem Header="🔌 新建串口通道 (SerialPort)" Foreground="#0F172A"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateChannelCommand}"
+                                                              CommandParameter="SerialPort"/>
+                                                    <Separator Background="#E2E8F0"/>
+                                                    <MenuItem Header="🗑️ 删除通道" Foreground="#DC2626"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.DeleteChannelCommand}"
+                                                              CommandParameter="{Binding DataPayload}"/>
+                                                </ContextMenu>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+
+                                    <!-- 三级节点：具体点位右键 -->
+                                    <DataTrigger Binding="{Binding NodeType}" Value="{x:Static models:TreeNodeType.TagItem}">
+                                        <Setter Property="ContextMenu">
+                                            <Setter.Value>
+                                                <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
+                                                    <MenuItem Header="🏷️ 新建点位" Foreground="#0F172A"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateTagCommand}"/>
+                                                    <Separator Background="#E2E8F0"/>
+                                                    <MenuItem Header="🗑️ 删除点位" Foreground="#DC2626"
+                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.DeleteTagCommand}"
+                                                              CommandParameter="{Binding DataPayload}"/>
+                                                </ContextMenu>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+
+                        <TreeView.ItemTemplate>
+                            <HierarchicalDataTemplate DataType="{x:Type models:TopologyTreeNode}" ItemsSource="{Binding Children}">
+                                <StackPanel Orientation="Horizontal" Margin="2,2">
+                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#1E293B"/>
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </DockPanel>
+            </Border>
+
+            <!-- 拖拽分割条 (清爽浅色) -->
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#E2E8F0" ResizeDirection="Columns" />
+
+            <!-- 右侧：动态功能工作区 (亮白卡片容器) -->
+            <Grid Grid.Column="2" Margin="16,14,16,14">
+
+                <!-- 模式 A：具体通道详细参数编辑 (ChannelDetail) -->
+                <Border>
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource LightCardBorder}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentViewMode}" Value="{x:Static vm:ViewMode.ChannelDetail}">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel MaxWidth="650" HorizontalAlignment="Left" DataContext="{Binding SelectedChannel}">
+                            <DockPanel Margin="0,0,0,18">
+                                <TextBlock Text="📡 通信通道参数编辑" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
+                                <Button Content="🔌 探测连通性 (Ping/握手测试)" HorizontalAlignment="Right" Padding="12,6" Height="32"
+                                        Background="#6366F1" Foreground="#FFFFFF" FontWeight="Bold" BorderThickness="0"
+                                        Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TestChannelConnectivityCommand}"/>
+                            </DockPanel>
+
+                            <TextBlock Text="通道唯一标识 ID (ChannelId):" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding ChannelId}" Height="32" Margin="0,0,0,12"/>
+
+                            <TextBlock Text="通道友好名称 (Name):" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding Name}" Height="32" Margin="0,0,0,12"/>
+
+                            <DockPanel Margin="0,0,0,4">
+                                <TextBlock Text="传输介质类型 (ChannelType):" Foreground="#475569" VerticalAlignment="Center"/>
+                                <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="6,2" HorizontalAlignment="Right">
+                                    <TextBlock Text="🔒 传输介质创建后锁定不可修改" FontSize="11" Foreground="#64748B"/>
+                                </Border>
+                            </DockPanel>
+                            <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ChannelTypes}"
+                                      SelectedItem="{Binding ChannelType}" 
+                                      IsEnabled="False"
+                                      Background="#F8FAFC"
+                                      Height="32" Margin="0,0,0,14"
+                                      ToolTip="依据硬件链路规范，通信通道创建后介质类型固定不可更改"/>
+
+                            <!-- 以太网参数 (仅当传输介质为以太网 TCP/UDP 时显示) -->
+                            <Border>
+                                <Border.Style>
+                                    <Style TargetType="Border" BasedOn="{StaticResource SubSectionBorder}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ChannelType}" Value="{x:Static enums:ChannelType.TcpClient}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding ChannelType}" Value="{x:Static enums:ChannelType.TcpServer}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding ChannelType}" Value="{x:Static enums:ChannelType.Udp}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel>
+                                    <TextBlock Text="🌐 以太网网络连接配置 (TCP 客户端/服务端/UDP)" FontWeight="Bold" Foreground="#0369A1" Margin="0,0,0,10"/>
+                                    <TextBlock Text="远程 IP 地址 / 域名 (Host):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Host}" Height="30" Margin="0,0,0,10"/>
+
+                                    <TextBlock Text="端口号 (Port, 如 502/102):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Port}" Height="30"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 串口参数 (仅当传输介质为串口 RS232/485 时显示) -->
+                            <Border>
+                                <Border.Style>
+                                    <Style TargetType="Border" BasedOn="{StaticResource SubSectionBorder}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ChannelType}" Value="{x:Static enums:ChannelType.SerialPort}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,10">
+                                        <TextBlock Text="🔌 串口通信配置 (RS232 / RS485)" FontWeight="Bold" Foreground="#0369A1" VerticalAlignment="Center"/>
+                                        <Button Content="刷新串口" HorizontalAlignment="Right" Padding="6,2" Height="24" Background="#E2E8F0" Foreground="#334155" BorderThickness="0"
+                                                Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RefreshSerialPortsCommand}"/>
+                                    </DockPanel>
+
+                                    <TextBlock Text="串口号 (PortName):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.AvailableSerialPorts}"
+                                              Text="{Binding PortName}" IsEditable="True" Height="30" Margin="0,0,0,10"/>
+
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="波特率 (BaudRate):" Foreground="#475569" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding BaudRate}" Height="30"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="数据位 (DataBits):" Foreground="#475569" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding DataBits}" Height="30"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="校验位 (Parity, 如 None/Even/Odd):" Foreground="#475569" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding Parity}" Height="30"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="停止位 (StopBits, 如 One/Two):" Foreground="#475569" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding StopBits}" Height="30"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Text="读取超时时间 (毫秒):" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding ReadTimeoutMs}" Height="32" Margin="0,0,0,14"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- 模式 B：具体设备详细参数编辑与点位总览 (DeviceDetail) -->
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentViewMode}" Value="{x:Static vm:ViewMode.DeviceDetail}">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- 设备参数上半部分表单 -->
+                    <Border Grid.Row="0" Style="{StaticResource LightCardBorder}" Margin="0,0,0,14">
+                        <StackPanel DataContext="{Binding SelectedDevice}">
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="📟 下位机设备属性设定" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
+                                <Button Content="➕ 新建该设备点位" HorizontalAlignment="Right" Padding="12,5" Height="30"
+                                        Background="#059669" Foreground="#FFF" FontWeight="SemiBold" BorderThickness="0"
+                                        Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateTagCommand}"
+                                        CommandParameter="{Binding}"/>
+                            </DockPanel>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="15" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="15" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="设备 ID (DeviceId):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding DeviceId}" Height="30" Margin="0,0,0,10"/>
+
+                                    <TextBlock Text="设备友好名称 (Name):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Name}" Height="30"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <DockPanel Margin="0,0,0,4">
+                                        <TextBlock Text="所属通信通道 (ChannelId):" Foreground="#475569" VerticalAlignment="Center"/>
+                                        <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="4,1" HorizontalAlignment="Right">
+                                            <TextBlock Text="🔒 锁定" FontSize="10" Foreground="#64748B"/>
+                                        </Border>
+                                    </DockPanel>
+                                    <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.Channels}"
+                                              SelectedValuePath="ChannelId" DisplayMemberPath="Name"
+                                              SelectedValue="{Binding ChannelId}" 
+                                              IsEnabled="False"
+                                              Background="#F8FAFC"
+                                              Height="30" Margin="0,0,0,10"
+                                              ToolTip="设备创建后绑定的通信通道固定，不可修改"/>
+
+                                    <DockPanel Margin="0,0,0,4">
+                                        <TextBlock Text="通信协议类型枚举 (ProtocolType):" Foreground="#475569" VerticalAlignment="Center"/>
+                                        <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3" Padding="4,1" HorizontalAlignment="Right">
+                                            <TextBlock Text="🔒 锁定" FontSize="10" Foreground="#64748B"/>
+                                        </Border>
+                                    </DockPanel>
+                                    <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ProtocolTypes}"
+                                              SelectedItem="{Binding ProtocolType}" 
+                                              IsEnabled="False"
+                                              Background="#F8FAFC"
+                                              Height="30"
+                                              ToolTip="设备创建后通信协议类型固定，不可修改"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="从站站号 / UnitId (StationAddress):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding StationAddress}" Height="30" Margin="0,0,0,10"/>
+
+                                    <TextBlock Text="采集轮询周期 (毫秒):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding DefaultPollIntervalMs}" Height="30"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 下半部分：设备关联点位清单 -->
+                    <Border Grid.Row="1" Style="{StaticResource LightCardBorder}" Padding="16">
+                        <DockPanel>
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                                <TextBlock Text="📋 设备关联数据点位总览" FontSize="14" FontWeight="Bold" Foreground="#0369A1" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="📥 导入点位 (CSV)" Padding="10,4" Height="28" Margin="0,0,8,0" 
+                                            Background="#F1F5F9" Foreground="#0284C7" BorderBrush="#CBD5E1" BorderThickness="1" FontWeight="SemiBold"
+                                            Command="{Binding ImportTagsCsvCommand}"/>
+                                    <Button Content="📤 导出点位 (CSV)" Padding="10,4" Height="28" 
+                                            Background="#F1F5F9" Foreground="#7C3AED" BorderBrush="#CBD5E1" BorderThickness="1" FontWeight="SemiBold"
+                                            Command="{Binding ExportTagsCsvCommand}"/>
+                                </StackPanel>
+                            </DockPanel>
+
+                            <DataGrid ItemsSource="{Binding CurrentDeviceTags}" SelectedItem="{Binding SelectedTag}"
+                                      AutoGenerateColumns="False" CanUserAddRows="False">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="点位 ID" Binding="{Binding TagId}" Width="160" FontWeight="Bold"/>
+                                    <DataGridTextColumn Header="点位名称 / 描述" Binding="{Binding Name}" Width="180"/>
+                                    <DataGridTextColumn Header="物理地址" Binding="{Binding Address}" Width="110"/>
+                                    <DataGridTemplateColumn Header="数据类型" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding DataType}" VerticalAlignment="Center" Margin="4,0" FontWeight="SemiBold" Foreground="#0284C7"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                        <DataGridTemplateColumn.CellEditingTemplate>
+                                            <DataTemplate>
+                                                <ComboBox SelectedItem="{Binding DataType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          ItemsSource="{Binding DataContext.TagDataTypes, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellEditingTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="读写权限" Width="100">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding AccessMode}" VerticalAlignment="Center" Margin="4,0" Foreground="#334155"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                        <DataGridTemplateColumn.CellEditingTemplate>
+                                            <DataTemplate>
+                                                <ComboBox SelectedItem="{Binding AccessMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          ItemsSource="{Binding DataContext.TagAccessModes, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellEditingTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="比例(k)" Binding="{Binding ScaleFactor}" Width="75"/>
+                                    <DataGridTextColumn Header="偏移(b)" Binding="{Binding Offset}" Width="75"/>
+                                    <DataGridTextColumn Header="单位" Binding="{Binding Unit}" Width="65"/>
+                                    <DataGridCheckBoxColumn Header="历史归档" Binding="{Binding IsHistorical}" Width="75"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+
+                <!-- 模式 C：单个具体点位深度属性修改 (TagDetail) -->
+                <Border>
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource LightCardBorder}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentViewMode}" Value="{x:Static vm:ViewMode.TagDetail}">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel MaxWidth="650" HorizontalAlignment="Left" DataContext="{Binding SelectedTag}">
+                            <DockPanel Margin="0,0,0,18">
+                                <TextBlock Text="🏷️ 数据点位参数详细配置" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
+                                <Button Content="🗑️ 删除此点位" HorizontalAlignment="Right" Padding="10,5" Height="30"
+                                        Background="#FEE2E2" Foreground="#DC2626" BorderBrush="#FECACA" BorderThickness="1" FontWeight="SemiBold"
+                                        Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.DeleteTagCommand}"
+                                        CommandParameter="{Binding}"/>
+                            </DockPanel>
+
+                            <TextBlock Text="点位全局唯一 ID (TagId):" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding TagId}" Height="32" Margin="0,0,0,12"/>
+
+                            <TextBlock Text="所属设备 (DeviceId):" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding DeviceId}" Height="32" Margin="0,0,0,12"/>
+
+                            <TextBlock Text="点位名称 / 中文描述 (Name):" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding Name}" Height="32" Margin="0,0,0,12"/>
+
+                            <TextBlock Text="下位机物理寄存器地址 (Address, 如 40001 / DB1.DBD0):" Foreground="#475569" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding Address}" Height="32" Margin="0,0,0,12"/>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="15" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="变量数据类型 (DataType):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TagDataTypes}"
+                                              SelectedItem="{Binding DataType}" Height="32"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="读写访问权限 (AccessMode):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TagAccessModes}"
+                                              SelectedItem="{Binding AccessMode}" Height="32"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 工程量换算公式卡片 -->
+                            <Border Style="{StaticResource SubSectionBorder}">
+                                <StackPanel>
+                                    <TextBlock Text="📐 线性工程量换算 (实际值 y = k * 采集原始值 + b)" FontWeight="Bold" Foreground="#0369A1" Margin="0,0,0,10"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="100" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="比例系数 (k):" Foreground="#475569" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding ScaleFactor}" Height="30"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="偏移常量 (b):" Foreground="#475569" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding Offset}" Height="30"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="4">
+                                            <TextBlock Text="工程单位:" Foreground="#475569" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding Unit}" Height="30"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="15" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="变化死区绝对值 (Deadband):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Deadband}" Height="32"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="采集扫描周期 (毫秒):" Foreground="#475569" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding ScanIntervalMs}" Height="32"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <CheckBox Content="是否归档记录到时序历史数据库 (IsHistorical)" 
+                                      IsChecked="{Binding IsHistorical}" 
+                                      Foreground="#15803D" FontWeight="SemiBold" FontSize="13" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- 模式 D：通道总览视图 (ChannelRoot) -->
+                <Border>
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource LightCardBorder}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentViewMode}" Value="{x:Static vm:ViewMode.ChannelRoot}">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                            <TextBlock Text="📡 通信通道总览管理" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="🌐 新建以太网通道" Padding="12,6" Height="32" Margin="0,0,8,0"
+                                        Background="#0284C7" Foreground="#FFF" FontWeight="SemiBold" BorderThickness="0"
+                                        Command="{Binding CreateChannelCommand}" CommandParameter="TcpClient"/>
+                                <Button Content="🔌 新建串口通道" Padding="12,6" Height="32"
+                                        Background="#059669" Foreground="#FFF" FontWeight="SemiBold" BorderThickness="0"
+                                        Command="{Binding CreateChannelCommand}" CommandParameter="SerialPort"/>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <DataGrid ItemsSource="{Binding Channels}" SelectedItem="{Binding SelectedChannel}"
+                                  AutoGenerateColumns="False" CanUserAddRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="通道唯一 ID" Binding="{Binding ChannelId}" Width="140" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="通道名称" Binding="{Binding Name}" Width="200"/>
+                                <DataGridTextColumn Header="传输类型" Binding="{Binding ChannelType}" Width="120"/>
+                                <DataGridTextColumn Header="网络主机 (Host)" Binding="{Binding Host}" Width="150"/>
+                                <DataGridTextColumn Header="端口 (Port)" Binding="{Binding Port}" Width="80"/>
+                                <DataGridTextColumn Header="串口号 (PortName)" Binding="{Binding PortName}" Width="110"/>
+                                <DataGridTextColumn Header="波特率" Binding="{Binding BaudRate}" Width="90"/>
+                                <DataGridTextColumn Header="超时(ms)" Binding="{Binding ReadTimeoutMs}" Width="90"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+
+                <!-- 模式 E：设备总览视图 (DeviceRoot) -->
+                <Border>
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource LightCardBorder}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentViewMode}" Value="{x:Static vm:ViewMode.DeviceRoot}">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                            <TextBlock Text="📟 下位机设备总览管理" FontSize="18" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center"/>
+                            <Button Content="➕ 新建设备" HorizontalAlignment="Right" Padding="14,6" Height="32" Background="#059669" Foreground="#FFF" FontWeight="SemiBold" BorderThickness="0"
+                                    Command="{Binding CreateDeviceCommand}"/>
+                        </DockPanel>
+
+                        <DataGrid ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                                  AutoGenerateColumns="False" CanUserAddRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="设备唯一 ID" Binding="{Binding DeviceId}" Width="140" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="设备友好名称" Binding="{Binding Name}" Width="200"/>
+                                <DataGridTextColumn Header="所属通道 (ChannelId)" Binding="{Binding ChannelId}" Width="140" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="协议类型 (ProtocolType)" Binding="{Binding ProtocolType}" Width="150" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="站号 (StationAddress)" Binding="{Binding StationAddress}" Width="100"/>
+                                <DataGridTextColumn Header="轮询周期(ms)" Binding="{Binding DefaultPollIntervalMs}" Width="110"/>
+                                <DataGridCheckBoxColumn Header="是否启用" Binding="{Binding IsEnabled}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- 3. 底部状态栏 (浅色优雅) -->
+        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="16,0">
+            <Grid VerticalAlignment="Center">
+                <TextBlock Text="{Binding StatusMessage}" Foreground="#059669" FontWeight="SemiBold" FontSize="12"/>
+                <TextBlock Text="Mal.UniversalScada Configurator v2.0 | 工业通用上位机组态中心" Foreground="#94A3B8" FontSize="11" HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
