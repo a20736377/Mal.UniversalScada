@@ -7,6 +7,7 @@ namespace Mal.UniversalScada.Core.Channels;
 
 /// <summary>
 /// 基于物理/虚拟串口通信通道实现 (IChannel)
+/// 全面支持 RS485/RS232/USB-Serial，具备 DTR/RTS 控制、高可靠异步收发与超时防护
 /// </summary>
 public class SerialPortChannel : IChannel
 {
@@ -41,16 +42,22 @@ public class SerialPortChannel : IChannel
                 _config.BaudRate,
                 parity == default ? Parity.None : parity,
                 _config.DataBits > 0 ? _config.DataBits : 8,
-                stopBits == default ? StopBits.One : stopBits);
-
-            _serial.ReadTimeout = _config.ReadTimeoutMs > 0 ? _config.ReadTimeoutMs : 2000;
-            _serial.WriteTimeout = _config.WriteTimeoutMs > 0 ? _config.WriteTimeoutMs : 2000;
+                stopBits == default ? StopBits.One : stopBits)
+            {
+                ReadTimeout = _config.ReadTimeoutMs > 0 ? _config.ReadTimeoutMs : 2000,
+                WriteTimeout = _config.WriteTimeoutMs > 0 ? _config.WriteTimeoutMs : 2000,
+                // 关键：启用 DTR/RTS 以保证大部分 USB-RS485 转换芯片及半双工收发自如供电与触发
+                DtrEnable = true,
+                RtsEnable = true,
+                Handshake = Handshake.None
+            };
 
             _serial.Open();
+            ClearBuffer();
             SetState(ChannelState.Connected);
             return Task.FromResult(true);
         }
-        catch
+        catch (Exception)
         {
             SetState(ChannelState.Faulted);
             Cleanup();
@@ -68,15 +75,45 @@ public class SerialPortChannel : IChannel
     public async Task<int> SendAsync(byte[] buffer, int offset, int count, CancellationToken ct = default)
     {
         if (!IsOpen || _serial == null) throw new InvalidOperationException($"串口通道 [{ChannelId}] 未处于打开状态");
-        await _serial.BaseStream.WriteAsync(buffer.AsMemory(offset, count), ct);
-        await _serial.BaseStream.FlushAsync(ct);
-        return count;
+
+        using var timeoutCts = new CancellationTokenSource(_serial.WriteTimeout);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+
+        try
+        {
+            await _serial.BaseStream.WriteAsync(buffer.AsMemory(offset, count), linkedCts.Token);
+            await _serial.BaseStream.FlushAsync(linkedCts.Token);
+            return count;
+        }
+        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
+        {
+            throw new TimeoutException($"串口通道 [{ChannelId}] 发送数据超时 ({_serial.WriteTimeout} ms)");
+        }
     }
 
     public async Task<int> ReceiveAsync(byte[] buffer, int offset, int count, CancellationToken ct = default)
     {
         if (!IsOpen || _serial == null) throw new InvalidOperationException($"串口通道 [{ChannelId}] 未处于打开状态");
-        return await _serial.BaseStream.ReadAsync(buffer.AsMemory(offset, count), ct);
+
+        // 若缓冲区已有就绪数据，优先同步快速读取
+        if (_serial.BytesToRead > 0)
+        {
+            int toRead = Math.Min(count, _serial.BytesToRead);
+            return _serial.Read(buffer, offset, toRead);
+        }
+
+        // 无就绪数据时，挂起异步等待，并绑定串口配置的 ReadTimeout 超时机制
+        using var timeoutCts = new CancellationTokenSource(_serial.ReadTimeout);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+
+        try
+        {
+            return await _serial.BaseStream.ReadAsync(buffer.AsMemory(offset, count), linkedCts.Token);
+        }
+        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
+        {
+            throw new TimeoutException($"串口通道 [{ChannelId}] 读取数据超时 ({_serial.ReadTimeout} ms)");
+        }
     }
 
     public void ClearBuffer()

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Mal.UniversalScada.Configurator.Wpf.ViewModels;
 using Mal.UniversalScada.Configurator.Wpf.Views;
 using Mal.UniversalScada.Core.Configuration;
+using Mal.UniversalScada.Drivers.CustomSerial;
 using Mal.UniversalScada.Drivers.Modbus;
 using Mal.UniversalScada.Drivers.Siemens;
 using Mal.UniversalScada.Storage.Sqlite;
@@ -41,6 +42,7 @@ public partial class App : Application
                     services.AddScadaConfigurationCore();
                     services.AddModbusDriver();
                     services.AddSiemensS7Driver();
+                    services.AddCustomSerialDriver();
 
                     // 3. ViewModel
                     services.AddTransient<LoginViewModel>();
