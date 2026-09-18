@@ -1,0 +1,43 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.DisplayBoxControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
+    <Border Background="{Binding DisplayProps.BackgroundColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+            BorderBrush="{Binding DisplayProps.BorderColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+            BorderThickness="1.5" CornerRadius="6" Padding="8,4">
+        <Grid VerticalAlignment="Center">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 前缀说明标签 (如 "主轴转速", "1#液位") -->
+            <TextBlock Grid.Column="0" Text="{Binding DisplayProps.Prefix}"
+                       Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"
+                       VerticalAlignment="Center" Margin="0,0,8,0"
+                       TextTrimming="CharacterEllipsis" MaxWidth="80"/>
+
+            <!-- 核心数值/文本显示 -->
+            <TextBlock Grid.Column="1" Text="{Binding FormattedValue}"
+                       Foreground="{Binding DisplayProps.TextColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                       FontSize="18" FontWeight="Bold"
+                       FontFamily="Consolas, Segoe UI, sans-serif"
+                       HorizontalAlignment="{Binding DisplayProps.Alignment, Converter={x:Static vm:WidgetUiConverters.StringToHorizontalAlignment}}"
+                       VerticalAlignment="Center">
+                <TextBlock.Effect>
+                    <DropShadowEffect BlurRadius="6" Color="#0284C7" ShadowDepth="0" Opacity="0.35"/>
+                </TextBlock.Effect>
+            </TextBlock>
+
+            <!-- 物理工程单位 (如 "rpm", "℃", "bar") -->
+            <TextBlock Grid.Column="2" Text="{Binding DisplayProps.Unit}"
+                       Foreground="#64748B" FontSize="11" FontWeight="SemiBold"
+                       VerticalAlignment="Center" Margin="4,0,0,0"/>
+        </Grid>
+    </Border>
+</UserControl>

@@ -17,6 +17,22 @@ public partial class UiDesignerView : UserControl
     public UiDesignerView()
     {
         InitializeComponent();
+
+        Loaded += (_, _) =>
+        {
+            if (DataContext is UiDesignerViewModel vm)
+            {
+                _ = vm.ReloadAvailableTagsAsync();
+            }
+        };
+
+        IsVisibleChanged += (_, e) =>
+        {
+            if (e.NewValue is true && DataContext is UiDesignerViewModel vm)
+            {
+                _ = vm.ReloadAvailableTagsAsync();
+            }
+        };
     }
 
     #region 工具箱拖拽与双击
@@ -119,6 +135,28 @@ public partial class UiDesignerView : UserControl
         if (DataContext is UiDesignerViewModel vm && vm.SelectedWidget != null)
         {
             vm.SelectedWidget.UpdateRuntimeValue(0);
+        }
+    }
+
+    private void OnSimulateIoPatternClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string hexStr &&
+            DataContext is UiDesignerViewModel vm && vm.SelectedWidget != null)
+        {
+            string clean = hexStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? hexStr[2..] : hexStr;
+            if (long.TryParse(clean, System.Globalization.NumberStyles.HexNumber, null, out var val))
+            {
+                vm.SelectedWidget.UpdateRuntimeValue(val);
+            }
+        }
+    }
+
+    private void OnSetButtonWriteValueClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string valStr &&
+            DataContext is UiDesignerViewModel vm && vm.SelectedWidget is ControlButtonWidgetViewModel btnVm)
+        {
+            btnVm.WriteValue = valStr;
         }
     }
 

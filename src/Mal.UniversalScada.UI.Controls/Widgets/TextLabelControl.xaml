@@ -1,0 +1,19 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.TextLabelControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
+    <Border Background="Transparent" Padding="4,2">
+        <TextBlock Text="{Binding FormattedValue}"
+                   FontSize="{Binding LabelProps.FontSize}"
+                   FontWeight="{Binding LabelProps.IsBold, Converter={x:Static vm:WidgetUiConverters.BoolToFontWeight}}"
+                   Foreground="{Binding LabelProps.TextColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                   HorizontalAlignment="{Binding LabelProps.Alignment, Converter={x:Static vm:WidgetUiConverters.StringToHorizontalAlignment}}"
+                   VerticalAlignment="Center"
+                   TextWrapping="Wrap"
+                   FontFamily="Microsoft YaHei, Segoe UI, sans-serif"/>
+    </Border>
+</UserControl>

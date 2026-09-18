@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Mal.UniversalScada.Configurator.Wpf.ViewModels"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.Configurator.Wpf.Controls"
              xmlns:widgets="clr-namespace:Mal.UniversalScada.UI.Controls.Widgets;assembly=Mal.UniversalScada.UI.Controls"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:UiDesignerViewModel}">
@@ -116,8 +117,15 @@
                             </DrawingBrush>
                         </Grid.Background>
 
+                        <!-- 画布工艺流程/设备底图 (支持透明度与拉伸模式) -->
+                        <Image Source="{Binding SelectedView.BackgroundImagePath}"
+                               Stretch="{Binding SelectedView.BackgroundImageStretch}"
+                               Opacity="{Binding SelectedView.BackgroundImageOpacity}"
+                               IsHitTestVisible="False"
+                               HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
                         <!-- 画布顶部水印标尺 -->
-                        <TextBlock Text="[ WYSIWYG DESIGNER CANVAS - 1600 x 900 | 支持组件自由拖拽与属性即时联动 ]" Foreground="#1E293B" FontSize="11"
+                        <TextBlock Text="[ WYSIWYG DESIGNER CANVAS - 1600 x 900 | 支持组件自由拖拽与属性即时联动 ]" Foreground="#334155" FontSize="11"
                                    FontFamily="Consolas" Margin="14,10,0,0" IsHitTestVisible="False"/>
 
                         <!-- 组件集合容器 (以 Canvas 绝对定位呈现) -->
@@ -133,6 +141,9 @@
                                     <Setter Property="Canvas.Top" Value="{Binding Y, Mode=TwoWay}"/>
                                     <Setter Property="Panel.ZIndex" Value="1"/>
                                     <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Type}" Value="PanelContainer">
+                                            <Setter Property="Panel.ZIndex" Value="0"/>
+                                        </DataTrigger>
                                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                             <Setter Property="Panel.ZIndex" Value="999"/>
                                         </DataTrigger>
@@ -177,10 +188,34 @@
                             <TextBlock Text="展示标题 / 标签 (Title):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding SelectedWidget.Title, UpdateSourceTrigger=PropertyChanged}" Height="30" Margin="0,0,0,10"/>
 
-                            <!-- 绑定主点位 -->
-                            <TextBlock Text="绑定采集点位 (PrimaryTagId):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
-                            <ComboBox ItemsSource="{Binding AvailableTagIds}" SelectedItem="{Binding SelectedWidget.PrimaryTagId}"
-                                      Height="30" Margin="0,0,0,10"/>
+                            <!-- 绑定主点位 (带数据类型精准过滤) -->
+                            <DockPanel Margin="0,0,0,4">
+                                <TextBlock Text="绑定采集点位 (PrimaryTagId):" FontSize="11" Foreground="#475569" VerticalAlignment="Center"/>
+                                <TextBlock Text="🎯 仅显示兼容数据类型" FontSize="9" Foreground="#0284C7" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </DockPanel>
+                            <ComboBox ItemsSource="{Binding FilteredAvailableTags}"
+                                      SelectedValue="{Binding SelectedWidget.PrimaryTagId, Mode=TwoWay}"
+                                      SelectedValuePath="TagId"
+                                      DisplayMemberPath="DisplayText"
+                                      Height="30" Margin="0,0,0,4"/>
+
+                            <!-- 所选点位详细信息与数据类型徽章卡片 -->
+                            <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="5" Padding="8,6" Margin="0,0,0,10"
+                                    Visibility="{Binding SelectedTagInfo, Converter={x:Static vm:DesignerUiConverters.NullToCollapsed}}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="#0284C7" CornerRadius="3" Padding="5,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectedTagInfo.DataTypeLabel}" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectedTagInfo.Name}" FontSize="11" FontWeight="SemiBold" Foreground="#1E293B" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding SelectedTagInfo.DetailSummary}" FontSize="9" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
 
                             <!-- 坐标与大小 -->
                             <Grid Margin="0,0,0,10">
@@ -262,13 +297,16 @@
                                             <ColumnDefinition Width="8"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="小数位数 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                            <TextBox Text="{Binding SelectedWidget.GaugeProps.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
-                                        </StackPanel>
+                                         <StackPanel Grid.Column="0">
+                                             <TextBlock Text="小数位数 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                             <TextBox Text="{Binding SelectedWidget.GaugeProps.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"
+                                                      IsEnabled="{Binding SelectedTagInfo.IsInteger, Converter={x:Static vm:DesignerUiConverters.InverseBool}}"/>
+                                             <TextBlock Text="整型点位已固定为0" FontSize="9" Foreground="#0284C7" Margin="0,2,0,0"
+                                                        Visibility="{Binding SelectedTagInfo.IsInteger, Converter={x:Static vm:DesignerUiConverters.BoolToVisibility}}"/>
+                                         </StackPanel>
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="表盘主题色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                            <TextBox Text="{Binding SelectedWidget.GaugeProps.ColorHex, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.GaugeProps.ColorHex, Mode=TwoWay}"/>
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
@@ -316,7 +354,7 @@
                                     </Grid>
 
                                     <TextBlock Text="液体渲染色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                    <TextBox Text="{Binding SelectedWidget.TankProps.ColorHex, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.TankProps.ColorHex, Mode=TwoWay}"/>
                                 </StackPanel>
                             </Border>
 
@@ -337,11 +375,14 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="小数保留位数 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                            <TextBox Text="{Binding SelectedWidget.CardProps.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                            <TextBox Text="{Binding SelectedWidget.CardProps.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"
+                                                     IsEnabled="{Binding SelectedTagInfo.IsInteger, Converter={x:Static vm:DesignerUiConverters.InverseBool}}"/>
+                                            <TextBlock Text="整型点位已固定为0" FontSize="9" Foreground="#0284C7" Margin="0,2,0,0"
+                                                       Visibility="{Binding SelectedTagInfo.IsInteger, Converter={x:Static vm:DesignerUiConverters.BoolToVisibility}}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="数显发光色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                            <TextBox Text="{Binding SelectedWidget.CardProps.ColorHex, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.CardProps.ColorHex, Mode=TwoWay}"/>
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
@@ -376,8 +417,21 @@
                                         </StackPanel>
                                     </Grid>
 
-                                    <TextBlock Text="导通点亮颜色 (ActiveColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                    <TextBox Text="{Binding SelectedWidget.IoProps.ActiveColor, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="导通点亮颜色 (Active):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.IoProps.ActiveColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="熄灭底色 (Inactive):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.IoProps.InactiveColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                    </Grid>
                                 </StackPanel>
                             </Border>
 
@@ -395,11 +449,11 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="点亮激活颜色 (Active):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                            <TextBox Text="{Binding SelectedWidget.LedProps.ActiveColor, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.LedProps.ActiveColor, Mode=TwoWay}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="熄灭底色 (Inactive):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                            <TextBox Text="{Binding SelectedWidget.LedProps.InactiveColor, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.LedProps.InactiveColor, Mode=TwoWay}"/>
                                         </StackPanel>
                                     </Grid>
 
@@ -432,6 +486,7 @@
                                     <TextBlock Text="按钮显示文字 (ButtonText):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
                                     <TextBox Text="{Binding SelectedWidget.ButtonProps.ButtonText, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
 
+                                    <!-- 依据数据类型差异化呈现动作模式与写入值 -->
                                     <Grid Margin="0,0,0,8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -449,11 +504,22 @@
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="写入数值 (Value):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
                                             <TextBox Text="{Binding SelectedWidget.ButtonProps.WriteValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                            <!-- 布尔量快捷置位按钮 -->
+                                            <Grid Margin="0,3,0,0"
+                                                  Visibility="{Binding SelectedTagInfo.IsBool, Converter={x:Static vm:DesignerUiConverters.BoolToVisibility}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="4"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Button Grid.Column="0" Content="置 1 (导通)" Tag="1" Height="18" FontSize="9" Background="#DCFCE7" Foreground="#15803D" BorderBrush="#86EFAC" Click="OnSetButtonWriteValueClick"/>
+                                                <Button Grid.Column="2" Content="置 0 (断开)" Tag="0" Height="18" FontSize="9" Background="#F1F5F9" Foreground="#475569" BorderBrush="#CBD5E1" Click="OnSetButtonWriteValueClick"/>
+                                            </Grid>
                                         </StackPanel>
                                     </Grid>
 
                                     <TextBlock Text="按钮底色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                    <TextBox Text="{Binding SelectedWidget.ButtonProps.ColorHex, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.ButtonProps.ColorHex, Mode=TwoWay}" Margin="0,0,0,8"/>
 
                                     <CheckBox Content="🛡️ 下发前弹出二次确认窗口 (防误触)" IsChecked="{Binding SelectedWidget.ButtonProps.RequireConfirm}" Margin="0,2,0,4"/>
                                     <TextBox Text="{Binding SelectedWidget.ButtonProps.ConfirmMessage, UpdateSourceTrigger=PropertyChanged}" Height="26"
@@ -461,32 +527,260 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 3. 即时动态预览调试 (所见即所得测试) -->
-                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10">
+                            <!-- 2.7 文本标签专属配置 (TextLabel) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='TextLabel'}">
                                 <StackPanel>
-                                    <TextBlock Text="🔍 画面动态即时预览调试" FontWeight="SemiBold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,6"/>
-                                    <DockPanel Margin="0,0,0,4">
-                                        <TextBlock Text="当前呈现值:" FontSize="10" Foreground="#64748B" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding SelectedWidget.FormattedValue}" FontWeight="Bold" FontSize="12" Foreground="#0284C7" HorizontalAlignment="Right"/>
-                                    </DockPanel>
+                                    <TextBlock Text="🏷️ 文本标签专属参数 (TextLabelProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
 
-                                    <!-- 模拟量滑块调试 (仪表、储罐、数显) -->
-                                    <Slider Minimum="{Binding SelectedWidget.MinValue}" Maximum="{Binding SelectedWidget.MaxValue}"
-                                            Value="{Binding SelectedWidget.CurrentRawValue, Mode=TwoWay}"
-                                            Margin="0,4,0,6" ValueChanged="OnPreviewSliderValueChanged"/>
+                                    <TextBlock Text="静态/说明文本 (Text):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedWidget.LabelProps.Text, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
 
-                                    <!-- 快速模拟按钮 (针对开关量、状态灯、控制按钮) -->
-                                    <Grid Margin="0,2,0,0">
+                                    <Grid Margin="0,0,0,8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="6"/>
+                                            <ColumnDefinition Width="8"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <Button Grid.Column="0" Content="⚡ 快速置 1 (导通/运行)" Height="24" FontSize="10" Background="#DCFCE7" Foreground="#15803D" BorderBrush="#86EFAC" Click="OnSimulateValueOneClick"/>
-                                        <Button Grid.Column="2" Content="⏹️ 快速置 0 (截止/停机)" Height="24" FontSize="10" Background="#F1F5F9" Foreground="#475569" BorderBrush="#CBD5E1" Click="OnSimulateValueZeroClick"/>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="文本字号 (FontSize):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.LabelProps.FontSize, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="水平对齐 (Alignment):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox Text="{Binding SelectedWidget.LabelProps.Alignment, UpdateSourceTrigger=PropertyChanged}" Height="26" IsEditable="True">
+                                                <ComboBoxItem Content="Left"/>
+                                                <ComboBoxItem Content="Center"/>
+                                                <ComboBoxItem Content="Right"/>
+                                            </ComboBox>
+                                        </StackPanel>
                                     </Grid>
+
+                                    <TextBlock Text="文本字体颜色 (TextColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.LabelProps.TextColor, Mode=TwoWay}" Margin="0,0,0,8"/>
+
+                                    <CheckBox Content="🔤 文本粗体展示 (IsBold)" IsChecked="{Binding SelectedWidget.LabelProps.IsBold}" Margin="0,2,0,0"/>
                                 </StackPanel>
                             </Border>
+
+                            <!-- 2.8 普通显示框专属配置 (DisplayBox) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='DisplayBox'}">
+                                <StackPanel>
+                                    <TextBlock Text="🔲 普通显示框专属参数 (DisplayBoxProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="前缀名称 (Prefix):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.DisplayProps.Prefix, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="工程单位 (Unit):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.DisplayProps.Unit, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="小数位数 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.DisplayProps.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="文本对齐 (Alignment):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox Text="{Binding SelectedWidget.DisplayProps.Alignment, UpdateSourceTrigger=PropertyChanged}" Height="26" IsEditable="True">
+                                                <ComboBoxItem Content="Right"/>
+                                                <ComboBoxItem Content="Center"/>
+                                                <ComboBoxItem Content="Left"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="文字颜色 (TextColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.DisplayProps.TextColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="边框颜色 (BorderColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.DisplayProps.BorderColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="背景底色 (BackgroundColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.DisplayProps.BackgroundColor, Mode=TwoWay}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 2.9 实时趋势折线图专属配置 (TrendChart) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='TrendChart'}">
+                                <StackPanel>
+                                    <TextBlock Text="📈 实时趋势折线图专属参数 (TrendChartProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="量程下限 (MinValue):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.ChartProps.MinValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="量程上限 (MaxValue):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.ChartProps.MaxValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="单位后缀 (Unit):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.ChartProps.Unit, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="缓存时间(秒) (TimeWindow):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.ChartProps.TimeWindowSeconds, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="曲线线条颜色 (LineColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.ChartProps.LineColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="波形填充底色 (FillColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.ChartProps.FillColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="刻度网格线颜色 (GridColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.ChartProps.GridColor, Mode=TwoWay}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 2.10 容器分组框专属配置 (PanelContainer) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='PanelContainer'}">
+                                <StackPanel>
+                                    <TextBlock Text="📦 容器分组框专属参数 (PanelContainerProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <TextBlock Text="分组标题 (GroupTitle):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedWidget.PanelProps.GroupTitle, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="边框圆角 (CornerRadius):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.PanelProps.CornerRadius, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="边框粗细 (BorderThickness):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.PanelProps.BorderThickness, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="边框线条颜色 (BorderColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.PanelProps.BorderColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="底板背景颜色 (FillColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.PanelProps.FillColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="标题栏底色 (HeaderBgColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.PanelProps.HeaderBgColor, Mode=TwoWay}"/>
+                                </StackPanel>
+                            </Border>
+
+                             <!-- 3. 即时动态预览调试 (依组件/数据类型自适应呈现) -->
+                             <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10">
+                                 <StackPanel>
+                                     <TextBlock Text="🔍 画面动态即时预览调试" FontWeight="SemiBold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,6"/>
+                                     <DockPanel Margin="0,0,0,4">
+                                         <TextBlock Text="当前呈现值:" FontSize="10" Foreground="#64748B" VerticalAlignment="Center"/>
+                                         <TextBlock Text="{Binding SelectedWidget.FormattedValue}" FontWeight="Bold" FontSize="12" Foreground="#0284C7" HorizontalAlignment="Right"/>
+                                     </DockPanel>
+
+                                     <!-- 3.1 模拟量滑块调试 (针对数值型与图表组件) -->
+                                     <StackPanel Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='GaugeCircular,LevelTank,NumericCard,TrendChart,DisplayBox'}">
+                                         <Slider Minimum="{Binding SelectedWidget.MinValue}" Maximum="{Binding SelectedWidget.MaxValue}"
+                                                 Value="{Binding SelectedWidget.CurrentRawValue, Mode=TwoWay}"
+                                                 Margin="0,4,0,6" ValueChanged="OnPreviewSliderValueChanged"/>
+                                         <DockPanel>
+                                             <TextBlock Text="{Binding SelectedWidget.MinValue, StringFormat='下限: {0}'}" FontSize="9" Foreground="#94A3B8"/>
+                                             <TextBlock Text="{Binding SelectedWidget.MaxValue, StringFormat='上限: {0}'}" FontSize="9" Foreground="#94A3B8" HorizontalAlignment="Right"/>
+                                         </DockPanel>
+                                     </StackPanel>
+
+                                     <!-- 3.2 开关量快速置位按钮 (针对 StatusLed 状态指示灯) -->
+                                     <Grid Margin="0,2,0,0"
+                                           Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='StatusLed'}">
+                                         <Grid.ColumnDefinitions>
+                                             <ColumnDefinition Width="*"/>
+                                             <ColumnDefinition Width="6"/>
+                                             <ColumnDefinition Width="*"/>
+                                         </Grid.ColumnDefinitions>
+                                         <Button Grid.Column="0" Content="⚡ 快速置 1 (导通/运行)" Height="26" FontSize="11" Background="#DCFCE7" Foreground="#15803D" BorderBrush="#86EFAC" Click="OnSimulateValueOneClick"/>
+                                         <Button Grid.Column="2" Content="⏹️ 快速置 0 (截止/停机)" Height="26" FontSize="11" Background="#F1F5F9" Foreground="#475569" BorderBrush="#CBD5E1" Click="OnSimulateValueZeroClick"/>
+                                     </Grid>
+
+                                     <!-- 3.3 IO 矩阵快速测试信号 (针对 IoMatrix) -->
+                                     <StackPanel Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='IoMatrix'}" Margin="0,2,0,0">
+                                         <TextBlock Text="快速注入点阵模拟数据:" FontSize="10" Foreground="#64748B" Margin="0,0,0,4"/>
+                                         <UniformGrid Columns="4">
+                                             <Button Content="全通 0xFF" Tag="0xFF" Height="22" FontSize="9" Margin="1" Click="OnSimulateIoPatternClick"/>
+                                             <Button Content="全断 0x00" Tag="0x00" Height="22" FontSize="9" Margin="1" Click="OnSimulateIoPatternClick"/>
+                                             <Button Content="交替 0xAA" Tag="0xAA" Height="22" FontSize="9" Margin="1" Click="OnSimulateIoPatternClick"/>
+                                             <Button Content="低4位 0x0F" Tag="0x0F" Height="22" FontSize="9" Margin="1" Click="OnSimulateIoPatternClick"/>
+                                         </UniformGrid>
+                                     </StackPanel>
+
+                                     <!-- 3.4 控制按钮测试触发 (针对 ControlButton) -->
+                                     <Button Content="🔘 模拟执行下发写入指令" Height="26" FontSize="11" Margin="0,4,0,0"
+                                             Background="#E0F2FE" Foreground="#0369A1" BorderBrush="#BAE6FD"
+                                             Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='ControlButton'}"
+                                             Click="OnSimulateValueOneClick"/>
+                                 </StackPanel>
+                             </Border>
                         </StackPanel>
 
                         <!-- 未选中组件时展示画面全局属性 -->
@@ -504,6 +798,50 @@
 
                             <TextBlock Text="画布参考高度 (px):" FontSize="11" Foreground="#64748B" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding SelectedView.CanvasHeight}" Height="28" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="画布底色 (BackgroundColor):" FontSize="11" Foreground="#64748B" Margin="0,0,0,4"/>
+                            <controls:ColorPickerBox ColorHex="{Binding SelectedView.BackgroundColor, Mode=TwoWay}" Margin="0,0,0,10"/>
+
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="🖼️ 画布背景底图设置" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <TextBlock Text="背景图片文件路径:" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="4"/>
+                                            <ColumnDefinition Width="54"/>
+                                            <ColumnDefinition Width="4"/>
+                                            <ColumnDefinition Width="48"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" Text="{Binding SelectedView.BackgroundImagePath, UpdateSourceTrigger=PropertyChanged}" Height="26" FontSize="10"/>
+                                        <Button Grid.Column="2" Content="浏览..." Height="26" FontSize="10" Background="#E0F2FE" Foreground="#0369A1" BorderBrush="#BAE6FD" Command="{Binding BrowseBackgroundImageCommand}"/>
+                                        <Button Grid.Column="4" Content="清除" Height="26" FontSize="10" Background="#F1F5F9" Foreground="#64748B" BorderBrush="#CBD5E1" Command="{Binding ClearBackgroundImageCommand}"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="图像拉伸方式 (Stretch):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox Text="{Binding SelectedView.BackgroundImageStretch, UpdateSourceTrigger=PropertyChanged}" Height="26" IsEditable="True">
+                                                <ComboBoxItem Content="UniformToFill"/>
+                                                <ComboBoxItem Content="Uniform"/>
+                                                <ComboBoxItem Content="Fill"/>
+                                                <ComboBoxItem Content="None"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="{Binding SelectedView.BackgroundImageOpacity, StringFormat='底图透明度: {0:F2}'}" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <Slider Minimum="0.05" Maximum="1.0" Value="{Binding SelectedView.BackgroundImageOpacity}" TickFrequency="0.05" Height="26" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
 
                             <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,10,0,0">
                                 <TextBlock Text="💡 提示: 从左侧工具箱拖拽或双击向画布添加组件；在画布上可自由拖动组件调整坐标；选中组件在右侧即时配置标题与点位！"

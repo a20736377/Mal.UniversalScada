@@ -107,11 +107,21 @@ public class SqliteConfigRepository : IConfigRepository
                     LayoutMode TEXT NOT NULL,
                     CanvasWidth REAL NOT NULL DEFAULT 1920,
                     CanvasHeight REAL NOT NULL DEFAULT 1080,
+                    BackgroundColor TEXT DEFAULT '#0F172A',
+                    BackgroundImagePath TEXT,
+                    BackgroundImageStretch TEXT DEFAULT 'UniformToFill',
+                    BackgroundImageOpacity REAL DEFAULT 1.0,
                     WidgetsJson TEXT NOT NULL,
                     IsDefault INTEGER NOT NULL DEFAULT 0,
                     UpdatedTime TEXT NOT NULL
                 );";
             await connection.ExecuteAsync(createUiViewsSql);
+
+            // 数据库轻量级自动迁移
+            try { await connection.ExecuteAsync("ALTER TABLE UiViews ADD COLUMN BackgroundColor TEXT DEFAULT '#0F172A';"); } catch { }
+            try { await connection.ExecuteAsync("ALTER TABLE UiViews ADD COLUMN BackgroundImagePath TEXT;"); } catch { }
+            try { await connection.ExecuteAsync("ALTER TABLE UiViews ADD COLUMN BackgroundImageStretch TEXT DEFAULT 'UniformToFill';"); } catch { }
+            try { await connection.ExecuteAsync("ALTER TABLE UiViews ADD COLUMN BackgroundImageOpacity REAL DEFAULT 1.0;"); } catch { }
 
             _isInitialized = true;
         }
@@ -358,6 +368,10 @@ public class SqliteConfigRepository : IConfigRepository
         public string LayoutMode { get; set; } = "Canvas";
         public double CanvasWidth { get; set; } = 1920;
         public double CanvasHeight { get; set; } = 1080;
+        public string BackgroundColor { get; set; } = "#0F172A";
+        public string? BackgroundImagePath { get; set; }
+        public string BackgroundImageStretch { get; set; } = "UniformToFill";
+        public double BackgroundImageOpacity { get; set; } = 1.0;
         public string WidgetsJson { get; set; } = "[]";
         public int IsDefault { get; set; }
         public string UpdatedTime { get; set; } = string.Empty;
@@ -384,6 +398,10 @@ public class SqliteConfigRepository : IConfigRepository
                 LayoutMode = LayoutMode,
                 CanvasWidth = CanvasWidth > 0 ? CanvasWidth : 1920,
                 CanvasHeight = CanvasHeight > 0 ? CanvasHeight : 1080,
+                BackgroundColor = string.IsNullOrWhiteSpace(BackgroundColor) ? "#0F172A" : BackgroundColor,
+                BackgroundImagePath = BackgroundImagePath,
+                BackgroundImageStretch = string.IsNullOrWhiteSpace(BackgroundImageStretch) ? "UniformToFill" : BackgroundImageStretch,
+                BackgroundImageOpacity = BackgroundImageOpacity <= 0 ? 1.0 : BackgroundImageOpacity,
                 IsDefault = IsDefault == 1,
                 Widgets = widgets,
                 UpdatedTime = dt == default ? DateTime.Now : dt
@@ -427,9 +445,11 @@ public class SqliteConfigRepository : IConfigRepository
         const string sql = @"
             INSERT INTO UiViews (
                 ViewId, Name, BoundDeviceId, LayoutMode, CanvasWidth, CanvasHeight,
+                BackgroundColor, BackgroundImagePath, BackgroundImageStretch, BackgroundImageOpacity,
                 WidgetsJson, IsDefault, UpdatedTime
             ) VALUES (
                 @ViewId, @Name, @BoundDeviceId, @LayoutMode, @CanvasWidth, @CanvasHeight,
+                @BackgroundColor, @BackgroundImagePath, @BackgroundImageStretch, @BackgroundImageOpacity,
                 @WidgetsJson, @IsDefault, @UpdatedTime
             )
             ON CONFLICT(ViewId) DO UPDATE SET
@@ -438,6 +458,10 @@ public class SqliteConfigRepository : IConfigRepository
                 LayoutMode = excluded.LayoutMode,
                 CanvasWidth = excluded.CanvasWidth,
                 CanvasHeight = excluded.CanvasHeight,
+                BackgroundColor = excluded.BackgroundColor,
+                BackgroundImagePath = excluded.BackgroundImagePath,
+                BackgroundImageStretch = excluded.BackgroundImageStretch,
+                BackgroundImageOpacity = excluded.BackgroundImageOpacity,
                 WidgetsJson = excluded.WidgetsJson,
                 IsDefault = excluded.IsDefault,
                 UpdatedTime = excluded.UpdatedTime;";
@@ -450,6 +474,10 @@ public class SqliteConfigRepository : IConfigRepository
             view.LayoutMode,
             view.CanvasWidth,
             view.CanvasHeight,
+            BackgroundColor = view.BackgroundColor ?? "#0F172A",
+            view.BackgroundImagePath,
+            BackgroundImageStretch = view.BackgroundImageStretch ?? "UniformToFill",
+            BackgroundImageOpacity = view.BackgroundImageOpacity <= 0 ? 1.0 : view.BackgroundImageOpacity,
             WidgetsJson = json,
             IsDefault = view.IsDefault ? 1 : 0,
             UpdatedTime = view.UpdatedTime.ToString("yyyy-MM-dd HH:mm:ss")

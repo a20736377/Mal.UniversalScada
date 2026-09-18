@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Mal.UniversalScada.Core.Enums;
 using Mal.UniversalScada.Core.Models;
 using Mal.UniversalScada.Storage.Sqlite;
 using Mal.UniversalScada.UI.Controls.ViewModels;
@@ -266,4 +267,273 @@ public class UiConfigurationTests
         Assert.Equal("degC", exportedConfig.GetProp("Unit"));
         Assert.Equal("160", exportedConfig.GetProp("HighAlarm"));
     }
+
+    [Fact]
+    public void WidgetColorProperty_WhenModified_NotifiesSynchronously()
+    {
+        // 1. 圆形仪表颜色同步
+        var gauge = new CircularGaugeWidgetViewModel();
+        string? notifiedPropGauge = null;
+        gauge.PropertyChanged += (s, e) => notifiedPropGauge = e.PropertyName;
+        gauge.GaugeProps!.ColorHex = "#EF4444";
+        Assert.Equal("ColorHex", notifiedPropGauge);
+        Assert.Equal("#EF4444", gauge.ColorHex);
+
+        // 2. 储罐颜色同步
+        var tank = new TankLevelWidgetViewModel();
+        string? notifiedPropTank = null;
+        tank.PropertyChanged += (s, e) => notifiedPropTank = e.PropertyName;
+        tank.TankProps!.ColorHex = "#10B981";
+        Assert.Equal("ColorHex", notifiedPropTank);
+        Assert.Equal("#10B981", tank.ColorHex);
+
+        // 3. 数显卡片颜色同步
+        var card = new NumericCardWidgetViewModel();
+        string? notifiedPropCard = null;
+        card.PropertyChanged += (s, e) => notifiedPropCard = e.PropertyName;
+        card.CardProps!.ColorHex = "#F59E0B";
+        Assert.Equal("ColorHex", notifiedPropCard);
+        Assert.Equal("#F59E0B", card.ColorHex);
+
+        // 4. IO 矩阵点阵颜色同步
+        var io = new IoMatrixWidgetViewModel();
+        var notifiedPropsIo = new List<string>();
+        io.PropertyChanged += (s, e) => { if (e.PropertyName != null) notifiedPropsIo.Add(e.PropertyName); };
+        io.IoProps!.ActiveColor = "#38BDF8";
+        io.IoProps!.InactiveColor = "#1E293B";
+        Assert.Contains("ActiveColor", notifiedPropsIo);
+        Assert.Contains("InactiveColor", notifiedPropsIo);
+        Assert.Equal("#38BDF8", io.ActiveColor);
+        Assert.Equal("#1E293B", io.InactiveColor);
+
+        // 5. 状态指示灯颜色同步
+        var led = new StatusLedWidgetViewModel();
+        var notifiedPropsLed = new List<string>();
+        led.PropertyChanged += (s, e) => { if (e.PropertyName != null) notifiedPropsLed.Add(e.PropertyName); };
+        led.LedProps!.ActiveColor = "#DC2626";
+        led.LedProps!.InactiveColor = "#475569";
+        Assert.Contains("ActiveColor", notifiedPropsLed);
+        Assert.Contains("InactiveColor", notifiedPropsLed);
+        Assert.Equal("#DC2626", led.ActiveColor);
+        Assert.Equal("#475569", led.InactiveColor);
+
+        // 6. 控制按钮颜色同步
+        var btn = new ControlButtonWidgetViewModel();
+        string? notifiedPropBtn = null;
+        btn.PropertyChanged += (s, e) => notifiedPropBtn = e.PropertyName;
+        btn.ButtonProps!.ColorHex = "#8B5CF6";
+        Assert.Equal("ColorHex", notifiedPropBtn);
+        Assert.Equal("#8B5CF6", btn.ColorHex);
+    }
+
+    [Fact]
+    public void TagOptionItem_CompatibilityRules_FiltersCorrectlyForWidgetTypes()
+    {
+        // 1. 模拟量/数值型组件（仪表、储罐、数显卡片）仅支持数值点位
+        var numericWidgets = new[] { WidgetType.GaugeCircular, WidgetType.LevelTank, WidgetType.NumericCard };
+        foreach (var wType in numericWidgets)
+        {
+            Assert.True(TagOptionItem.IsCompatibleWithWidget(wType, TagDataType.Float));
+            Assert.True(TagOptionItem.IsCompatibleWithWidget(wType, TagDataType.Double));
+            Assert.True(TagOptionItem.IsCompatibleWithWidget(wType, TagDataType.Int16));
+            Assert.True(TagOptionItem.IsCompatibleWithWidget(wType, TagDataType.Int32));
+            Assert.True(TagOptionItem.IsCompatibleWithWidget(wType, TagDataType.UInt32));
+
+            Assert.False(TagOptionItem.IsCompatibleWithWidget(wType, TagDataType.Bool));
+            Assert.False(TagOptionItem.IsCompatibleWithWidget(wType, TagDataType.String));
+            Assert.False(TagOptionItem.IsCompatibleWithWidget(wType, TagDataType.ByteArray));
+        }
+
+        // 2. 状态指示灯仅支持布尔量点位
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.StatusLed, TagDataType.Bool));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.StatusLed, TagDataType.Float));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.StatusLed, TagDataType.Int16));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.StatusLed, TagDataType.String));
+
+        // 3. IO 矩阵点阵仅支持整型或状态字点位
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.IoMatrix, TagDataType.UInt16));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.IoMatrix, TagDataType.Int16));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.IoMatrix, TagDataType.UInt8));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.IoMatrix, TagDataType.Int32));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.IoMatrix, TagDataType.Float));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.IoMatrix, TagDataType.Double));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.IoMatrix, TagDataType.Bool));
+
+        // 4. 控制按钮支持布尔量；若为数值量，必须具有可写权限
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.ControlButton, TagDataType.Bool, TagAccessMode.ReadOnly));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.ControlButton, TagDataType.Bool, TagAccessMode.ReadWrite));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.ControlButton, TagDataType.Float, TagAccessMode.ReadWrite));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.ControlButton, TagDataType.Int32, TagAccessMode.WriteOnly));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.ControlButton, TagDataType.Float, TagAccessMode.ReadOnly));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.ControlButton, TagDataType.String, TagAccessMode.ReadWrite));
+    }
+
+    [Fact]
+    public void TagOptionItem_FromTagNode_GeneratesAccurateSummaryAndLabels()
+    {
+        var tag = new TagNode
+        {
+            TagId = "Oven_Zone1_Temp",
+            Name = "1号预热区温度",
+            DataType = TagDataType.Float,
+            Unit = "℃",
+            Address = "D1000",
+            AccessMode = TagAccessMode.ReadOnly
+        };
+
+        var option = TagOptionItem.FromTagNode(tag);
+
+        Assert.Equal("Oven_Zone1_Temp", option.TagId);
+        Assert.Equal("1号预热区温度", option.Name);
+        Assert.Equal(TagDataType.Float, option.DataType);
+        Assert.True(option.IsNumeric);
+        Assert.True(option.IsFloat);
+        Assert.False(option.IsInteger);
+        Assert.False(option.IsBool);
+        Assert.Contains("[Float 浮点数]", option.DisplayText);
+        Assert.Contains("Oven_Zone1_Temp", option.DisplayText);
+        Assert.Contains("(℃)", option.DisplayText);
+        Assert.Contains("D1000", option.DetailSummary);
+    }
+
+    [Fact]
+    public void TagOptionItem_NewWidgets_CompatibilityRules()
+    {
+        // 1. TrendChart (实时趋势图) 仅匹配数值量
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.TrendChart, TagDataType.Float));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.TrendChart, TagDataType.Double));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.TrendChart, TagDataType.Int32));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.TrendChart, TagDataType.Bool));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.TrendChart, TagDataType.String));
+
+        // 2. DisplayBox (普通显示框) 匹配数值、布尔与字符串
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.DisplayBox, TagDataType.Float));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.DisplayBox, TagDataType.Bool));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.DisplayBox, TagDataType.String));
+
+        // 3. TextLabel (文本标签) 匹配所有类型 (亦支持不绑点位)
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.TextLabel, TagDataType.Float));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.TextLabel, TagDataType.Bool));
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.TextLabel, TagDataType.String));
+
+        // 4. PanelContainer (容器) 纯装饰与分组容器，不匹配任何点位
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.PanelContainer, TagDataType.Float));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.PanelContainer, TagDataType.Bool));
+    }
+
+    [Fact]
+    public async Task Sqlite_UiView_WithNewWidgetsAndBackground_ShouldPersistSuccessfully()
+    {
+        var tempDbPath = Path.Combine(Path.GetTempPath(), $"scada_test_new_{Guid.NewGuid():N}.db");
+        var connStr = $"Data Source={tempDbPath}";
+
+        try
+        {
+            var repo = new SqliteConfigRepository(connStr);
+
+            var view = new UiViewConfig
+            {
+                ViewId = "VIEW_NEW_01",
+                Name = "工艺流程主控画面",
+                BackgroundColor = "#070B14",
+                BackgroundImagePath = "C:\\assets\\background_flow.png",
+                BackgroundImageStretch = "UniformToFill",
+                BackgroundImageOpacity = 0.45,
+                CanvasWidth = 1920,
+                CanvasHeight = 1080,
+                Widgets = new List<WidgetConfig>
+                {
+                    new()
+                    {
+                        WidgetId = "W_LABEL_1",
+                        Type = WidgetType.TextLabel,
+                        Title = "回流焊1号工位说明",
+                        X = 20, Y = 20, Width = 200, Height = 40,
+                        Properties = new() { ["Text"] = "1号工位", ["FontSize"] = "16", ["IsBold"] = "True" }
+                    },
+                    new()
+                    {
+                        WidgetId = "W_DISP_1",
+                        Type = WidgetType.DisplayBox,
+                        Title = "炉温实时显示",
+                        PrimaryTagId = "DEV_01.Temp",
+                        X = 240, Y = 20, Width = 160, Height = 60,
+                        Properties = new() { ["Prefix"] = "炉温", ["Unit"] = "℃", ["Decimals"] = "1" }
+                    },
+                    new()
+                    {
+                        WidgetId = "W_CHART_1",
+                        Type = WidgetType.TrendChart,
+                        Title = "炉温曲线",
+                        PrimaryTagId = "DEV_01.Temp",
+                        X = 20, Y = 100, Width = 380, Height = 200,
+                        Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "300", ["Unit"] = "℃" }
+                    },
+                    new()
+                    {
+                        WidgetId = "W_PANEL_1",
+                        Type = WidgetType.PanelContainer,
+                        Title = "预热区容器",
+                        X = 10, Y = 10, Width = 420, Height = 320,
+                        Properties = new() { ["GroupTitle"] = "预热温区", ["CornerRadius"] = "8" }
+                    }
+                }
+            };
+
+            await repo.SaveUiViewAsync(view);
+
+            var loaded = await repo.GetUiViewByIdAsync("VIEW_NEW_01");
+            Assert.NotNull(loaded);
+            Assert.Equal("工艺流程主控画面", loaded!.Name);
+            Assert.Equal("#070B14", loaded.BackgroundColor);
+            Assert.Equal("C:\\assets\\background_flow.png", loaded.BackgroundImagePath);
+            Assert.Equal("UniformToFill", loaded.BackgroundImageStretch);
+            Assert.Equal(0.45, loaded.BackgroundImageOpacity);
+            Assert.Equal(4, loaded.Widgets.Count);
+
+            var panel = loaded.Widgets.First(w => w.Type == WidgetType.PanelContainer);
+            Assert.Equal("预热温区", panel.Properties["GroupTitle"]);
+
+            var chart = loaded.Widgets.First(w => w.Type == WidgetType.TrendChart);
+            Assert.Equal("300", chart.Properties["MaxValue"]);
+        }
+        finally
+        {
+            if (File.Exists(tempDbPath))
+            {
+                try { File.Delete(tempDbPath); } catch { }
+            }
+        }
+    }
+
+    [Fact]
+    public void WidgetViewModel_DeletedTag_ClearSelectionRule()
+    {
+        // 模拟已配置点位的组件
+        var widget = WidgetViewModel.Create(WidgetType.DisplayBox);
+        widget.PrimaryTagId = "Deleted_Tag_01";
+        widget.UpdateRuntimeValue(123.45);
+        Assert.Equal("Deleted_Tag_01", widget.PrimaryTagId);
+        Assert.Equal(123.45, widget.CurrentRawValue);
+
+        // 模拟点位表中该点位已被彻底删除
+        var existingTags = new List<TagNode>
+        {
+            new() { TagId = "Valid_Tag_01", Name = "有效点位" }
+        };
+
+        // 模拟 UiDesignerViewModel 中的自动清理扫描
+        if (!string.IsNullOrWhiteSpace(widget.PrimaryTagId) &&
+            !existingTags.Any(t => t.TagId == widget.PrimaryTagId))
+        {
+            widget.PrimaryTagId = string.Empty;
+            widget.UpdateRuntimeValue(null);
+        }
+
+        // 断言：点位已被置空，运行时值已被复位，避免幽灵点位
+        Assert.Equal(string.Empty, widget.PrimaryTagId);
+        Assert.Null(widget.CurrentRawValue);
+        Assert.Equal("--", widget.FormattedValue);
+    }
 }
+

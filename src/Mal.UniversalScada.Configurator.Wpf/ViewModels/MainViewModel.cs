@@ -281,6 +281,7 @@ public partial class MainViewModel : ObservableObject
 
             RebuildHierarchyTree();
             RefreshCurrentDeviceTags();
+            _ = DesignerVm.ReloadAvailableTagsAsync();
 
             StatusMessage = $"数据库加载完成：{Channels.Count} 个通道，{Devices.Count} 个设备，{AllTags.Count} 个点位。";
         }
@@ -469,6 +470,7 @@ public partial class MainViewModel : ObservableObject
         SelectedDevice = Devices.FirstOrDefault();
         RebuildHierarchyTree();
         RefreshCurrentDeviceTags();
+        _ = DesignerVm.ReloadAvailableTagsAsync();
         CurrentViewMode = ViewMode.DeviceRoot;
         StatusMessage = $"已删除设备 {id} 及其关联的 {deletedTagCount} 个点位";
     }
@@ -500,6 +502,7 @@ public partial class MainViewModel : ObservableObject
 
         RebuildHierarchyTree();
         RefreshCurrentDeviceTags();
+        _ = DesignerVm.ReloadAvailableTagsAsync();
         StatusMessage = $"已在设备【{dev.Name}】下新建点位: {newTag.TagId}";
     }
 
@@ -525,6 +528,7 @@ public partial class MainViewModel : ObservableObject
 
         SelectedTag = CurrentDeviceTags.FirstOrDefault();
         RebuildHierarchyTree();
+        _ = DesignerVm.ReloadAvailableTagsAsync();
         if (SelectedTag != null)
         {
             CurrentViewMode = ViewMode.TagDetail;
@@ -768,7 +772,8 @@ public partial class MainViewModel : ObservableObject
 
                 RebuildHierarchyTree();
                 RefreshCurrentDeviceTags();
-                StatusMessage = $"CSV 导入完成：新增 {addCount} 条，更新 {updateCount} 条。请点击保存按钮存入数据库。";
+                _ = DesignerVm.ReloadAvailableTagsAsync();
+                StatusMessage = $"CSV 点位导入成功！新增 {addCount} 个点位，更新 {updateCount} 个点位。请点击保存按钮存入数据库。";
                 MessageBox.Show($"✅ 导入成功！\n新增: {addCount} 条\n更新: {updateCount} 条", "导入完成", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)

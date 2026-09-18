@@ -107,6 +107,26 @@ public partial class WidgetViewModel : ObservableObject
     /// </summary>
     public virtual ControlButtonProps? ButtonProps => (this as ControlButtonWidgetViewModel)?.Props;
 
+    /// <summary>
+    /// 快捷转换：文本标签专属组合属性
+    /// </summary>
+    public virtual TextLabelProps? LabelProps => (this as TextLabelWidgetViewModel)?.Props;
+
+    /// <summary>
+    /// 快捷转换：普通显示框专属组合属性
+    /// </summary>
+    public virtual DisplayBoxProps? DisplayProps => (this as DisplayBoxWidgetViewModel)?.Props;
+
+    /// <summary>
+    /// 快捷转换：实时趋势图表专属组合属性
+    /// </summary>
+    public virtual TrendChartProps? ChartProps => (this as TrendChartWidgetViewModel)?.Props;
+
+    /// <summary>
+    /// 快捷转换：区域容器分组框专属组合属性
+    /// </summary>
+    public virtual PanelContainerProps? PanelProps => (this as PanelContainerWidgetViewModel)?.Props;
+
     // ==========================================
     // 4. 虚拟兼容属性（允许 XAML 或老测试代码直接平滑访问，且与组合类双向联动）
     // ==========================================
@@ -519,6 +539,10 @@ public partial class WidgetViewModel : ObservableObject
             WidgetType.IoMatrix => new IoMatrixWidgetViewModel(),
             WidgetType.StatusLed => new StatusLedWidgetViewModel(),
             WidgetType.ControlButton => new ControlButtonWidgetViewModel(),
+            WidgetType.TextLabel => new TextLabelWidgetViewModel(),
+            WidgetType.DisplayBox => new DisplayBoxWidgetViewModel(),
+            WidgetType.TrendChart => new TrendChartWidgetViewModel(),
+            WidgetType.PanelContainer => new PanelContainerWidgetViewModel(),
             _ => new NumericCardWidgetViewModel()
         };
 
@@ -560,6 +584,10 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.StatusLed => 130,
         WidgetType.ControlButton => 150,
         WidgetType.SetpointInput => 180,
+        WidgetType.TextLabel => 180,
+        WidgetType.DisplayBox => 200,
+        WidgetType.TrendChart => 380,
+        WidgetType.PanelContainer => 360,
         _ => 160
     };
 
@@ -572,6 +600,10 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.StatusLed => 120,
         WidgetType.ControlButton => 90,
         WidgetType.SetpointInput => 100,
+        WidgetType.TextLabel => 46,
+        WidgetType.DisplayBox => 58,
+        WidgetType.TrendChart => 220,
+        WidgetType.PanelContainer => 260,
         _ => 140
     };
 }

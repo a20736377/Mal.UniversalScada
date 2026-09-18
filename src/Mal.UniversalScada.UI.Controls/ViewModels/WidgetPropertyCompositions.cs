@@ -142,3 +142,103 @@ public partial class ControlButtonProps : ObservableObject
     [ObservableProperty]
     private string _confirmMessage = "确定要下发此项控制操作吗？";
 }
+
+/// <summary>
+/// 文本标签专属组合属性类 (支持静态文本/动态点位展示、字号、颜色与对齐)
+/// </summary>
+public partial class TextLabelProps : ObservableObject
+{
+    [ObservableProperty]
+    private string _text = "文本标签 / 工位说明";
+
+    [ObservableProperty]
+    private double _fontSize = 14;
+
+    [ObservableProperty]
+    private string _textColor = "#F8FAFC";
+
+    [ObservableProperty]
+    private bool _isBold = true;
+
+    [ObservableProperty]
+    private string _alignment = "Left"; // Left, Center, Right
+}
+
+/// <summary>
+/// 普通显示框专属组合属性类 (紧凑型标准工控数显/文本框，带前缀标签、实时值、单位及边框底色)
+/// </summary>
+public partial class DisplayBoxProps : ObservableObject
+{
+    [ObservableProperty]
+    private string _prefix = "实时量测";
+
+    [ObservableProperty]
+    private string _unit = string.Empty;
+
+    [ObservableProperty]
+    private int _decimals = 2;
+
+    [ObservableProperty]
+    private string _textColor = "#38BDF8";
+
+    [ObservableProperty]
+    private string _borderColor = "#334155";
+
+    [ObservableProperty]
+    private string _backgroundColor = "#0F172A";
+
+    [ObservableProperty]
+    private string _alignment = "Right"; // Left, Center, Right
+}
+
+/// <summary>
+/// 实时趋势折线图专属组合属性类 (模拟量波形波动监控、时间网格与曲线颜色)
+/// </summary>
+public partial class TrendChartProps : ObservableObject
+{
+    [ObservableProperty]
+    private double _minValue = 0;
+
+    [ObservableProperty]
+    private double _maxValue = 100;
+
+    [ObservableProperty]
+    private string _unit = string.Empty;
+
+    [ObservableProperty]
+    private string _lineColor = "#38BDF8";
+
+    [ObservableProperty]
+    private string _fillColor = "#0369A1";
+
+    [ObservableProperty]
+    private string _gridColor = "#1E293B";
+
+    [ObservableProperty]
+    private int _timeWindowSeconds = 60;
+}
+
+/// <summary>
+/// 区域容器分组框专属组合属性类 (分组标题、边框、填充底色与圆角)
+/// </summary>
+public partial class PanelContainerProps : ObservableObject
+{
+    [ObservableProperty]
+    private string _groupTitle = "工位区域分组";
+
+    [ObservableProperty]
+    private string _headerBgColor = "#1E293B";
+
+    [ObservableProperty]
+    private string _borderColor = "#38BDF8";
+
+    [ObservableProperty]
+    private string _fillColor = "#0A0F1D";
+
+    [ObservableProperty]
+    private double _cornerRadius = 8;
+
+    [ObservableProperty]
+    private double _borderThickness = 1;
+}
+

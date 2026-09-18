@@ -4,9 +4,11 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mal.UniversalScada.Core.Configuration;
+using Mal.UniversalScada.Core.Enums;
 using Mal.UniversalScada.Core.Models;
 using Mal.UniversalScada.UI.Controls.ViewModels;
 using Mal.UniversalScada.UI.Controls.Widgets;
@@ -35,10 +37,22 @@ public partial class UiDesignerViewModel : ObservableObject
     private ObservableCollection<string> _availableTagIds = new();
 
     [ObservableProperty]
+    private ObservableCollection<TagOptionItem> _filteredAvailableTags = new();
+
+    [ObservableProperty]
+    private TagOptionItem? _selectedTagInfo;
+
+    private readonly List<TagNode> _allRawTags = new();
+
+    [ObservableProperty]
     private string _statusMessage = "就绪";
 
     public ObservableCollection<ToolboxItemRecord> ToolboxItems { get; } = new()
     {
+        new(WidgetType.TextLabel, "文本标签", "🏷️", "工位说明、静态标题或点位文本标注"),
+        new(WidgetType.DisplayBox, "普通显示框", "🔲", "标准工控单行数值/文本显示框"),
+        new(WidgetType.TrendChart, "实时趋势图", "📈", "模拟量实时动态波形折线图"),
+        new(WidgetType.PanelContainer, "容器分组框", "📦", "工位区域分组边框与背景底板"),
         new(WidgetType.GaugeCircular, "270° 圆形仪表", "⏱️", "模拟量表盘展示，带量程刻度"),
         new(WidgetType.LevelTank, "立体液体储罐", "🛢️", "动态液位柱状指示，带百分比"),
         new(WidgetType.NumericCard, "数显科技卡片", "📟", "大号数显，带单位徽章与品质状态"),
@@ -67,12 +81,29 @@ public partial class UiDesignerViewModel : ObservableObject
         try
         {
             var tags = await _configService.GetAllTagsAsync();
+            _allRawTags.Clear();
+            _allRawTags.AddRange(tags.OrderBy(t => t.TagId));
+
+            // 针对已经删除的点位，在组件里彻底清除对应的选择
+            foreach (var w in Widgets)
+            {
+                if (!string.IsNullOrWhiteSpace(w.PrimaryTagId) &&
+                    !_allRawTags.Any(t => t.TagId == w.PrimaryTagId))
+                {
+                    w.PrimaryTagId = string.Empty;
+                    w.UpdateRuntimeValue(null);
+                }
+            }
+
             AvailableTagIds.Clear();
             AvailableTagIds.Add(string.Empty); // 支持不绑定
-            foreach (var tag in tags.OrderBy(t => t.TagId))
+            foreach (var tag in _allRawTags)
             {
                 AvailableTagIds.Add(tag.TagId);
             }
+
+            UpdateFilteredTagsForSelectedWidget();
+            OnPrimaryTagIdChanged();
         }
         catch (Exception ex)
         {
@@ -132,6 +163,30 @@ public partial class UiDesignerViewModel : ObservableObject
         if (SelectedWidget != null) SelectedWidget.IsSelected = true;
     }
 
+    partial void OnSelectedWidgetChanged(WidgetViewModel? oldValue, WidgetViewModel? newValue)
+    {
+        if (oldValue != null)
+        {
+            oldValue.PropertyChanged -= OnCurrentWidgetPropertyChanged;
+        }
+
+        if (newValue != null)
+        {
+            newValue.PropertyChanged += OnCurrentWidgetPropertyChanged;
+        }
+
+        UpdateFilteredTagsForSelectedWidget();
+        OnPrimaryTagIdChanged();
+    }
+
+    private void OnCurrentWidgetPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(WidgetViewModel.PrimaryTagId))
+        {
+            OnPrimaryTagIdChanged();
+        }
+    }
+
     private void OnWidgetSelected(WidgetViewModel vm)
     {
         foreach (var w in Widgets)
@@ -144,6 +199,93 @@ public partial class UiDesignerViewModel : ObservableObject
     private void OnWidgetDeleteRequested(WidgetViewModel vm)
     {
         DeleteWidget(vm);
+    }
+
+    /// <summary>
+    /// 依据当前选中的组件类型，对可用点位进行严格的数据类型兼容性过滤
+    /// </summary>
+    public void UpdateFilteredTagsForSelectedWidget()
+    {
+        FilteredAvailableTags.Clear();
+        FilteredAvailableTags.Add(TagOptionItem.CreateUnbound());
+
+        if (SelectedWidget == null)
+        {
+            return;
+        }
+
+        // 针对已经删除的点位，在组件里清除对应的选择
+        if (!string.IsNullOrWhiteSpace(SelectedWidget.PrimaryTagId) &&
+            !_allRawTags.Any(t => t.TagId == SelectedWidget.PrimaryTagId))
+        {
+            SelectedWidget.PrimaryTagId = string.Empty;
+            SelectedWidget.UpdateRuntimeValue(null);
+        }
+
+        var targetType = SelectedWidget.Type;
+
+        foreach (var tag in _allRawTags)
+        {
+            var opt = TagOptionItem.FromTagNode(tag);
+            bool isCompatible = TagOptionItem.IsCompatibleWithWidget(targetType, tag.DataType, tag.AccessMode);
+
+            if (isCompatible)
+            {
+                FilteredAvailableTags.Add(opt);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 当选中的点位发生变化时，依据点位的数据类型自动联动属性（如精度归零、单位回填、写入值约束）
+    /// </summary>
+    private void OnPrimaryTagIdChanged()
+    {
+        if (SelectedWidget == null || string.IsNullOrWhiteSpace(SelectedWidget.PrimaryTagId))
+        {
+            SelectedTagInfo = null;
+            return;
+        }
+
+        var matched = FilteredAvailableTags.FirstOrDefault(t => t.TagId == SelectedWidget.PrimaryTagId)
+                   ?? _allRawTags.Where(t => t.TagId == SelectedWidget.PrimaryTagId).Select(TagOptionItem.FromTagNode).FirstOrDefault();
+
+        if (matched == null)
+        {
+            SelectedWidget.PrimaryTagId = string.Empty;
+            SelectedTagInfo = null;
+            return;
+        }
+
+        SelectedTagInfo = matched;
+
+        // 1. 工程单位智能回填 (当组件当前 Unit 为空时)
+        if (!string.IsNullOrWhiteSpace(matched.Unit))
+        {
+            if (string.IsNullOrWhiteSpace(SelectedWidget.Unit))
+            {
+                SelectedWidget.Unit = matched.Unit;
+            }
+        }
+
+        // 2. 整型点位精度自适应：整型点位无小数，小数保留位数归零
+        if (matched.IsInteger)
+        {
+            if (SelectedWidget is CircularGaugeWidgetViewModel gauge) gauge.Decimals = 0;
+            else if (SelectedWidget is NumericCardWidgetViewModel card) card.Decimals = 0;
+        }
+
+        // 3. 控制按钮写入值自适应：若是布尔量点位，限制写入值默认置为 "1"
+        if (SelectedWidget is ControlButtonWidgetViewModel btn)
+        {
+            if (matched.IsBool)
+            {
+                if (btn.Props.WriteValue != "0" && btn.Props.WriteValue != "1")
+                {
+                    btn.Props.WriteValue = "1";
+                }
+            }
+        }
     }
 
     [RelayCommand]
@@ -255,7 +397,15 @@ public partial class UiDesignerViewModel : ObservableObject
             Height = WidgetViewModel.GetDefaultHeight(type)
         };
 
-        if (AvailableTagIds.Count > 1)
+        if (type == WidgetType.PanelContainer)
+        {
+            wConfig.PrimaryTagId = string.Empty;
+        }
+        else if (FilteredAvailableTags.Count > 1)
+        {
+            wConfig.PrimaryTagId = FilteredAvailableTags[1].TagId;
+        }
+        else if (AvailableTagIds.Count > 1)
         {
             wConfig.PrimaryTagId = AvailableTagIds[1];
         }
@@ -265,7 +415,6 @@ public partial class UiDesignerViewModel : ObservableObject
         OnWidgetSelected(vm);
         StatusMessage = $"已添加控件: {vm.Title} 到坐标 ({x}, {y})";
     }
-
 
     [RelayCommand]
     public void DeleteWidget(WidgetViewModel? vm)
@@ -280,8 +429,41 @@ public partial class UiDesignerViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    public void BrowseBackgroundImage()
+    {
+        if (SelectedView == null) return;
+
+        var ofd = new OpenFileDialog
+        {
+            Title = "选择画布背景底图 (工艺流程图/设备结构图)",
+            Filter = "图片文件 (*.png;*.jpg;*.jpeg;*.bmp;*.svg)|*.png;*.jpg;*.jpeg;*.bmp;*.svg|所有文件 (*.*)|*.*"
+        };
+
+        if (ofd.ShowDialog() == true)
+        {
+            SelectedView.BackgroundImagePath = ofd.FileName;
+            OnPropertyChanged(nameof(SelectedView));
+            StatusMessage = $"已设置画布背景图: {System.IO.Path.GetFileName(ofd.FileName)}";
+        }
+    }
+
+    [RelayCommand]
+    public void ClearBackgroundImage()
+    {
+        if (SelectedView == null) return;
+
+        SelectedView.BackgroundImagePath = null;
+        OnPropertyChanged(nameof(SelectedView));
+        StatusMessage = "已清除画布背景底图";
+    }
+
     private static string GetDefaultTitle(WidgetType type) => type switch
     {
+        WidgetType.TextLabel => "工位说明标签",
+        WidgetType.DisplayBox => "实时测控显示",
+        WidgetType.TrendChart => "实时趋势折线图",
+        WidgetType.PanelContainer => "工位分区容器",
         WidgetType.GaugeCircular => "主轴转速 / 压力表",
         WidgetType.LevelTank => "储罐液位监测",
         WidgetType.NumericCard => "温度/流量测量项",

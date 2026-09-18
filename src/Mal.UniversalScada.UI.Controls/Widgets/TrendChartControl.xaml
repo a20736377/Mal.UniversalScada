@@ -1,0 +1,84 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.TrendChartControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:TrendChartWidgetViewModel}">
+    <Border Background="#090E1A" BorderBrush="#1E293B" BorderThickness="1.5" CornerRadius="10" Padding="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 顶部信息栏：标题、当前实时值、品质徽章 -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="📈 " FontSize="12"/>
+                    <TextBlock Text="{Binding Title}" Foreground="#E2E8F0" FontSize="13" FontWeight="Bold"
+                               TextTrimming="CharacterEllipsis" MaxWidth="160"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding FormattedValue}"
+                               Foreground="{Binding ChartProps.LineColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                               FontSize="16" FontWeight="Bold" FontFamily="Consolas, Segoe UI" Margin="0,0,8,0">
+                        <TextBlock.Effect>
+                            <DropShadowEffect BlurRadius="6" Color="#0284C7" ShadowDepth="0" Opacity="0.5"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+                    <Border Background="#064E3B" CornerRadius="3" Padding="5,1">
+                        <TextBlock Text="{Binding Quality}" FontSize="9" FontWeight="Bold" Foreground="#34D399"/>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- 图表主体区域 -->
+            <Grid Grid.Row="1">
+                <!-- 背景刻度与辅助线 -->
+                <Grid Margin="44,20,12,24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" BorderBrush="#162032" BorderThickness="0,1,0,0"/>
+                    <Border Grid.Row="1" BorderBrush="#162032" BorderThickness="0,1,0,0"/>
+                    <Border Grid.Row="2" BorderBrush="#162032" BorderThickness="0,1,0,1"/>
+                </Grid>
+
+                <!-- 左侧 Y 轴上下限文本 -->
+                <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Left" Width="40" Margin="0,12,0,24">
+                    <TextBlock Text="{Binding ChartProps.MaxValue, StringFormat='{}{0:F0}'}" Foreground="#64748B" FontSize="9" FontFamily="Consolas"/>
+                    <TextBlock Text="{Binding ChartProps.MinValue, StringFormat='{}{0:F0}'}" Foreground="#64748B" FontSize="9" FontFamily="Consolas" VerticalAlignment="Bottom" Margin="0,60,0,0"/>
+                </StackPanel>
+
+                <!-- 底部 X 轴时间标签 -->
+                <DockPanel VerticalAlignment="Bottom" Margin="44,0,12,6">
+                    <TextBlock Text="{Binding ChartProps.TimeWindowSeconds, StringFormat='-{0}s'}" Foreground="#475569" FontSize="9" FontFamily="Consolas"/>
+                    <TextBlock Text="实时 (Now)" Foreground="#475569" FontSize="9" FontFamily="Consolas" HorizontalAlignment="Right"/>
+                </DockPanel>
+
+                <!-- 曲线绘制层 (Polyline & Polygon) -->
+                <Canvas Margin="0" IsHitTestVisible="False">
+                    <!-- 曲线下方半透明阴影区域填充 -->
+                    <Polygon Points="{Binding FillPoints}"
+                             Fill="{Binding ChartProps.FillColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                             Opacity="0.25"/>
+
+                    <!-- 实时动态折线 -->
+                    <Polyline Points="{Binding TrendPoints}"
+                              Stroke="{Binding ChartProps.LineColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                              StrokeThickness="2.2"
+                              StrokeLineJoin="Round">
+                        <Polyline.Effect>
+                            <DropShadowEffect BlurRadius="8" Color="#38BDF8" ShadowDepth="0" Opacity="0.6"/>
+                        </Polyline.Effect>
+                    </Polyline>
+                </Canvas>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

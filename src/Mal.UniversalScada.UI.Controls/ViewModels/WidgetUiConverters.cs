@@ -10,6 +10,33 @@ public static class WidgetUiConverters
 {
     public static IValueConverter BoolToVisibility { get; } = new BoolToVisibilityConverterImpl();
     public static IValueConverter ColorHexToBrush { get; } = new ColorHexToBrushConverterImpl();
+    public static IValueConverter BoolToFontWeight { get; } = new BoolToFontWeightConverterImpl();
+    public static IValueConverter StringToHorizontalAlignment { get; } = new StringToHorizontalAlignmentConverterImpl();
+
+    private class BoolToFontWeightConverterImpl : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is true ? FontWeights.Bold : FontWeights.Normal;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is FontWeight fw && fw == FontWeights.Bold;
+    }
+
+    private class StringToHorizontalAlignmentConverterImpl : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string s)
+            {
+                if (s.Equals("Center", StringComparison.OrdinalIgnoreCase)) return HorizontalAlignment.Center;
+                if (s.Equals("Right", StringComparison.OrdinalIgnoreCase)) return HorizontalAlignment.Right;
+            }
+            return HorizontalAlignment.Left;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value?.ToString() ?? "Left";
+    }
 
     private class BoolToVisibilityConverterImpl : IValueConverter
     {

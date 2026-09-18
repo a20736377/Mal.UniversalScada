@@ -59,9 +59,6 @@
                         <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.NumericCard}">
                             <Setter Property="Visibility" Value="Visible"/>
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.TextLabel}">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
                         <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.SetpointInput}">
                             <Setter Property="Visibility" Value="Visible"/>
                         </DataTrigger>
@@ -69,6 +66,58 @@
                 </Style>
             </widgets:NumericCardControl.Style>
         </widgets:NumericCardControl>
+
+        <widgets:TextLabelControl>
+            <widgets:TextLabelControl.Style>
+                <Style TargetType="widgets:TextLabelControl">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.TextLabel}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </widgets:TextLabelControl.Style>
+        </widgets:TextLabelControl>
+
+        <widgets:DisplayBoxControl>
+            <widgets:DisplayBoxControl.Style>
+                <Style TargetType="widgets:DisplayBoxControl">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.DisplayBox}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </widgets:DisplayBoxControl.Style>
+        </widgets:DisplayBoxControl>
+
+        <widgets:TrendChartControl>
+            <widgets:TrendChartControl.Style>
+                <Style TargetType="widgets:TrendChartControl">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.TrendChart}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </widgets:TrendChartControl.Style>
+        </widgets:TrendChartControl>
+
+        <widgets:PanelContainerControl>
+            <widgets:PanelContainerControl.Style>
+                <Style TargetType="widgets:PanelContainerControl">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.PanelContainer}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </widgets:PanelContainerControl.Style>
+        </widgets:PanelContainerControl>
 
         <widgets:IoMatrixControl>
             <widgets:IoMatrixControl.Style>

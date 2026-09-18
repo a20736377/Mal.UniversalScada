@@ -45,7 +45,22 @@ public enum WidgetType
     /// <summary>
     /// 静态/动态文本标签 (设备铭牌、区域指示、工位说明)
     /// </summary>
-    TextLabel = 8
+    TextLabel = 8,
+
+    /// <summary>
+    /// 普通显示框 (紧凑型标准单行工控文本/数值显示框)
+    /// </summary>
+    DisplayBox = 9,
+
+    /// <summary>
+    /// 实时趋势折线图 (模拟量实时波动曲线监控)
+    /// </summary>
+    TrendChart = 10,
+
+    /// <summary>
+    /// 区域容器分组框 (工位边框、组件容器卡片与背景框)
+    /// </summary>
+    PanelContainer = 11
 }
 
 /// <summary>
@@ -196,6 +211,26 @@ public class UiViewConfig
     /// 是否为启动默认加载展示的画面
     /// </summary>
     public bool IsDefault { get; set; } = false;
+
+    /// <summary>
+    /// 画布背景色 (如 "#0F172A", "Transparent")
+    /// </summary>
+    public string BackgroundColor { get; set; } = "#0F172A";
+
+    /// <summary>
+    /// 画布背景图片路径 (本地文件绝对路径或相对路径)
+    /// </summary>
+    public string? BackgroundImagePath { get; set; }
+
+    /// <summary>
+    /// 背景图片拉伸方式 (Uniform / UniformToFill / Fill / None)
+    /// </summary>
+    public string BackgroundImageStretch { get; set; } = "UniformToFill";
+
+    /// <summary>
+    /// 背景图片透明度 (0.0 ~ 1.0)
+    /// </summary>
+    public double BackgroundImageOpacity { get; set; } = 0.85;
 
     /// <summary>
     /// 画面上布局的所有可视化卡片列表
