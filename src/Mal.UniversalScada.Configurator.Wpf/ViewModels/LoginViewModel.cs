@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Mal.UniversalScada.Configurator.Wpf.Services;
+using Mal.UniversalScada.Core.Configuration;
 
 namespace Mal.UniversalScada.Configurator.Wpf.ViewModels;
 

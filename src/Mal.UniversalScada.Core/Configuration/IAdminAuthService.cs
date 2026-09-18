@@ -1,7 +1,7 @@
 using Mal.UniversalScada.Core.Abstractions;
 using Mal.UniversalScada.Core.Models;
 
-namespace Mal.UniversalScada.Configurator.Wpf.Services;
+namespace Mal.UniversalScada.Core.Configuration;
 
 /// <summary>
 /// 管理员认证与权限服务接口
@@ -26,18 +26,11 @@ public interface IAdminAuthService
     /// <summary>
     /// 验证管理员登录凭据
     /// </summary>
-    /// <param name="username">用户名</param>
-    /// <param name="password">明文密码</param>
-    /// <returns>验证是否通过</returns>
     Task<bool> LoginAsync(string username, string password);
 
     /// <summary>
     /// 修改当前登录用户的密码
     /// </summary>
-    /// <param name="username">用户名</param>
-    /// <param name="oldPassword">旧明文密码</param>
-    /// <param name="newPassword">新明文密码</param>
-    /// <returns>修改结果与错误描述</returns>
     Task<(bool Success, string Message)> ChangePasswordAsync(string username, string oldPassword, string newPassword);
 
     /// <summary>

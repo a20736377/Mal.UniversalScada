@@ -6,6 +6,7 @@
         xmlns:vm="clr-namespace:Mal.UniversalScada.Configurator.Wpf.ViewModels"
         xmlns:models="clr-namespace:Mal.UniversalScada.Configurator.Wpf.Models"
         xmlns:enums="clr-namespace:Mal.UniversalScada.Core.Enums;assembly=Mal.UniversalScada.Core"
+        xmlns:local="clr-namespace:Mal.UniversalScada.Configurator.Wpf"
         mc:Ignorable="d"
         Title="SCADA 工业工程组态管理系统 (Mal.UniversalScada)"
         Height="840" Width="1350"
@@ -14,6 +15,9 @@
         Foreground="#0F172A">
 
     <Window.Resources>
+        <!-- 数据绑定代理 (解决 ContextMenu 脱离视觉树导致无法寻找 Ancestor Window 的问题) -->
+        <local:BindingProxy x:Key="Proxy" Data="{Binding}" />
+
         <!-- 通用文本框样式 (亮色) -->
         <Style TargetType="TextBox">
             <Setter Property="Background" Value="#FFFFFF"/>
@@ -150,7 +154,7 @@
                                             <Setter.Value>
                                                 <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
                                                     <MenuItem Header="➕ 新建设备" Foreground="#0F172A"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateDeviceCommand}"/>
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.CreateDeviceCommand}"/>
                                                 </ContextMenu>
                                             </Setter.Value>
                                         </Setter>
@@ -162,10 +166,10 @@
                                             <Setter.Value>
                                                 <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
                                                     <MenuItem Header="🌐 新建以太网通道 (TCP)" Foreground="#0F172A"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateChannelCommand}"
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.CreateChannelCommand}"
                                                               CommandParameter="TcpClient"/>
                                                     <MenuItem Header="🔌 新建串口通道 (SerialPort)" Foreground="#0F172A"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateChannelCommand}"
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.CreateChannelCommand}"
                                                               CommandParameter="SerialPort"/>
                                                 </ContextMenu>
                                             </Setter.Value>
@@ -178,13 +182,13 @@
                                             <Setter.Value>
                                                 <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
                                                     <MenuItem Header="🏷️ 新建点位" Foreground="#0F172A"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateTagCommand}"
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.CreateTagCommand}"
                                                               CommandParameter="{Binding DataPayload}"/>
                                                     <Separator Background="#E2E8F0"/>
                                                     <MenuItem Header="➕ 新建同级设备" Foreground="#0F172A"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateDeviceCommand}"/>
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.CreateDeviceCommand}"/>
                                                     <MenuItem Header="🗑️ 删除设备" Foreground="#DC2626"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.DeleteDeviceCommand}"
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.DeleteDeviceCommand}"
                                                               CommandParameter="{Binding DataPayload}"/>
                                                 </ContextMenu>
                                             </Setter.Value>
@@ -197,14 +201,14 @@
                                             <Setter.Value>
                                                 <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
                                                     <MenuItem Header="🌐 新建以太网通道 (TCP)" Foreground="#0F172A"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateChannelCommand}"
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.CreateChannelCommand}"
                                                               CommandParameter="TcpClient"/>
                                                     <MenuItem Header="🔌 新建串口通道 (SerialPort)" Foreground="#0F172A"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateChannelCommand}"
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.CreateChannelCommand}"
                                                               CommandParameter="SerialPort"/>
                                                     <Separator Background="#E2E8F0"/>
                                                     <MenuItem Header="🗑️ 删除通道" Foreground="#DC2626"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.DeleteChannelCommand}"
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.DeleteChannelCommand}"
                                                               CommandParameter="{Binding DataPayload}"/>
                                                 </ContextMenu>
                                             </Setter.Value>
@@ -217,10 +221,10 @@
                                             <Setter.Value>
                                                 <ContextMenu Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1">
                                                     <MenuItem Header="🏷️ 新建点位" Foreground="#0F172A"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.CreateTagCommand}"/>
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.CreateTagCommand}"/>
                                                     <Separator Background="#E2E8F0"/>
                                                     <MenuItem Header="🗑️ 删除点位" Foreground="#DC2626"
-                                                              Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.DeleteTagCommand}"
+                                                              Command="{Binding Source={StaticResource Proxy}, Path=Data.DeleteTagCommand}"
                                                               CommandParameter="{Binding DataPayload}"/>
                                                 </ContextMenu>
                                             </Setter.Value>

@@ -1,9 +1,9 @@
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Mal.UniversalScada.Configurator.Wpf.Services;
 using Mal.UniversalScada.Configurator.Wpf.ViewModels;
 using Mal.UniversalScada.Configurator.Wpf.Views;
+using Mal.UniversalScada.Core.Configuration;
 using Mal.UniversalScada.Storage.Sqlite;
 
 namespace Mal.UniversalScada.Configurator.Wpf;
@@ -32,17 +32,13 @@ public partial class App : Application
             AppHost = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
-                    // 1. 认证服务
-                    services.AddSingleton<IAdminAuthService, DefaultAdminAuthService>();
-
-                    // 2. 组态配置数据库仓储 (SQLite)
+                    // 1. 组态配置底层数据库仓储 (SQLite)
                     services.AddSqliteConfigStorage("Data Source=scada_config.db");
 
-                    // 3. 辅助服务 (导入导出与通道测试)
-                    services.AddSingleton<ITagImportExportService, CsvTagImportExportService>();
-                    services.AddSingleton<IChannelTester, DefaultChannelTester>();
+                    // 2. 核心组态业务服务 (认证、组态引擎、导入导出、硬件连通性探测)
+                    services.AddScadaConfigurationCore();
 
-                    // 4. ViewModel
+                    // 3. ViewModel
                     services.AddTransient<LoginViewModel>();
                     services.AddSingleton<MainViewModel>();
 

@@ -1,5 +1,5 @@
 using System.Windows;
-using Mal.UniversalScada.Configurator.Wpf.Services;
+using Mal.UniversalScada.Core.Configuration;
 
 namespace Mal.UniversalScada.Configurator.Wpf.Views;
 

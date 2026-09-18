@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using Mal.UniversalScada.Core.Enums;
 using Mal.UniversalScada.Core.Models;
 
-namespace Mal.UniversalScada.Configurator.Wpf.Services;
+namespace Mal.UniversalScada.Core.Configuration;
 
 /// <summary>
 /// 通道测试结果模型

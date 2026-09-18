@@ -4,7 +4,7 @@ using System.Text;
 using Mal.UniversalScada.Core.Enums;
 using Mal.UniversalScada.Core.Models;
 
-namespace Mal.UniversalScada.Configurator.Wpf.Services;
+namespace Mal.UniversalScada.Core.Configuration;
 
 /// <summary>
 /// 点位组态导入导出服务接口
@@ -14,16 +14,11 @@ public interface ITagImportExportService
     /// <summary>
     /// 将点位集合导出为 CSV 文件
     /// </summary>
-    /// <param name="tags">点位集合</param>
-    /// <param name="filePath">目标文件路径</param>
     Task ExportToCsvAsync(IEnumerable<TagNode> tags, string filePath);
 
     /// <summary>
     /// 从 CSV 文件解析并导入点位
     /// </summary>
-    /// <param name="filePath">CSV 文件路径</param>
-    /// <param name="defaultDeviceId">默认归属设备 ID (若 CSV 中为空时使用)</param>
-    /// <returns>解析成功的点位列表</returns>
     Task<IReadOnlyList<TagNode>> ImportFromCsvAsync(string filePath, string? defaultDeviceId = null);
 }
 
@@ -105,7 +100,7 @@ public class CsvTagImportExportService : ITagImportExportService
 
     private static List<string> ParseCsvLine(string line)
     {
-        var tokens = new List<string>();
+        var result = new List<string>();
         var sb = new StringBuilder();
         bool inQuotes = false;
 
@@ -126,7 +121,7 @@ public class CsvTagImportExportService : ITagImportExportService
             }
             else if (c == ',' && !inQuotes)
             {
-                tokens.Add(sb.ToString().Trim());
+                result.Add(sb.ToString().Trim());
                 sb.Clear();
             }
             else
@@ -134,7 +129,7 @@ public class CsvTagImportExportService : ITagImportExportService
                 sb.Append(c);
             }
         }
-        tokens.Add(sb.ToString().Trim());
-        return tokens;
+        result.Add(sb.ToString().Trim());
+        return result;
     }
 }

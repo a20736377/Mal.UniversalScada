@@ -1,13 +1,11 @@
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Mal.UniversalScada.Configurator.Wpf.Models;
-using Mal.UniversalScada.Configurator.Wpf.Services;
-using Mal.UniversalScada.Core.Abstractions;
+using Mal.UniversalScada.Configurator.Wpf.Views;
+using Mal.UniversalScada.Core.Configuration;
 using Mal.UniversalScada.Core.Enums;
 using Mal.UniversalScada.Core.Models;
 
@@ -26,11 +24,12 @@ public enum ViewMode
 }
 
 /// <summary>
-/// 后台组态配置主界面视图模型 (全面支持设备/通道/点位三级树与右键菜单交互)
+/// 后台组态配置主界面视图模型。
+/// 保持极致轻量：所有核心业务能力（组态持久化、级联清理、导入导出、测试探测）全部委托给 Core.Configuration 引擎处理。
 /// </summary>
 public partial class MainViewModel : ObservableObject
 {
-    private readonly IConfigRepository _configRepository;
+    private readonly IConfigurationService _configService;
     private readonly IAdminAuthService _authService;
     private readonly ITagImportExportService _importExportService;
     private readonly IChannelTester _channelTester;
@@ -126,13 +125,13 @@ public partial class MainViewModel : ObservableObject
     #endregion
 
     public MainViewModel(
-        IAdminAuthService authService, 
-        IConfigRepository configRepository,
+        IConfigurationService configService,
+        IAdminAuthService authService,
         ITagImportExportService importExportService,
         IChannelTester channelTester)
     {
+        _configService = configService;
         _authService = authService;
-        _configRepository = configRepository;
         _importExportService = importExportService;
         _channelTester = channelTester;
 
@@ -153,37 +152,23 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 从 SQLite 数据库读取数据并重构整棵树
+    /// 调用 Core 组态引擎全量载入数据库中的通道、设备与点位
     /// </summary>
     [RelayCommand]
     public async Task LoadFromDbAsync()
     {
+        StatusMessage = "正在通过 Core 引擎加载配置...";
         try
         {
-            StatusMessage = "正在从 SQLite 数据库加载组态数据...";
-            var dbChannels = await _configRepository.GetChannelsAsync();
-            var dbDevices = await _configRepository.GetDevicesAsync();
-            var dbTags = await _configRepository.GetAllTagsAsync();
+            var configData = await _configService.LoadConfigurationAsync();
 
             Channels.Clear();
             Devices.Clear();
             AllTags.Clear();
 
-            // 若数据库首次运行且为空，注入初始默认示例并自动保存到 SQLite
-            if (dbChannels.Count == 0)
-            {
-                SeedDefaultConfig();
-                await SaveAllAsync();
-                return;
-            }
-
-            foreach (var ch in dbChannels)
-            {
-                CleanUnusedMediaParameters(ch);
-                Channels.Add(ch);
-            }
-            foreach (var dev in dbDevices) Devices.Add(dev);
-            foreach (var tag in dbTags) AllTags.Add(tag);
+            foreach (var ch in configData.Channels) Channels.Add(ch);
+            foreach (var dev in configData.Devices) Devices.Add(dev);
+            foreach (var tag in configData.Tags) AllTags.Add(tag);
 
             SelectedChannel = Channels.FirstOrDefault();
             SelectedDevice = Devices.FirstOrDefault();
@@ -192,7 +177,7 @@ public partial class MainViewModel : ObservableObject
             RebuildHierarchyTree();
             RefreshCurrentDeviceTags();
 
-            StatusMessage = $"SQLite 数据库加载完成：{Channels.Count} 个通道，{Devices.Count} 个设备，{AllTags.Count} 个点位。";
+            StatusMessage = $"数据库加载完成：{Channels.Count} 个通道，{Devices.Count} 个设备，{AllTags.Count} 个点位。";
         }
         catch (Exception ex)
         {
@@ -206,7 +191,7 @@ public partial class MainViewModel : ObservableObject
     /// 二级：设备管理下是具体设备；通道管理下是具体通道
     /// 三级：具体设备下是该设备的具体 TagNode
     /// </summary>
-    public void RebuildHierarchyTree(string? selectId = null)
+    public void RebuildHierarchyTree()
     {
         TreeRoots.Clear();
 
@@ -259,27 +244,7 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    #region 通道、设备、点位的创建与删除 (支持右键菜单绑定)
-
-    /// <summary>
-    /// 清理不属于当前传输介质的冗余参数，保存成空
-    /// </summary>
-    public static void CleanUnusedMediaParameters(ChannelConfig ch)
-    {
-        if (ch.ChannelType == ChannelType.SerialPort)
-        {
-            ch.Host = string.Empty;
-            ch.Port = 0;
-        }
-        else
-        {
-            ch.PortName = string.Empty;
-            ch.BaudRate = 0;
-            ch.DataBits = 0;
-            ch.StopBits = string.Empty;
-            ch.Parity = string.Empty;
-        }
-    }
+    #region 通道管理操作 (简单调用 Core 引擎)
 
     /// <summary>
     /// 【新建通道】(支持指定 SerialPort 或 TcpClient)
@@ -288,22 +253,9 @@ public partial class MainViewModel : ObservableObject
     public void CreateChannel(string? mediumType = null)
     {
         bool isSerial = string.Equals(mediumType, "SerialPort", StringComparison.OrdinalIgnoreCase);
+        var type = isSerial ? ChannelType.SerialPort : ChannelType.TcpClient;
 
-        var newCh = new ChannelConfig
-        {
-            ChannelId = isSerial ? $"CH_COM_{Channels.Count + 1:D2}" : $"CH_TCP_{Channels.Count + 1:D2}",
-            Name = isSerial ? $"新建串口通道 {Channels.Count + 1}" : $"新建以太网通道 {Channels.Count + 1}",
-            ChannelType = isSerial ? ChannelType.SerialPort : ChannelType.TcpClient,
-            Host = isSerial ? string.Empty : "192.168.1.100",
-            Port = isSerial ? 0 : 502,
-            PortName = isSerial ? (AvailableSerialPorts.FirstOrDefault() ?? "COM1") : string.Empty,
-            BaudRate = isSerial ? 9600 : 0,
-            DataBits = isSerial ? 8 : 0,
-            StopBits = isSerial ? "One" : string.Empty,
-            Parity = isSerial ? "None" : string.Empty,
-            ReadTimeoutMs = 1500,
-            WriteTimeoutMs = 1500
-        };
+        var newCh = _configService.CreateChannel(type, Channels.Count, AvailableSerialPorts.FirstOrDefault());
         Channels.Add(newCh);
         SelectedChannel = newCh;
         CurrentViewMode = ViewMode.ChannelDetail;
@@ -313,7 +265,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 【删除通道】(针对选中的具体通道)
+    /// 【删除通道】
     /// </summary>
     [RelayCommand]
     public async Task DeleteChannelAsync(ChannelConfig? targetChannel = null)
@@ -328,17 +280,21 @@ public partial class MainViewModel : ObservableObject
         }
 
         string id = ch.ChannelId;
+        await _configService.DeleteChannelAsync(id);
         Channels.Remove(ch);
         SelectedChannel = Channels.FirstOrDefault();
 
-        await _configRepository.DeleteChannelAsync(id);
         RebuildHierarchyTree();
         CurrentViewMode = ViewMode.ChannelRoot;
         StatusMessage = $"已删除通道: {id}";
     }
 
+    #endregion
+
+    #region 设备管理操作 (简单调用 Core 引擎)
+
     /// <summary>
-    /// 【新建设备】(弹出对话框配置，创建后通道与协议锁定不可修改)
+    /// 【新建设备】(弹出对话框配置，所属通道与协议创建后即锁定)
     /// </summary>
     [RelayCommand]
     public void CreateDevice()
@@ -350,7 +306,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         string defaultChannelId = SelectedChannel?.ChannelId ?? Channels.FirstOrDefault()?.ChannelId ?? string.Empty;
-        var dialog = new Mal.UniversalScada.Configurator.Wpf.Views.CreateDeviceDialog(Channels, ProtocolTypes, defaultChannelId, Devices.Count + 1)
+        var dialog = new CreateDeviceDialog(Channels, ProtocolTypes, defaultChannelId, Devices.Count + 1)
         {
             Owner = Application.Current.MainWindow
         };
@@ -369,7 +325,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 【删除设备】(针对选中的具体设备)
+    /// 【删除设备】(级联删除名下点位)
     /// </summary>
     [RelayCommand]
     public async Task DeleteDeviceAsync(DeviceNode? targetDevice = null)
@@ -384,27 +340,28 @@ public partial class MainViewModel : ObservableObject
         }
 
         string id = dev.DeviceId;
+        int deletedTagCount = await _configService.DeleteDeviceAsync(id, AllTags);
         Devices.Remove(dev);
 
-        // 连带删除属于该设备的点位
-        var tagsToDelete = AllTags.Where(t => t.DeviceId == id).ToList();
-        foreach (var t in tagsToDelete)
+        var tagsToRemove = AllTags.Where(t => t.DeviceId == id).ToList();
+        foreach (var t in tagsToRemove)
         {
             AllTags.Remove(t);
-            await _configRepository.DeleteTagAsync(t.TagId);
         }
 
-        await _configRepository.DeleteDeviceAsync(id);
         SelectedDevice = Devices.FirstOrDefault();
-
         RebuildHierarchyTree();
         RefreshCurrentDeviceTags();
         CurrentViewMode = ViewMode.DeviceRoot;
-        StatusMessage = $"已删除设备 {id} 及其关联的 {tagsToDelete.Count} 个点位";
+        StatusMessage = $"已删除设备 {id} 及其关联的 {deletedTagCount} 个点位";
     }
 
+    #endregion
+
+    #region 点位管理操作 (简单调用 Core 引擎)
+
     /// <summary>
-    /// 【新建点位】(针对选中的具体设备)
+    /// 【新建点位】
     /// </summary>
     [RelayCommand]
     public void CreateTag(DeviceNode? targetDevice = null)
@@ -417,21 +374,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         int devTagCount = AllTags.Count(t => t.DeviceId == dev.DeviceId);
-        var newTag = new TagNode
-        {
-            TagId = $"{dev.DeviceId}.Tag_{devTagCount + 1:D2}",
-            DeviceId = dev.DeviceId,
-            Name = $"新测点 {devTagCount + 1}",
-            Address = "40001",
-            DataType = TagDataType.Int16,
-            AccessMode = TagAccessMode.ReadWrite,
-            ScaleFactor = 1.0,
-            Offset = 0.0,
-            Unit = "",
-            Deadband = 0.0,
-            ScanIntervalMs = 100,
-            IsHistorical = true
-        };
+        var newTag = _configService.CreateTag(dev.DeviceId, devTagCount);
 
         AllTags.Add(newTag);
         SelectedDevice = dev;
@@ -444,7 +387,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 【删除点位】(针对选中的具体点位)
+    /// 【删除点位】
     /// </summary>
     [RelayCommand]
     public async Task DeleteTagAsync(TagNode? targetTag = null)
@@ -459,12 +402,11 @@ public partial class MainViewModel : ObservableObject
         }
 
         string id = tag.TagId;
+        await _configService.DeleteTagAsync(id);
         AllTags.Remove(tag);
         CurrentDeviceTags.Remove(tag);
 
-        await _configRepository.DeleteTagAsync(id);
         SelectedTag = CurrentDeviceTags.FirstOrDefault();
-
         RebuildHierarchyTree();
         if (SelectedTag != null)
         {
@@ -479,7 +421,7 @@ public partial class MainViewModel : ObservableObject
 
     #endregion
 
-    #region 通道测试、CSV 导入导出、保存、改密、注销
+    #region 辅助功能：通道测试、CSV 导入导出、保存、改密、注销
 
     [RelayCommand]
     private async Task TestChannelConnectivityAsync()
@@ -522,9 +464,9 @@ public partial class MainViewModel : ObservableObject
 
         var sfd = new SaveFileDialog
         {
-            Title = "导出点位组态表",
-            Filter = "CSV 文件 (*.csv)|*.csv|所有文件 (*.*)|*.*",
-            FileName = $"SCADA_Tags_{(SelectedDevice?.DeviceId ?? "ALL")}_{DateTime.Now:yyyyMMdd_HHmm}.csv"
+            Title = "导出点位组态表 (CSV)",
+            Filter = "CSV 文件 (*.csv)|*.csv",
+            FileName = $"Tags_Export_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
         };
 
         if (sfd.ShowDialog() == true)
@@ -532,8 +474,8 @@ public partial class MainViewModel : ObservableObject
             try
             {
                 await _importExportService.ExportToCsvAsync(tagsToExport, sfd.FileName);
-                StatusMessage = $"成功导出 {tagsToExport.Count} 个点位至: {Path.GetFileName(sfd.FileName)}";
-                MessageBox.Show($"✅ 导出完成！共导出 {tagsToExport.Count} 个点位配置。", "导出成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                StatusMessage = $"已成功导出 {tagsToExport.Count} 个点位至: {sfd.FileName}";
+                MessageBox.Show($"✅ 成功导出 {tagsToExport.Count} 条点位记录！\n路径: {sfd.FileName}", "导出完成", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -603,19 +545,16 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// 全量保存组态至 SQLite 数据库（由 Core 引擎统一执行参数清理与批量持久化）
+    /// </summary>
     [RelayCommand]
     private async Task SaveAllAsync()
     {
-        StatusMessage = "正在保存组态配置到数据库...";
+        StatusMessage = "正在通过 Core 引擎保存组态配置到数据库...";
         try
         {
-            foreach (var ch in Channels)
-            {
-                CleanUnusedMediaParameters(ch);
-                await _configRepository.SaveChannelAsync(ch);
-            }
-            foreach (var dev in Devices) await _configRepository.SaveDeviceAsync(dev);
-            await _configRepository.BatchSaveTagsAsync(AllTags);
+            await _configService.SaveConfigurationAsync(Channels, Devices, AllTags);
 
             RebuildHierarchyTree();
             StatusMessage = $"组态保存成功！共持久化 {Channels.Count} 个通道，{Devices.Count} 个设备，{AllTags.Count} 个点位。";
@@ -631,128 +570,23 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenChangePasswordDialog()
     {
-        var win = new Views.ChangePasswordDialog(_authService, CurrentAdmin)
+        var dlg = new ChangePasswordDialog(_authService, CurrentAdmin)
         {
             Owner = Application.Current.MainWindow
         };
-        win.ShowDialog();
+        dlg.ShowDialog();
     }
 
     [RelayCommand]
     private void Logout()
     {
-        if (MessageBox.Show("确定要注销当前管理员登录状态吗？", "安全注销", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+        if (MessageBox.Show("确定要退出当前管理员登录并关闭系统吗？", "注销确认", 
+            MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
         {
             _authService.Logout();
-
-            var mainWin = Application.Current.MainWindow;
-            mainWin?.Hide();
-
-            var loginWin = App.AppHost?.Services.GetRequiredService<Views.LoginWindow>();
-            if (loginWin?.ShowDialog() == true)
-            {
-                CurrentAdmin = _authService.CurrentUser ?? "admin";
-                mainWin?.Show();
-                StatusMessage = $"欢迎回来，管理员: {CurrentAdmin}";
-            }
-            else
-            {
-                Application.Current.Shutdown();
-            }
+            Application.Current.Shutdown();
         }
     }
 
     #endregion
-
-    private void SeedDefaultConfig()
-    {
-        var ch1 = new ChannelConfig
-        {
-            ChannelId = "CH_01",
-            Name = "主产线 PLC 以太网通道",
-            ChannelType = ChannelType.TcpClient,
-            Host = "192.168.1.100",
-            Port = 502,
-            PortName = string.Empty,
-            BaudRate = 0,
-            DataBits = 0,
-            StopBits = string.Empty,
-            Parity = string.Empty,
-            ReadTimeoutMs = 1500,
-            WriteTimeoutMs = 1500
-        };
-        var ch2 = new ChannelConfig
-        {
-            ChannelId = "CH_02",
-            Name = "温湿度传感器串口通道",
-            ChannelType = ChannelType.SerialPort,
-            Host = string.Empty,
-            Port = 0,
-            PortName = "COM1",
-            BaudRate = 9600,
-            DataBits = 8,
-            StopBits = "One",
-            Parity = "None"
-        };
-        Channels.Add(ch1);
-        Channels.Add(ch2);
-        SelectedChannel = ch1;
-
-        var dev1 = new DeviceNode
-        {
-            DeviceId = "DEV_01",
-            Name = "1号灌装机 PLC",
-            ChannelId = ch1.ChannelId,
-            ProtocolType = ProtocolType.ModbusTcp,
-            StationAddress = 1,
-            DefaultPollIntervalMs = 100
-        };
-        var dev2 = new DeviceNode
-        {
-            DeviceId = "DEV_02",
-            Name = "仓储温湿度监测模块",
-            ChannelId = ch2.ChannelId,
-            ProtocolType = ProtocolType.CustomSerial,
-            StationAddress = 2,
-            DefaultPollIntervalMs = 500
-        };
-        Devices.Add(dev1);
-        Devices.Add(dev2);
-        SelectedDevice = dev1;
-
-        AllTags.Add(new TagNode
-        {
-            TagId = "DEV_01.Motor_Speed",
-            DeviceId = dev1.DeviceId,
-            Name = "主轴电机实时转速",
-            Address = "40001",
-            DataType = TagDataType.Int16,
-            AccessMode = TagAccessMode.ReadWrite,
-            ScaleFactor = 0.1,
-            Offset = 0,
-            Unit = "rpm",
-            Deadband = 1.0
-        });
-        AllTags.Add(new TagNode
-        {
-            TagId = "DEV_01.Motor_Current",
-            DeviceId = dev1.DeviceId,
-            Name = "主轴电机工作电流",
-            Address = "40002",
-            DataType = TagDataType.Float,
-            AccessMode = TagAccessMode.ReadOnly,
-            ScaleFactor = 1.0,
-            Unit = "A",
-            Deadband = 0.2
-        });
-        AllTags.Add(new TagNode
-        {
-            TagId = "DEV_01.System_Start",
-            DeviceId = dev1.DeviceId,
-            Name = "系统启动控制线圈",
-            Address = "00001",
-            DataType = TagDataType.Bool,
-            AccessMode = TagAccessMode.ReadWrite
-        });
-    }
 }
