@@ -6,28 +6,30 @@
              xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
-    <Border Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1.5" CornerRadius="10" Padding="8">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- 标题 -->
-            <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"
-                       HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
-
-            <!-- 控制按钮主体 (背景颜色由 ColorHex 驱动) -->
-            <Button Grid.Row="1" Content="{Binding ButtonText}" Click="OnExecuteClick"
-                    Background="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
-                    Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"
-                    BorderThickness="1" BorderBrush="#38BDF8" Cursor="Hand" Height="36">
-                <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="6"/>
-                    </Style>
-                </Button.Resources>
-            </Button>
-        </Grid>
-    </Border>
+    <Grid>
+        <!-- 普通按钮主体 (自适应全填充，无深色卡片外框，背景色由 ColorHex 驱动) -->
+        <Button Click="OnExecuteClick"
+                Background="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                Foreground="#FFFFFF"
+                FontWeight="SemiBold"
+                FontSize="12"
+                BorderThickness="1"
+                BorderBrush="#38BDF8"
+                Cursor="Hand"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+            <Button.Content>
+                <TextBlock Text="{Binding ButtonText, TargetNullValue='按钮'}"
+                           TextTrimming="CharacterEllipsis"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Button.Content>
+            <Button.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="6"/>
+                </Style>
+            </Button.Resources>
+        </Button>
+    </Grid>
 </UserControl>
+

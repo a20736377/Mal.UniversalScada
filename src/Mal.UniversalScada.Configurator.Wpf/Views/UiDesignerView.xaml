@@ -304,11 +304,72 @@
                                              <TextBlock Text="整型点位已固定为0" FontSize="9" Foreground="#0284C7" Margin="0,2,0,0"
                                                         Visibility="{Binding SelectedTagInfo.IsInteger, Converter={x:Static vm:DesignerUiConverters.BoolToVisibility}}"/>
                                          </StackPanel>
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Text="表盘主题色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.GaugeProps.ColorHex, Mode=TwoWay}"/>
+                                         <StackPanel Grid.Column="2">
+                                             <TextBlock Text="表盘默认主题色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                             <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.GaugeProps.ColorHex, Mode=TwoWay}"/>
+                                         </StackPanel>
+                                     </Grid>
+
+                                    <!-- 2.1.1 低中高三段数值与对应颜色设置 -->
+                                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,4,0,0">
+                                        <StackPanel>
+                                            <DockPanel Margin="0,0,0,6">
+                                                <TextBlock Text="🎨 低/中/高三段数值与对应颜色" FontWeight="Bold" FontSize="11" Foreground="#0369A1" VerticalAlignment="Center"/>
+                                                <CheckBox Content="启用三色自适应" IsChecked="{Binding SelectedWidget.GaugeProps.EnableThresholdColor}" HorizontalAlignment="Right" FontSize="10"/>
+                                            </DockPanel>
+
+                                            <!-- 低段设置 -->
+                                            <Grid Margin="0,0,0,5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="8"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="低值阈值 (Low Value):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                    <TextBox Text="{Binding SelectedWidget.GaugeProps.LowValue, UpdateSourceTrigger=PropertyChanged}" Height="24" FontSize="11"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2">
+                                                    <TextBlock Text="低段颜色 (Low Color):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.GaugeProps.LowColor, Mode=TwoWay}"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- 中段设置 -->
+                                            <Grid Margin="0,0,0,5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="8"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="中值基准 (Mid Value):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                    <TextBox Text="{Binding SelectedWidget.GaugeProps.MidValue, UpdateSourceTrigger=PropertyChanged}" Height="24" FontSize="11"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2">
+                                                    <TextBlock Text="中段颜色 (Mid Color):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.GaugeProps.MidColor, Mode=TwoWay}"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- 高段设置 -->
+                                            <Grid Margin="0,0,0,2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="8"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="高值阈值 (High Value):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                    <TextBox Text="{Binding SelectedWidget.GaugeProps.HighValue, UpdateSourceTrigger=PropertyChanged}" Height="24" FontSize="11"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2">
+                                                    <TextBlock Text="高段颜色 (High Color):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.GaugeProps.HighColor, Mode=TwoWay}"/>
+                                                </StackPanel>
+                                            </Grid>
                                         </StackPanel>
-                                    </Grid>
+                                    </Border>
                                 </StackPanel>
                             </Border>
 
@@ -317,6 +378,13 @@
                                     Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='LevelTank'}">
                                 <StackPanel>
                                     <TextBlock Text="🛢️ 立体储罐专属组合参数 (TankLevelProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <TextBlock Text="安装方向 (Orientation):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <ComboBox SelectedValue="{Binding SelectedWidget.TankProps.Orientation, Mode=TwoWay}"
+                                              SelectedValuePath="Tag" Height="26" Margin="0,0,0,8">
+                                        <ComboBoxItem Content="立式 / 竖向 (Vertical)" Tag="Vertical"/>
+                                        <ComboBoxItem Content="卧式 / 横向 (Horizontal)" Tag="Horizontal"/>
+                                    </ComboBox>
 
                                     <Grid Margin="0,0,0,8">
                                         <Grid.ColumnDefinitions>
@@ -344,17 +412,51 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock Text="溢出报警液位 (High):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                            <TextBox Text="{Binding SelectedWidget.TankProps.HighAlarm, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2">
                                             <TextBlock Text="干涸预警液位 (Low):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
                                             <TextBox Text="{Binding SelectedWidget.TankProps.LowAlarm, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
                                         </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="溢出报警液位 (High):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.TankProps.HighAlarm, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
                                     </Grid>
 
-                                    <TextBlock Text="液体渲染色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
-                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.TankProps.ColorHex, Mode=TwoWay}"/>
+                                    <!-- 2.2.1 纯色液体颜色设置（以高限/低限为变色阈值） -->
+                                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,4,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="🎨 液体纯色设置 (以高限和低限为变色阈值)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,6"/>
+
+                                            <!-- 低液位颜色 -->
+                                            <Grid Margin="0,0,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="140"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="低液位色 (≤ 低限预警):" FontSize="10" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                <controls:ColorPickerBox Grid.Column="1" ColorHex="{Binding SelectedWidget.TankProps.LowColor, Mode=TwoWay}"/>
+                                            </Grid>
+
+                                            <!-- 正常区间颜色 -->
+                                            <Grid Margin="0,0,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="140"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="正常液位色 (低限~高限):" FontSize="10" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                <controls:ColorPickerBox Grid.Column="1" ColorHex="{Binding SelectedWidget.TankProps.MidColor, Mode=TwoWay}"/>
+                                            </Grid>
+
+                                            <!-- 高液位颜色 -->
+                                            <Grid Margin="0,0,0,2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="140"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="高液位色 (≥ 高限报警):" FontSize="10" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                <controls:ColorPickerBox Grid.Column="1" ColorHex="{Binding SelectedWidget.TankProps.HighColor, Mode=TwoWay}"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
                             </Border>
 
@@ -481,7 +583,7 @@
                             <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
                                     Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='ControlButton'}">
                                 <StackPanel>
-                                    <TextBlock Text="🔘 工业控制按钮专属组合参数 (ControlButtonProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+                                    <TextBlock Text="🔘 普通按钮专属参数 (ControlButtonProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
 
                                     <TextBlock Text="按钮显示文字 (ButtonText):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
                                     <TextBox Text="{Binding SelectedWidget.ButtonProps.ButtonText, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>

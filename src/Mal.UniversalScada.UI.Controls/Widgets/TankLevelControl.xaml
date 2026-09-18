@@ -8,61 +8,155 @@
              d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
     <Border Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1.5" CornerRadius="10" Padding="8">
         <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+            <!-- 竖向储罐视图 (立式) -->
+            <Grid Visibility="{Binding TankProps.IsHorizontal, Converter={x:Static vm:WidgetUiConverters.InverseBoolToVisibility}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-            <!-- 标题 -->
-            <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"
-                       HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                <!-- 标题 -->
+                <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Margin="0,0,0,6" TextTrimming="CharacterEllipsis"/>
 
-            <!-- 储罐立体外壳 -->
-            <Grid Grid.Row="1" HorizontalAlignment="Center" Width="80" Margin="0,4">
-                <!-- 刻度线 (左侧) -->
-                <StackPanel HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="-20,0,0,0" Width="18">
-                    <TextBlock Text="100%" FontSize="8" Foreground="#64748B"/>
-                    <Border Height="1" Background="#334155" Margin="0,2"/>
-                    <TextBlock Text="50%" FontSize="8" Foreground="#64748B" Margin="0,36,0,0"/>
-                    <Border Height="1" Background="#334155" Margin="0,2"/>
-                    <TextBlock Text="0%" FontSize="8" Foreground="#64748B" VerticalAlignment="Bottom" Margin="0,36,0,0"/>
-                </StackPanel>
+                <!-- 储罐区域 (刻度线与储罐主体严格 1:1 对齐) -->
+                <Grid Grid.Row="1" HorizontalAlignment="Center" Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- 储罐外壳 -->
-                <Border Background="#090D16"
-                        BorderBrush="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
-                        BorderThickness="2" CornerRadius="16"
-                        ClipToBounds="True" Width="70" HorizontalAlignment="Center">
-                    <Grid VerticalAlignment="Bottom">
-                        <!-- 动态液位矩形 -->
-                        <Border Background="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
-                                Opacity="0.85" CornerRadius="0,0,14,14"
-                                VerticalAlignment="Bottom">
-                            <Border.Height>
-                                <MultiBinding Converter="{x:Static vm:TankHeightConverter.Instance}">
-                                    <Binding Path="NormalizedProgress"/>
-                                    <Binding RelativeSource="{RelativeSource AncestorType=Border, AncestorLevel=2}" Path="ActualHeight"/>
-                                </MultiBinding>
-                            </Border.Height>
-                            <!-- 液体顶部波浪高光 -->
-                            <Border Height="4" VerticalAlignment="Top" Background="#FFFFFF" Opacity="0.6"/>
-                        </Border>
+                    <!-- 刻度线 (左侧)，高度与储罐外壳绝对同步对齐 -->
+                    <Grid Grid.Column="0" VerticalAlignment="Stretch">
+                        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" Orientation="Horizontal">
+                            <TextBlock Text="100%" FontSize="8" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                            <Border Width="6" Height="1" Background="#475569" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Right" Orientation="Horizontal">
+                            <TextBlock Text="50%" FontSize="8" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                            <Border Width="6" Height="1" Background="#475569" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Right" Orientation="Horizontal">
+                            <TextBlock Text="0%" FontSize="8" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                            <Border Width="6" Height="1" Background="#475569" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </Grid>
-                </Border>
 
-                <!-- 储罐高光反射 -->
-                <Border Width="10" HorizontalAlignment="Left" Margin="10,6,0,6" Background="#FFFFFF" Opacity="0.08"
-                        CornerRadius="4"/>
+                    <!-- 储罐外壳 (金属边框，不随液体变色) -->
+                    <Border x:Name="VerticalTankBorder" Grid.Column="2"
+                            Background="#090D16"
+                            BorderBrush="#334155"
+                            BorderThickness="2" CornerRadius="16"
+                            ClipToBounds="True" Width="72" HorizontalAlignment="Center">
+                        <Grid VerticalAlignment="Bottom">
+                            <!-- 纯色液体填充 (高度直接绑定内部罐体实际高度，精准无误) -->
+                            <Border Background="{Binding TankProps.LiquidColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                                    Opacity="0.9" CornerRadius="0,0,14,14"
+                                    VerticalAlignment="Bottom">
+                                <Border.Height>
+                                    <MultiBinding Converter="{x:Static vm:TankDimensionConverter.Instance}">
+                                        <Binding Path="TankProps.NormalizedProgress"/>
+                                        <Binding ElementName="VerticalTankBorder" Path="ActualHeight"/>
+                                    </MultiBinding>
+                                </Border.Height>
+                                <!-- 液体表面分界光 -->
+                                <Border Height="3" VerticalAlignment="Top" Background="#FFFFFF" Opacity="0.4"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- 储罐高光反射 -->
+                    <Border Grid.Column="2" Width="10" HorizontalAlignment="Left" Margin="8,6,0,6" Background="#FFFFFF" Opacity="0.08"
+                            CornerRadius="4" IsHitTestVisible="False"/>
+                </Grid>
+
+                <!-- 底部数值与单位 (高对比度工业白色) -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                    <TextBlock Text="{Binding FormattedValue}" Foreground="#F8FAFC" FontSize="15" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding Unit}" Foreground="#94A3B8" FontSize="11" Margin="4,2,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
             </Grid>
 
-            <!-- 底部数值与单位 -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
-                <TextBlock Text="{Binding FormattedValue}"
-                           Foreground="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
-                           FontSize="15" FontWeight="Bold"/>
-                <TextBlock Text="{Binding Unit}" Foreground="#94A3B8" FontSize="11" Margin="4,2,0,0" VerticalAlignment="Center"/>
-            </StackPanel>
+            <!-- 横向储罐视图 (卧式) -->
+            <Grid Visibility="{Binding TankProps.IsHorizontal, Converter={x:Static vm:WidgetUiConverters.BoolToVisibility}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- 顶部标题与数值并排 -->
+                <DockPanel Grid.Row="0" Margin="4,0,4,6">
+                    <TextBlock Text="{Binding Title}" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding FormattedValue}" Foreground="#F8FAFC" FontSize="14" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Unit}" Foreground="#94A3B8" FontSize="10" Margin="3,2,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- 卧式储罐主体 (自适应填充) -->
+                <Grid Grid.Row="1" VerticalAlignment="Stretch" Margin="4,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/> <!-- 刻度线 -->
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="*"/>    <!-- 卧式罐体 -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 卧式储罐高度刻度线 (左侧，顶中底严密对齐) -->
+                    <Grid Grid.Column="0" VerticalAlignment="Stretch">
+                        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" Orientation="Horizontal">
+                            <TextBlock Text="100%" FontSize="8" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                            <Border Width="5" Height="1" Background="#475569" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Right" Orientation="Horizontal">
+                            <TextBlock Text="50%" FontSize="8" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                            <Border Width="5" Height="1" Background="#475569" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Right" Orientation="Horizontal">
+                            <TextBlock Text="0%" FontSize="8" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                            <Border Width="5" Height="1" Background="#475569" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 卧式储罐外壳 (金属边框，自适应外部高度) -->
+                    <Border x:Name="HorizontalTankBorder" Grid.Column="2"
+                            VerticalAlignment="Stretch"
+                            MinHeight="60"
+                            Background="#090D16"
+                            BorderBrush="#334155"
+                            BorderThickness="2"
+                            CornerRadius="18"
+                            ClipToBounds="True"
+                            HorizontalAlignment="Stretch">
+                        <Grid VerticalAlignment="Bottom">
+                            <!-- 纯色液体填充 (卧式储罐同样自底向上充盈！宽度水平铺满) -->
+                            <Border Background="{Binding TankProps.LiquidColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                                    Opacity="0.9"
+                                    CornerRadius="0,0,18,18"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Bottom">
+                                <Border.Height>
+                                    <MultiBinding Converter="{x:Static vm:TankDimensionConverter.Instance}">
+                                        <Binding Path="TankProps.NormalizedProgress"/>
+                                        <Binding ElementName="HorizontalTankBorder" Path="ActualHeight"/>
+                                    </MultiBinding>
+                                </Border.Height>
+                                <!-- 水平液面边界光 -->
+                                <Border Height="3" VerticalAlignment="Top" Background="#FFFFFF" Opacity="0.4"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- 卧式储罐顶部反光条 (覆盖在罐体上) -->
+                    <Border Grid.Column="2" Height="8" VerticalAlignment="Top" Margin="20,4,20,0" Background="#FFFFFF" Opacity="0.08"
+                            CornerRadius="3" IsHitTestVisible="False"/>
+                </Grid>
+
+                <Grid Grid.Row="2" Height="2"/>
+            </Grid>
         </Grid>
     </Border>
 </UserControl>

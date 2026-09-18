@@ -535,5 +535,155 @@ public class UiConfigurationTests
         Assert.Null(widget.CurrentRawValue);
         Assert.Equal("--", widget.FormattedValue);
     }
+
+    [Fact]
+    public void CircularGauge_ThresholdColors_ShouldAdaptToValueRanges()
+    {
+        var gauge = (CircularGaugeWidgetViewModel)WidgetViewModel.Create(WidgetType.GaugeCircular);
+        gauge.MinValue = 0;
+        gauge.MaxValue = 100;
+
+        gauge.Props.LowValue = 20;
+        gauge.Props.LowColor = "#38BDF8";
+
+        gauge.Props.MidValue = 50;
+        gauge.Props.MidColor = "#10B981";
+
+        gauge.Props.HighValue = 80;
+        gauge.Props.HighColor = "#EF4444";
+
+        gauge.Props.EnableThresholdColor = true;
+
+        // 1. 低值区间 (15 <= 20)
+        gauge.UpdateRuntimeValue(15);
+        Assert.Equal("#38BDF8", gauge.ColorHex);
+        Assert.True(gauge.IsAlarm); // 触发低限报警
+
+        // 2. 中值区间 (20 < 45 < 80)
+        gauge.UpdateRuntimeValue(45);
+        Assert.Equal("#10B981", gauge.ColorHex);
+        Assert.False(gauge.IsAlarm);
+
+        // 3. 高值区间 (85 >= 80)
+        gauge.UpdateRuntimeValue(85);
+        Assert.Equal("#EF4444", gauge.ColorHex);
+        Assert.True(gauge.IsAlarm); // 触发高限报警
+
+        // 4. 持久化字典同步测试
+        gauge.SyncPropertiesFromFields();
+        Assert.Equal("20", gauge.Properties["LowValue"]);
+        Assert.Equal("50", gauge.Properties["MidValue"]);
+        Assert.Equal("80", gauge.Properties["HighValue"]);
+        Assert.Equal("#38BDF8", gauge.Properties["LowColor"]);
+        Assert.Equal("#10B981", gauge.Properties["MidColor"]);
+        Assert.Equal("#EF4444", gauge.Properties["HighColor"]);
+        Assert.Equal("True", gauge.Properties["EnableThresholdColor"]);
+
+        // 5. 反序列化测试
+        var newGauge = (CircularGaugeWidgetViewModel)WidgetViewModel.Create(WidgetType.GaugeCircular);
+        newGauge.LoadProperties(gauge.Properties);
+        Assert.Equal(20, newGauge.Props.LowValue);
+        Assert.Equal(50, newGauge.Props.MidValue);
+        Assert.Equal(80, newGauge.Props.HighValue);
+        Assert.Equal("#38BDF8", newGauge.Props.LowColor);
+        Assert.Equal("#10B981", newGauge.Props.MidColor);
+        Assert.Equal("#EF4444", newGauge.Props.HighColor);
+        Assert.True(newGauge.Props.EnableThresholdColor);
+
+        // 6. 分段式圆弧表盘 Path 生成断言 (类似于湿度计的分段色表盘)
+        Assert.False(string.IsNullOrWhiteSpace(newGauge.Props.LowArcData));
+        Assert.False(string.IsNullOrWhiteSpace(newGauge.Props.MidArcData));
+        Assert.False(string.IsNullOrWhiteSpace(newGauge.Props.HighArcData));
+        Assert.StartsWith("M ", newGauge.Props.LowArcData);
+        Assert.Contains(" A ", newGauge.Props.LowArcData);
+        Assert.StartsWith("M ", newGauge.Props.MidArcData);
+        Assert.Contains(" A ", newGauge.Props.MidArcData);
+        Assert.StartsWith("M ", newGauge.Props.HighArcData);
+        Assert.Contains(" A ", newGauge.Props.HighArcData);
+
+        // 7. 初始无数据时，表盘中间轴心圆圈和指针应呈现中段颜色 (MidColor 绿色)
+        var defaultGauge = (CircularGaugeWidgetViewModel)WidgetViewModel.Create(WidgetType.GaugeCircular);
+        Assert.Equal("#10B981", defaultGauge.ColorHex);
+
+        // 8. 针对 0~300 量程，自动计算低(75)、中(150)、高(225)，中段绿色精准居中
+        var wideGauge = (CircularGaugeWidgetViewModel)WidgetViewModel.Create(WidgetType.GaugeCircular);
+        wideGauge.MinValue = 0;
+        wideGauge.MaxValue = 300;
+        wideGauge.UpdateSegmentArcs();
+        // 验证中间值 150 处于中段区间内
+        wideGauge.UpdateRuntimeValue(150);
+        Assert.Equal("#10B981", wideGauge.ColorHex);
+    }
+
+    [Fact]
+    public void TankLevelWidgetViewModel_Orientation_And_LowMidHighLiquidColors_Test()
+    {
+        var tank = (TankLevelWidgetViewModel)WidgetViewModel.Create(WidgetType.LevelTank);
+        Assert.NotNull(tank);
+        Assert.Equal("Vertical", tank.Orientation);
+        Assert.False(tank.IsHorizontal);
+
+        // 1. 方向切换与外部宽高自适应测试 (支持直接设 Orientation 或在界面设 Props.Orientation)
+        tank.Width = 150;
+        tank.Height = 220;
+        tank.Props.Orientation = "Horizontal";
+        Assert.True(tank.IsHorizontal);
+        Assert.Equal(220, tank.Width);
+        Assert.Equal(150, tank.Height);
+
+        tank.Props.Orientation = "Vertical";
+        Assert.False(tank.IsHorizontal);
+        Assert.Equal(150, tank.Width);
+        Assert.Equal(220, tank.Height);
+
+        // 2. 以高限和低限为变色阈值的纯色液体测试
+        tank.MinValue = 0;
+        tank.MaxValue = 100;
+        tank.LowAlarm = 20;  // 低限（预警）
+        tank.HighAlarm = 80; // 高限（报警）
+        tank.LowColor = "#EAB308";  // 低液位颜色 (预警黄)
+        tank.MidColor = "#0284C7";  // 正常液位颜色 (标准蓝)
+        tank.HighColor = "#EF4444"; // 高液位颜色 (溢流红)
+
+        // 2.1 低于低限 (10 <= 20) -> 低液位纯色
+        tank.UpdateRuntimeValue(10);
+        Assert.Equal("#EAB308", tank.LiquidColor);
+        Assert.Equal("#EAB308", tank.Props.LiquidColor);
+        Assert.True(tank.IsAlarm); // 低液位报警
+
+        // 2.2 低限与高限之间 (20 < 55 < 80) -> 正常液位纯色
+        tank.UpdateRuntimeValue(55);
+        Assert.Equal("#0284C7", tank.LiquidColor);
+        Assert.Equal("#0284C7", tank.Props.LiquidColor);
+        Assert.False(tank.IsAlarm);
+
+        // 2.3 高于高限 (88 >= 80) -> 高液位纯色
+        tank.UpdateRuntimeValue(88);
+        Assert.Equal("#EF4444", tank.LiquidColor);
+        Assert.Equal("#EF4444", tank.Props.LiquidColor);
+        Assert.True(tank.IsAlarm); // 高液位报警
+
+        // 3. 序列化与持久化配置测试
+        tank.Orientation = "Horizontal";
+        tank.SyncPropertiesFromFields();
+        Assert.Equal("Horizontal", tank.Properties["Orientation"]);
+        Assert.Equal("20", tank.Properties["LowAlarm"]);
+        Assert.Equal("80", tank.Properties["HighAlarm"]);
+        Assert.Equal("#EAB308", tank.Properties["LowColor"]);
+        Assert.Equal("#0284C7", tank.Properties["MidColor"]);
+        Assert.Equal("#EF4444", tank.Properties["HighColor"]);
+
+        // 4. 反序列化与还原
+        var restored = (TankLevelWidgetViewModel)WidgetViewModel.Create(WidgetType.LevelTank);
+        restored.LoadProperties(tank.Properties);
+        Assert.Equal("Horizontal", restored.Orientation);
+        Assert.True(restored.IsHorizontal);
+        Assert.Equal(20, restored.LowAlarm);
+        Assert.Equal(80, restored.HighAlarm);
+        Assert.Equal("#EAB308", restored.LowColor);
+        Assert.Equal("#0284C7", restored.MidColor);
+        Assert.Equal("#EF4444", restored.HighColor);
+    }
 }
+
 

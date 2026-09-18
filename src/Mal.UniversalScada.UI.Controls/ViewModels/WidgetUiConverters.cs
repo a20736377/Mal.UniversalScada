@@ -9,9 +9,39 @@ namespace Mal.UniversalScada.UI.Controls.ViewModels;
 public static class WidgetUiConverters
 {
     public static IValueConverter BoolToVisibility { get; } = new BoolToVisibilityConverterImpl();
+    public static IValueConverter InverseBoolToVisibility { get; } = new InverseBoolToVisibilityConverterImpl();
     public static IValueConverter ColorHexToBrush { get; } = new ColorHexToBrushConverterImpl();
+    public static IValueConverter ColorHexToColor { get; } = new ColorHexToColorConverterImpl();
     public static IValueConverter BoolToFontWeight { get; } = new BoolToFontWeightConverterImpl();
     public static IValueConverter StringToHorizontalAlignment { get; } = new StringToHorizontalAlignmentConverterImpl();
+
+    private class InverseBoolToVisibilityConverterImpl : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is true ? Visibility.Collapsed : Visibility.Visible;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is Visibility.Collapsed;
+    }
+
+    private class ColorHexToColorConverterImpl : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string hex && !string.IsNullOrWhiteSpace(hex))
+            {
+                try
+                {
+                    return (Color)ColorConverter.ConvertFromString(hex);
+                }
+                catch { }
+            }
+            return Color.FromRgb(16, 185, 129);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is Color c ? $"#{c.R:X2}{c.G:X2}{c.B:X2}" : "#10B981";
+    }
 
     private class BoolToFontWeightConverterImpl : IValueConverter
     {
@@ -89,6 +119,27 @@ public class TankHeightConverter : IMultiValueConverter
         {
             var calculated = ratio * actualHeight;
             return Math.Max(0, Math.Min(actualHeight, calculated));
+        }
+        return 0.0;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+public class TankDimensionConverter : IMultiValueConverter
+{
+    public static TankDimensionConverter Instance { get; } = new();
+
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length >= 2 &&
+            values[0] is double ratio &&
+            values[1] is double actualDimension &&
+            actualDimension > 0)
+        {
+            var calculated = ratio * actualDimension;
+            return Math.Max(0, Math.Min(actualDimension, calculated));
         }
         return 0.0;
     }

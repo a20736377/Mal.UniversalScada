@@ -26,7 +26,37 @@ public partial class CircularGaugeProps : ObservableObject
     private int _decimals = 1;
 
     [ObservableProperty]
-    private string _colorHex = "#0284C7";
+    private string _colorHex = "#10B981";
+
+    [ObservableProperty]
+    private double? _lowValue;
+
+    [ObservableProperty]
+    private double? _midValue;
+
+    [ObservableProperty]
+    private double? _highValue;
+
+    [ObservableProperty]
+    private string _lowColor = "#38BDF8";
+
+    [ObservableProperty]
+    private string _midColor = "#10B981";
+
+    [ObservableProperty]
+    private string _highColor = "#EF4444";
+
+    [ObservableProperty]
+    private bool _enableThresholdColor = true;
+
+    [ObservableProperty]
+    private string _lowArcData = string.Empty;
+
+    [ObservableProperty]
+    private string _midArcData = string.Empty;
+
+    [ObservableProperty]
+    private string _highArcData = string.Empty;
 
     [ObservableProperty]
     private double _normalizedProgress = 0.0;
@@ -56,10 +86,41 @@ public partial class TankLevelProps : ObservableObject
     private double? _lowAlarm;
 
     [ObservableProperty]
+    private string _orientation = "Vertical"; // "Vertical" (立式/竖向), "Horizontal" (卧式/横向)
+
+    [ObservableProperty]
+    private double? _lowLevel;
+
+    [ObservableProperty]
+    private double? _midLevel;
+
+    [ObservableProperty]
+    private double? _highLevel;
+
+    [ObservableProperty]
+    private string _lowColor = "#EAB308";
+
+    [ObservableProperty]
+    private string _midColor = "#0284C7";
+
+    [ObservableProperty]
+    private string _highColor = "#EF4444";
+
+    [ObservableProperty]
+    private string _liquidColor = "#0284C7";
+
+    [ObservableProperty]
     private string _colorHex = "#0284C7";
 
     [ObservableProperty]
     private double _normalizedProgress = 0.0;
+
+    partial void OnOrientationChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsHorizontal));
+    }
+
+    public bool IsHorizontal => string.Equals(Orientation, "Horizontal", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>
@@ -120,12 +181,12 @@ public partial class StatusLedProps : ObservableObject
 }
 
 /// <summary>
-/// 工业控制按钮专属组合属性类（包含按钮文本、动作模式、下发数值、二次防误触确认）
+/// 普通按钮专属组合属性类（包含按钮文本、动作模式、下发数值、二次防误触确认）
 /// </summary>
 public partial class ControlButtonProps : ObservableObject
 {
     [ObservableProperty]
-    private string _buttonText = "触发控制";
+    private string _buttonText = "按钮";
 
     [ObservableProperty]
     private string _writeValue = "1";

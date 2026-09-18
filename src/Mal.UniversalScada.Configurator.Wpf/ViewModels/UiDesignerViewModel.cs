@@ -58,7 +58,7 @@ public partial class UiDesignerViewModel : ObservableObject
         new(WidgetType.NumericCard, "数显科技卡片", "📟", "大号数显，带单位徽章与品质状态"),
         new(WidgetType.IoMatrix, "8路 IO 状态板", "🎛️", "8路开关量点阵矩阵，状态自感"),
         new(WidgetType.StatusLed, "工业状态指示灯", "💡", "三态高光状态灯，带运行/告警标识"),
-        new(WidgetType.ControlButton, "工业控制按钮", "🔘", "下发置位控制指令至下位机点位")
+        new(WidgetType.ControlButton, "普通按钮", "🔘", "下发置位控制指令至下位机点位")
     };
 
     public UiDesignerViewModel(IConfigurationService configService)
@@ -469,7 +469,7 @@ public partial class UiDesignerViewModel : ObservableObject
         WidgetType.NumericCard => "温度/流量测量项",
         WidgetType.IoMatrix => "8路数字量状态板",
         WidgetType.StatusLed => "运行就绪指示灯",
-        WidgetType.ControlButton => "启动控制按键",
+        WidgetType.ControlButton => "普通按钮",
         _ => "监控卡片"
     };
 

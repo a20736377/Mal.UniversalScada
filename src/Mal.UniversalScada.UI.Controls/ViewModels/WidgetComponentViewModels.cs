@@ -23,7 +23,27 @@ public partial class CircularGaugeWidgetViewModel : WidgetViewModel
         Type = WidgetType.GaugeCircular;
         Width = 180;
         Height = 180;
-        _props.PropertyChanged += (s, e) => { if (e.PropertyName != null) OnPropertyChanged(e.PropertyName); };
+        UpdateSegmentArcs();
+        ReevaluateGaugeColor();
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null)
+            {
+                if (e.PropertyName is nameof(CircularGaugeProps.MinValue) or nameof(CircularGaugeProps.MaxValue) or
+                    nameof(CircularGaugeProps.LowValue) or nameof(CircularGaugeProps.HighValue))
+                {
+                    UpdateSegmentArcs();
+                    ReevaluateGaugeColor();
+                }
+                else if (e.PropertyName is nameof(CircularGaugeProps.MidValue) or
+                    nameof(CircularGaugeProps.LowColor) or nameof(CircularGaugeProps.MidColor) or nameof(CircularGaugeProps.HighColor) or
+                    nameof(CircularGaugeProps.EnableThresholdColor))
+                {
+                    ReevaluateGaugeColor();
+                }
+                OnPropertyChanged(e.PropertyName);
+            }
+        };
     }
 
     public override double MinValue { get => Props.MinValue; set => Props.MinValue = value; }
@@ -57,11 +77,41 @@ public partial class CircularGaugeWidgetViewModel : WidgetViewModel
         if (properties.TryGetValue("LowAlarm", out var loStr) && double.TryParse(loStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var loVal))
             Props.LowAlarm = loVal;
 
+        if (properties.TryGetValue("LowValue", out var lowStr) && double.TryParse(lowStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var lowVal))
+            Props.LowValue = lowVal;
+        else
+            Props.LowValue = Props.MinValue + (Props.MaxValue - Props.MinValue) * 0.25;
+
+        if (properties.TryGetValue("MidValue", out var midStr) && double.TryParse(midStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var midVal))
+            Props.MidValue = midVal;
+        else
+            Props.MidValue = Props.MinValue + (Props.MaxValue - Props.MinValue) * 0.50;
+
+        if (properties.TryGetValue("HighValue", out var hiVStr) && double.TryParse(hiVStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var hiVVal))
+            Props.HighValue = hiVVal;
+        else
+            Props.HighValue = Props.MinValue + (Props.MaxValue - Props.MinValue) * 0.75;
+
+        if (properties.TryGetValue("LowColor", out var lowCol))
+            Props.LowColor = lowCol;
+
+        if (properties.TryGetValue("MidColor", out var midCol))
+            Props.MidColor = midCol;
+
+        if (properties.TryGetValue("HighColor", out var hiCol))
+            Props.HighColor = hiCol;
+
+        if (properties.TryGetValue("EnableThresholdColor", out var enColorStr) && bool.TryParse(enColorStr, out var enColor))
+            Props.EnableThresholdColor = enColor;
+
         if (properties.TryGetValue("Decimals", out var decStr) && int.TryParse(decStr, out var decVal))
             Props.Decimals = decVal;
 
         if (properties.TryGetValue("ColorHex", out var color))
             Props.ColorHex = color;
+
+        UpdateSegmentArcs();
+        ReevaluateGaugeColor();
     }
 
     public override void SyncPropertiesFromFields()
@@ -79,6 +129,117 @@ public partial class CircularGaugeWidgetViewModel : WidgetViewModel
 
         if (Props.LowAlarm.HasValue) Properties["LowAlarm"] = Props.LowAlarm.Value.ToString(CultureInfo.InvariantCulture);
         else Properties.Remove("LowAlarm");
+
+        if (Props.LowValue.HasValue) Properties["LowValue"] = Props.LowValue.Value.ToString(CultureInfo.InvariantCulture);
+        else Properties.Remove("LowValue");
+
+        if (Props.MidValue.HasValue) Properties["MidValue"] = Props.MidValue.Value.ToString(CultureInfo.InvariantCulture);
+        else Properties.Remove("MidValue");
+
+        if (Props.HighValue.HasValue) Properties["HighValue"] = Props.HighValue.Value.ToString(CultureInfo.InvariantCulture);
+        else Properties.Remove("HighValue");
+
+        Properties["LowColor"] = Props.LowColor ?? "#38BDF8";
+        Properties["MidColor"] = Props.MidColor ?? "#10B981";
+        Properties["HighColor"] = Props.HighColor ?? "#EF4444";
+        Properties["EnableThresholdColor"] = Props.EnableThresholdColor.ToString();
+    }
+
+    public void UpdateSegmentArcs()
+    {
+        var min = Props.MinValue;
+        var max = Props.MaxValue;
+        var range = max - min;
+        if (range <= 0) range = 100;
+
+        var low = Props.LowValue ?? (min + range * 0.25);
+        var high = Props.HighValue ?? (min + range * 0.75);
+
+        low = Math.Clamp(low, min, max);
+        high = Math.Clamp(high, min, max);
+        if (low > high) (low, high) = (high, low);
+
+        var ratioLow = Math.Clamp((low - min) / range, 0.0, 1.0);
+        var ratioHigh = Math.Clamp((high - min) / range, 0.0, 1.0);
+
+        const double angleStart = -135.0;
+        const double angleTotal = 270.0;
+        var angleLow = angleStart + ratioLow * angleTotal;
+        var angleHigh = angleStart + ratioHigh * angleTotal;
+
+        const double cx = 60.0;
+        const double cy = 60.0;
+        const double r = 48.0;
+
+        Props.LowArcData = CreateArcString(cx, cy, r, angleStart, angleLow);
+        Props.MidArcData = CreateArcString(cx, cy, r, angleLow, angleHigh);
+        Props.HighArcData = CreateArcString(cx, cy, r, angleHigh, angleStart + angleTotal);
+    }
+
+    private static string CreateArcString(double cx, double cy, double r, double startAngleDeg, double endAngleDeg)
+    {
+        if (endAngleDeg <= startAngleDeg + 0.1) return string.Empty;
+        if (endAngleDeg - startAngleDeg >= 360) endAngleDeg = startAngleDeg + 359.9;
+
+        var rad1 = startAngleDeg * Math.PI / 180.0;
+        var x1 = cx + r * Math.Sin(rad1);
+        var y1 = cy - r * Math.Cos(rad1);
+
+        var rad2 = endAngleDeg * Math.PI / 180.0;
+        var x2 = cx + r * Math.Sin(rad2);
+        var y2 = cy - r * Math.Cos(rad2);
+
+        int isLargeArc = (endAngleDeg - startAngleDeg) > 180.0 ? 1 : 0;
+
+        return FormattableString.Invariant($"M {x1:F2} {y1:F2} A {r:F2} {r:F2} 0 {isLargeArc} 1 {x2:F2} {y2:F2}");
+    }
+
+    public void ReevaluateGaugeColor()
+    {
+        if (!Props.EnableThresholdColor)
+        {
+            return;
+        }
+
+        if (CurrentRawValue != null && double.TryParse(CurrentRawValue.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var num))
+        {
+            ApplyThresholdColorForValue(num);
+        }
+        else
+        {
+            Props.ColorHex = Props.MidColor ?? "#10B981";
+            ColorHex = Props.ColorHex;
+        }
+    }
+
+    private void ApplyThresholdColorForValue(double num)
+    {
+        if (!Props.EnableThresholdColor) return;
+
+        var min = Props.MinValue;
+        var max = Props.MaxValue;
+        var range = max - min;
+        if (range <= 0) range = 100;
+
+        var low = Props.LowValue ?? (min + range * 0.25);
+        var high = Props.HighValue ?? (min + range * 0.75);
+
+        string targetColor;
+        if (num <= low)
+        {
+            targetColor = Props.LowColor ?? "#38BDF8";
+        }
+        else if (num >= high)
+        {
+            targetColor = Props.HighColor ?? "#EF4444";
+        }
+        else
+        {
+            targetColor = Props.MidColor ?? "#10B981";
+        }
+
+        Props.ColorHex = targetColor;
+        ColorHex = targetColor;
     }
 
     public override void UpdateRuntimeValue(object? rawValue, string quality = "Good")
@@ -92,6 +253,11 @@ public partial class CircularGaugeWidgetViewModel : WidgetViewModel
             Props.NormalizedProgress = 0.0;
             Props.GaugeAngle = -135;
             IsAlarm = false;
+            if (Props.EnableThresholdColor)
+            {
+                Props.ColorHex = Props.MidColor ?? "#10B981";
+                ColorHex = Props.ColorHex;
+            }
             return;
         }
 
@@ -107,10 +273,19 @@ public partial class CircularGaugeWidgetViewModel : WidgetViewModel
             Props.NormalizedProgress = ratio;
             Props.GaugeAngle = -135.0 + (ratio * 270.0);
 
+            if (Props.EnableThresholdColor)
+            {
+                ApplyThresholdColorForValue(num);
+            }
+
             bool alarm = false;
             if (Props.HighAlarm.HasValue && num >= Props.HighAlarm.Value) alarm = true;
+            else if (Props.HighValue.HasValue && num >= Props.HighValue.Value) alarm = true;
+
             if (Props.LowAlarm.HasValue && num <= Props.LowAlarm.Value) alarm = true;
-            if (!Props.HighAlarm.HasValue && !Props.LowAlarm.HasValue && num >= Props.MaxValue * 0.9) alarm = true;
+            else if (Props.LowValue.HasValue && num <= Props.LowValue.Value) alarm = true;
+
+            if (!Props.HighAlarm.HasValue && !Props.HighValue.HasValue && !Props.LowAlarm.HasValue && !Props.LowValue.HasValue && num >= Props.MaxValue * 0.9) alarm = true;
             IsAlarm = alarm;
         }
         else
@@ -135,16 +310,118 @@ public partial class TankLevelWidgetViewModel : WidgetViewModel
         Type = WidgetType.LevelTank;
         Width = 150;
         Height = 220;
-        _props.PropertyChanged += (s, e) => { if (e.PropertyName != null) OnPropertyChanged(e.PropertyName); };
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null)
+            {
+                OnPropertyChanged(e.PropertyName);
+                if (e.PropertyName == nameof(TankLevelProps.Orientation))
+                {
+                    OnPropertyChanged(nameof(IsHorizontal));
+                    AdjustDimensionsForOrientation();
+                }
+                else if (e.PropertyName is nameof(TankLevelProps.LowAlarm) or nameof(TankLevelProps.HighAlarm) or
+                         nameof(TankLevelProps.LowColor) or nameof(TankLevelProps.MidColor) or nameof(TankLevelProps.HighColor))
+                {
+                    ReevaluateLiquidColor();
+                }
+            }
+        };
     }
 
     public override double MinValue { get => Props.MinValue; set => Props.MinValue = value; }
     public override double MaxValue { get => Props.MaxValue; set => Props.MaxValue = value; }
     public override string Unit { get => Props.Unit; set => Props.Unit = value; }
-    public override double? HighAlarm { get => Props.HighAlarm; set => Props.HighAlarm = value; }
-    public override double? LowAlarm { get => Props.LowAlarm; set => Props.LowAlarm = value; }
+    public override double? HighAlarm { get => Props.HighAlarm; set { Props.HighAlarm = value; OnPropertyChanged(); ReevaluateLiquidColor(); } }
+    public override double? LowAlarm { get => Props.LowAlarm; set { Props.LowAlarm = value; OnPropertyChanged(); ReevaluateLiquidColor(); } }
     public override string ColorHex { get => Props.ColorHex; set => Props.ColorHex = value; }
     public override double NormalizedProgress { get => Props.NormalizedProgress; set => Props.NormalizedProgress = value; }
+
+    public string Orientation
+    {
+        get => Props.Orientation;
+        set
+        {
+            if (Props.Orientation != value)
+            {
+                Props.Orientation = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsHorizontal));
+                AdjustDimensionsForOrientation();
+            }
+        }
+    }
+
+    public void AdjustDimensionsForOrientation()
+    {
+        if (IsHorizontal)
+        {
+            // 切换为横向（卧式）：宽大于高，尺寸自动调整为宽 220、高 140
+            if (Width < Height)
+            {
+                (Width, Height) = (Height, Width);
+            }
+            if (Width < 200) Width = 220;
+            if (Height > 160) Height = 140;
+        }
+        else
+        {
+            // 切换为竖向（立式）：高大于宽，尺寸自动调整为宽 150、高 220
+            if (Width > Height)
+            {
+                (Width, Height) = (Height, Width);
+            }
+            if (Width > 170) Width = 150;
+            if (Height < 200) Height = 220;
+        }
+    }
+
+    public bool IsHorizontal => Props.IsHorizontal;
+    public string LowColor { get => Props.LowColor; set => Props.LowColor = value; }
+    public string MidColor { get => Props.MidColor; set => Props.MidColor = value; }
+    public string HighColor { get => Props.HighColor; set => Props.HighColor = value; }
+    public string LiquidColor { get => Props.LiquidColor; set => Props.LiquidColor = value; }
+
+    public void ReevaluateLiquidColor(double? currentVal = null)
+    {
+        double val;
+        if (currentVal.HasValue)
+        {
+            val = currentVal.Value;
+        }
+        else if (CurrentRawValue != null && double.TryParse(CurrentRawValue.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
+        {
+            val = parsed;
+        }
+        else
+        {
+            Props.LiquidColor = Props.MidColor ?? "#0284C7";
+            return;
+        }
+
+        var min = Props.MinValue;
+        var max = Props.MaxValue;
+        var range = max - min;
+        if (range <= 0) range = 100;
+
+        var low = Props.LowAlarm ?? (min + range * 0.25);
+        var high = Props.HighAlarm ?? (min + range * 0.75);
+
+        if (low > high) (low, high) = (high, low);
+
+        if (val <= low)
+        {
+            Props.LiquidColor = Props.LowColor ?? "#EAB308";
+        }
+        else if (val >= high)
+        {
+            Props.LiquidColor = Props.HighColor ?? "#EF4444";
+        }
+        else
+        {
+            Props.LiquidColor = Props.MidColor ?? "#0284C7";
+        }
+    }
 
     public override void LoadProperties(Dictionary<string, string> properties)
     {
@@ -169,6 +446,20 @@ public partial class TankLevelWidgetViewModel : WidgetViewModel
 
         if (properties.TryGetValue("ColorHex", out var color))
             Props.ColorHex = color;
+
+        if (properties.TryGetValue("Orientation", out var orient) && !string.IsNullOrWhiteSpace(orient))
+            Props.Orientation = orient;
+
+        if (properties.TryGetValue("LowColor", out var loClr) && !string.IsNullOrWhiteSpace(loClr))
+            Props.LowColor = loClr;
+
+        if (properties.TryGetValue("MidColor", out var midClr) && !string.IsNullOrWhiteSpace(midClr))
+            Props.MidColor = midClr;
+
+        if (properties.TryGetValue("HighColor", out var hiClr) && !string.IsNullOrWhiteSpace(hiClr))
+            Props.HighColor = hiClr;
+
+        ReevaluateLiquidColor();
     }
 
     public override void SyncPropertiesFromFields()
@@ -179,12 +470,21 @@ public partial class TankLevelWidgetViewModel : WidgetViewModel
         Properties["MaxValue"] = Props.MaxValue.ToString(CultureInfo.InvariantCulture);
         Properties["Unit"] = Props.Unit ?? string.Empty;
         Properties["ColorHex"] = Props.ColorHex ?? "#0284C7";
+        Properties["Orientation"] = Props.Orientation ?? "Vertical";
 
         if (Props.HighAlarm.HasValue) Properties["HighAlarm"] = Props.HighAlarm.Value.ToString(CultureInfo.InvariantCulture);
         else Properties.Remove("HighAlarm");
 
         if (Props.LowAlarm.HasValue) Properties["LowAlarm"] = Props.LowAlarm.Value.ToString(CultureInfo.InvariantCulture);
         else Properties.Remove("LowAlarm");
+
+        Properties.Remove("LowLevel");
+        Properties.Remove("MidLevel");
+        Properties.Remove("HighLevel");
+
+        Properties["LowColor"] = Props.LowColor ?? "#EAB308";
+        Properties["MidColor"] = Props.MidColor ?? "#0284C7";
+        Properties["HighColor"] = Props.HighColor ?? "#EF4444";
     }
 
     public override void UpdateRuntimeValue(object? rawValue, string quality = "Good")
@@ -197,6 +497,7 @@ public partial class TankLevelWidgetViewModel : WidgetViewModel
             FormattedValue = "--";
             Props.NormalizedProgress = 0.0;
             IsAlarm = false;
+            ReevaluateLiquidColor();
             return;
         }
 
@@ -209,6 +510,8 @@ public partial class TankLevelWidgetViewModel : WidgetViewModel
 
             var ratio = Math.Clamp((num - Props.MinValue) / range, 0.0, 1.0);
             Props.NormalizedProgress = ratio;
+
+            ReevaluateLiquidColor(num);
 
             bool alarm = false;
             if (Props.HighAlarm.HasValue && num >= Props.HighAlarm.Value) alarm = true;
@@ -458,7 +761,7 @@ public partial class StatusLedWidgetViewModel : WidgetViewModel
 }
 
 /// <summary>
-/// 工业控制按钮组件视图模型（继承自基类 WidgetViewModel，组合包含 ControlButtonProps）
+/// 普通按钮组件视图模型（继承自基类 WidgetViewModel，组合包含 ControlButtonProps）
 /// </summary>
 public partial class ControlButtonWidgetViewModel : WidgetViewModel
 {
@@ -470,8 +773,8 @@ public partial class ControlButtonWidgetViewModel : WidgetViewModel
     public ControlButtonWidgetViewModel()
     {
         Type = WidgetType.ControlButton;
-        Width = 150;
-        Height = 90;
+        Width = 100;
+        Height = 36;
         _props.PropertyChanged += (s, e) => { if (e.PropertyName != null) OnPropertyChanged(e.PropertyName); };
     }
 
@@ -509,7 +812,7 @@ public partial class ControlButtonWidgetViewModel : WidgetViewModel
     {
         base.SyncPropertiesFromFields();
 
-        Properties["ButtonText"] = Props.ButtonText ?? "触发控制";
+        Properties["ButtonText"] = Props.ButtonText ?? "按钮";
         Properties["WriteValue"] = Props.WriteValue ?? "1";
         Properties["ButtonMode"] = Props.ButtonMode ?? "DirectWrite";
         Properties["ColorHex"] = Props.ColorHex ?? "#0284C7";
