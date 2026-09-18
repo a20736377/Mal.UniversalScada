@@ -6,6 +6,7 @@
     <ProjectReference Include="..\Mal.UniversalScada.Drivers.Modbus\Mal.UniversalScada.Drivers.Modbus.csproj" />
     <ProjectReference Include="..\Mal.UniversalScada.Drivers.Siemens\Mal.UniversalScada.Drivers.Siemens.csproj" />
     <ProjectReference Include="..\Mal.UniversalScada.Drivers.CustomSerial\Mal.UniversalScada.Drivers.CustomSerial.csproj" />
+    <ProjectReference Include="..\Mal.UniversalScada.UI.Controls\Mal.UniversalScada.UI.Controls.csproj" />
   </ItemGroup>
 
   <ItemGroup>

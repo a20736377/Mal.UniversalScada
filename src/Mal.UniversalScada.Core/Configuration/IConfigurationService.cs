@@ -71,4 +71,38 @@ public interface IConfigurationService
     /// 清理不属于当前传输介质的冗余参数，保存成空
     /// </summary>
     void CleanUnusedMediaParameters(ChannelConfig channel);
+
+    /// <summary>
+    /// 获取当前系统配置的所有点位
+    /// </summary>
+    Task<IReadOnlyList<TagNode>> GetAllTagsAsync();
+
+    #region 界面组态视图 (UiViews)
+
+    /// <summary>
+    /// 获取所有配置的监控画面方案列表
+    /// </summary>
+    Task<IReadOnlyList<UiViewConfig>> GetUiViewsAsync();
+
+    /// <summary>
+    /// 根据 ID 获取画面配置
+    /// </summary>
+    Task<UiViewConfig?> GetUiViewByIdAsync(string viewId);
+
+    /// <summary>
+    /// 保存或更新画面组态配置
+    /// </summary>
+    Task SaveUiViewAsync(UiViewConfig view);
+
+    /// <summary>
+    /// 删除指定画面配置
+    /// </summary>
+    Task DeleteUiViewAsync(string viewId);
+
+    /// <summary>
+    /// 创建一个新的空白监控画面配置
+    /// </summary>
+    UiViewConfig CreateDefaultUiView(string? name = null, string? deviceId = null);
+
+    #endregion
 }

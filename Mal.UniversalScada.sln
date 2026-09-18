@@ -27,6 +27,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.UniversalScada.Drivers.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.UniversalScada.Drivers.CustomSerial.Tests", "tests\Mal.UniversalScada.Drivers.CustomSerial.Tests\Mal.UniversalScada.Drivers.CustomSerial.Tests.csproj", "{FD4CCAB5-A46A-4FBA-892B-3E44EB83435E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.UniversalScada.UI.Controls", "src\Mal.UniversalScada.UI.Controls\Mal.UniversalScada.UI.Controls.csproj", "{C41077FD-0AA4-411B-A6FC-9E73E522FA92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.UniversalScada.Core.Tests", "tests\Mal.UniversalScada.Core.Tests\Mal.UniversalScada.Core.Tests.csproj", "{0E622AAB-6D9F-4714-96AB-60796168F541}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -157,6 +161,30 @@ Global
 		{FD4CCAB5-A46A-4FBA-892B-3E44EB83435E}.Release|x64.Build.0 = Release|Any CPU
 		{FD4CCAB5-A46A-4FBA-892B-3E44EB83435E}.Release|x86.ActiveCfg = Release|Any CPU
 		{FD4CCAB5-A46A-4FBA-892B-3E44EB83435E}.Release|x86.Build.0 = Release|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Debug|x64.Build.0 = Debug|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Debug|x86.Build.0 = Debug|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Release|x64.ActiveCfg = Release|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Release|x64.Build.0 = Release|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Release|x86.ActiveCfg = Release|Any CPU
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92}.Release|x86.Build.0 = Release|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Debug|x64.Build.0 = Debug|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Debug|x86.Build.0 = Debug|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Release|x64.ActiveCfg = Release|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Release|x64.Build.0 = Release|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Release|x86.ActiveCfg = Release|Any CPU
+		{0E622AAB-6D9F-4714-96AB-60796168F541}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -172,5 +200,7 @@ Global
 		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{F3D372FB-7317-434F-B896-1B7A3877A6EB} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{FD4CCAB5-A46A-4FBA-892B-3E44EB83435E} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{C41077FD-0AA4-411B-A6FC-9E73E522FA92} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{0E622AAB-6D9F-4714-96AB-60796168F541} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Mal.UniversalScada.Configurator.Wpf.ViewModels"
+        xmlns:views="clr-namespace:Mal.UniversalScada.Configurator.Wpf.Views"
         xmlns:models="clr-namespace:Mal.UniversalScada.Configurator.Wpf.Models"
         xmlns:enums="clr-namespace:Mal.UniversalScada.Core.Enums;assembly=Mal.UniversalScada.Core"
         xmlns:local="clr-namespace:Mal.UniversalScada.Configurator.Wpf"
@@ -107,6 +108,10 @@
                     <Button Content="💾 保存当前组态" Padding="14,6" Height="34" Margin="0,0,8,0"
                             Background="#0284C7" Foreground="#FFFFFF" FontWeight="Bold" BorderThickness="0"
                             Command="{Binding SaveAllCommand}"/>
+
+                    <Button Content="🖥️ 可视化画面设计器" Padding="14,6" Height="34" Margin="0,0,14,0"
+                            Background="#059669" Foreground="#FFFFFF" FontWeight="Bold" BorderThickness="0"
+                            Command="{Binding OpenUiDesignerCommand}"/>
 
                     <Button Content="🔑 修改密码" Padding="10,6" Height="34" Margin="0,0,8,0"
                             Background="#F8FAFC" Foreground="#475569" BorderBrush="#CBD5E1" BorderThickness="1"
@@ -793,6 +798,21 @@
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
+                </Border>
+
+                <!-- 模式 F：可视化画面所见即所得设计器 (UiDesigner) -->
+                <Border>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentViewMode}" Value="{x:Static vm:ViewMode.UiDesigner}">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <views:UiDesignerView DataContext="{Binding DesignerVm}"/>
                 </Border>
             </Grid>
         </Grid>

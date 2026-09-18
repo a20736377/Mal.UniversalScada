@@ -1,0 +1,36 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.ControlButtonControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
+    <Border Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1.5" CornerRadius="10" Padding="8">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 标题与绑定点位 -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,6">
+                <TextBlock Text="{Binding Title}" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="{Binding PrimaryTagId}" Foreground="#475569" FontSize="9" HorizontalAlignment="Right"
+                           TextTrimming="CharacterEllipsis" MaxWidth="60"/>
+            </DockPanel>
+
+            <!-- 控制按钮主体 -->
+            <Button Grid.Row="1" Content="{Binding ButtonText}" Click="OnExecuteClick"
+                    Background="#0284C7" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"
+                    BorderThickness="1" BorderBrush="#38BDF8" Cursor="Hand" Height="36">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="6"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>

@@ -21,7 +21,10 @@ public enum TreeNodeType
     DeviceItem,
 
     /// <summary>三级：具体点位</summary>
-    TagItem
+    TagItem,
+
+    /// <summary>一级：可视化画面所见即所得设计器根节点</summary>
+    UiDesignerRoot
 }
 
 /// <summary>

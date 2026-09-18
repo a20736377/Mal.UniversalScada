@@ -1,0 +1,54 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.StatusLedControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
+    <Border Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1.5" CornerRadius="10" Padding="8">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 标题 -->
+            <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+            <!-- 状态灯核心 -->
+            <Grid Grid.Row="1" Width="52" Height="52" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- 金属外圈 -->
+                <Ellipse Stroke="#334155" StrokeThickness="4" Fill="#090D16"/>
+
+                <!-- 亮灯指示 (依据 IsActive 切换) -->
+                <Ellipse Width="38" Height="38">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="#334155"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                    <Setter Property="Fill" Value="#10B981"/>
+                                    <Setter Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect BlurRadius="16" Color="#10B981" ShadowDepth="0" Opacity="0.9"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+
+                <!-- 镜头高光 -->
+                <Ellipse Width="16" Height="10" Fill="#FFFFFF" Opacity="0.25" VerticalAlignment="Top" Margin="0,9,0,0"/>
+            </Grid>
+
+            <!-- 状态说明文案 -->
+            <TextBlock Grid.Row="2" Text="{Binding FormattedValue}" Foreground="#F8FAFC" FontSize="11" FontWeight="Bold"
+                       HorizontalAlignment="Center" Margin="0,2,0,0"/>
+        </Grid>
+    </Border>
+</UserControl>

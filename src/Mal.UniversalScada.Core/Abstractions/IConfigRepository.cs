@@ -94,4 +94,28 @@ public interface IConfigRepository
     Task DeleteTagAsync(string tagId);
 
     #endregion
+
+    #region 界面组态视图 (UiViews)
+
+    /// <summary>
+    /// 获取系统中配置的所有监控画面列表
+    /// </summary>
+    Task<IReadOnlyList<UiViewConfig>> GetUiViewsAsync();
+
+    /// <summary>
+    /// 根据画面 ID 获取画面配置
+    /// </summary>
+    Task<UiViewConfig?> GetUiViewByIdAsync(string viewId);
+
+    /// <summary>
+    /// 保存或更新画面组态配置
+    /// </summary>
+    Task SaveUiViewAsync(UiViewConfig view);
+
+    /// <summary>
+    /// 删除指定画面配置
+    /// </summary>
+    Task DeleteUiViewAsync(string viewId);
+
+    #endregion
 }

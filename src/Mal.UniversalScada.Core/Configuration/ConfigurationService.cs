@@ -144,6 +144,12 @@ public class ConfigurationService : IConfigurationService
         await _configRepository.DeleteTagAsync(tagId);
     }
 
+    public async Task<IReadOnlyList<TagNode>> GetAllTagsAsync()
+    {
+        var tags = await _configRepository.GetAllTagsAsync();
+        return tags.ToList();
+    }
+
     public void CleanUnusedMediaParameters(ChannelConfig channel)
     {
         if (channel.ChannelType == ChannelType.SerialPort)
@@ -230,4 +236,46 @@ public class ConfigurationService : IConfigurationService
             new List<DeviceNode> { dev1, dev2 },
             tags);
     }
+
+    #region 界面组态视图 (UiViews)
+
+    public async Task<IReadOnlyList<UiViewConfig>> GetUiViewsAsync()
+    {
+        return await _configRepository.GetUiViewsAsync();
+    }
+
+    public async Task<UiViewConfig?> GetUiViewByIdAsync(string viewId)
+    {
+        return await _configRepository.GetUiViewByIdAsync(viewId);
+    }
+
+    public async Task SaveUiViewAsync(UiViewConfig view)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+        view.UpdatedTime = DateTime.Now;
+        await _configRepository.SaveUiViewAsync(view);
+    }
+
+    public async Task DeleteUiViewAsync(string viewId)
+    {
+        await _configRepository.DeleteUiViewAsync(viewId);
+    }
+
+    public UiViewConfig CreateDefaultUiView(string? name = null, string? deviceId = null)
+    {
+        return new UiViewConfig
+        {
+            ViewId = "View_" + Guid.NewGuid().ToString("N")[..8],
+            Name = name ?? "新建工艺看板",
+            BoundDeviceId = deviceId,
+            LayoutMode = "Canvas",
+            CanvasWidth = 1920,
+            CanvasHeight = 1080,
+            IsDefault = false,
+            Widgets = new List<WidgetConfig>(),
+            UpdatedTime = DateTime.Now
+        };
+    }
+
+    #endregion
 }

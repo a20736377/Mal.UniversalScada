@@ -1,0 +1,83 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.IoMatrixControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
+    <Border Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1.5" CornerRadius="10" Padding="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 顶部标题与点位 -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                <TextBlock Text="{Binding Title}" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding PrimaryTagId}" Foreground="#475569" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </DockPanel>
+
+            <!-- 8 路 IO 点阵 (2行4列) -->
+            <UniformGrid Grid.Row="1" Rows="2" Columns="4" Margin="2">
+                <!-- DI0 -->
+                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
+                    <Ellipse Width="12" Height="12"
+                             Fill="{Binding CurrentRawValue, Converter={x:Static vm:BitStatusConverter.Instance}, ConverterParameter=0}"/>
+                    <TextBlock Text="0" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <!-- DI1 -->
+                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
+                    <Ellipse Width="12" Height="12"
+                             Fill="{Binding CurrentRawValue, Converter={x:Static vm:BitStatusConverter.Instance}, ConverterParameter=1}"/>
+                    <TextBlock Text="1" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <!-- DI2 -->
+                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
+                    <Ellipse Width="12" Height="12"
+                             Fill="{Binding CurrentRawValue, Converter={x:Static vm:BitStatusConverter.Instance}, ConverterParameter=2}"/>
+                    <TextBlock Text="2" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <!-- DI3 -->
+                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
+                    <Ellipse Width="12" Height="12"
+                             Fill="{Binding CurrentRawValue, Converter={x:Static vm:BitStatusConverter.Instance}, ConverterParameter=3}"/>
+                    <TextBlock Text="3" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <!-- DI4 -->
+                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
+                    <Ellipse Width="12" Height="12"
+                             Fill="{Binding CurrentRawValue, Converter={x:Static vm:BitStatusConverter.Instance}, ConverterParameter=4}"/>
+                    <TextBlock Text="4" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <!-- DI5 -->
+                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
+                    <Ellipse Width="12" Height="12"
+                             Fill="{Binding CurrentRawValue, Converter={x:Static vm:BitStatusConverter.Instance}, ConverterParameter=5}"/>
+                    <TextBlock Text="5" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <!-- DI6 -->
+                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
+                    <Ellipse Width="12" Height="12"
+                             Fill="{Binding CurrentRawValue, Converter={x:Static vm:BitStatusConverter.Instance}, ConverterParameter=6}"/>
+                    <TextBlock Text="6" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <!-- DI7 -->
+                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
+                    <Ellipse Width="12" Height="12"
+                             Fill="{Binding CurrentRawValue, Converter={x:Static vm:BitStatusConverter.Instance}, ConverterParameter=7}"/>
+                    <TextBlock Text="7" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </UniformGrid>
+
+            <!-- 底部原始 HEX / 数值 -->
+            <DockPanel Grid.Row="2" Margin="0,6,0,0">
+                <TextBlock Text="HEX:" Foreground="#64748B" FontSize="10"/>
+                <TextBlock Text="{Binding FormattedValue}" Foreground="#38BDF8" FontSize="11" FontWeight="Bold" Margin="4,0,0,0"/>
+                <TextBlock Text="8-Bit Status" Foreground="#475569" FontSize="10" HorizontalAlignment="Right"/>
+            </DockPanel>
+        </Grid>
+    </Border>
+</UserControl>

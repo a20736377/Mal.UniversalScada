@@ -98,6 +98,21 @@ public class SqliteConfigRepository : IConfigRepository
                 CREATE INDEX IF NOT EXISTS IX_Tags_DeviceId ON Tags(DeviceId);";
             await connection.ExecuteAsync(createTagsSql);
 
+            // 5. 创建画面视图组态表 (UiViews)
+            const string createUiViewsSql = @"
+                CREATE TABLE IF NOT EXISTS UiViews (
+                    ViewId TEXT PRIMARY KEY,
+                    Name TEXT NOT NULL,
+                    BoundDeviceId TEXT,
+                    LayoutMode TEXT NOT NULL,
+                    CanvasWidth REAL NOT NULL DEFAULT 1920,
+                    CanvasHeight REAL NOT NULL DEFAULT 1080,
+                    WidgetsJson TEXT NOT NULL,
+                    IsDefault INTEGER NOT NULL DEFAULT 0,
+                    UpdatedTime TEXT NOT NULL
+                );";
+            await connection.ExecuteAsync(createUiViewsSql);
+
             _isInitialized = true;
         }
         finally
@@ -329,6 +344,126 @@ public class SqliteConfigRepository : IConfigRepository
         await using var connection = CreateConnection();
         const string sql = "DELETE FROM Tags WHERE TagId = @TagId;";
         await connection.ExecuteAsync(sql, new { TagId = tagId });
+    }
+
+    #endregion
+
+    #region 界面组态视图 (UiViews)
+
+    private class UiViewDto
+    {
+        public string ViewId { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? BoundDeviceId { get; set; }
+        public string LayoutMode { get; set; } = "Canvas";
+        public double CanvasWidth { get; set; } = 1920;
+        public double CanvasHeight { get; set; } = 1080;
+        public string WidgetsJson { get; set; } = "[]";
+        public int IsDefault { get; set; }
+        public string UpdatedTime { get; set; } = string.Empty;
+
+        public UiViewConfig ToModel()
+        {
+            List<WidgetConfig> widgets;
+            try
+            {
+                widgets = System.Text.Json.JsonSerializer.Deserialize<List<WidgetConfig>>(WidgetsJson) ?? new();
+            }
+            catch
+            {
+                widgets = new();
+            }
+
+            DateTime.TryParse(UpdatedTime, out var dt);
+
+            return new UiViewConfig
+            {
+                ViewId = ViewId,
+                Name = Name,
+                BoundDeviceId = BoundDeviceId,
+                LayoutMode = LayoutMode,
+                CanvasWidth = CanvasWidth > 0 ? CanvasWidth : 1920,
+                CanvasHeight = CanvasHeight > 0 ? CanvasHeight : 1080,
+                IsDefault = IsDefault == 1,
+                Widgets = widgets,
+                UpdatedTime = dt == default ? DateTime.Now : dt
+            };
+        }
+    }
+
+    public async Task<IReadOnlyList<UiViewConfig>> GetUiViewsAsync()
+    {
+        await EnsureInitializedAsync();
+        await using var connection = CreateConnection();
+        const string sql = "SELECT * FROM UiViews ORDER BY IsDefault DESC, UpdatedTime DESC;";
+        var dtos = await connection.QueryAsync<UiViewDto>(sql);
+        return dtos.Select(d => d.ToModel()).ToList();
+    }
+
+    public async Task<UiViewConfig?> GetUiViewByIdAsync(string viewId)
+    {
+        await EnsureInitializedAsync();
+        await using var connection = CreateConnection();
+        const string sql = "SELECT * FROM UiViews WHERE ViewId = @ViewId LIMIT 1;";
+        var dto = await connection.QueryFirstOrDefaultAsync<UiViewDto>(sql, new { ViewId = viewId });
+        return dto?.ToModel();
+    }
+
+    public async Task SaveUiViewAsync(UiViewConfig view)
+    {
+        await EnsureInitializedAsync();
+        await using var connection = CreateConnection();
+        await connection.OpenAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+
+        if (view.IsDefault)
+        {
+            // 若设为默认，先清空其它画面的默认标识
+            await connection.ExecuteAsync("UPDATE UiViews SET IsDefault = 0;", transaction);
+        }
+
+        var json = System.Text.Json.JsonSerializer.Serialize(view.Widgets);
+
+        const string sql = @"
+            INSERT INTO UiViews (
+                ViewId, Name, BoundDeviceId, LayoutMode, CanvasWidth, CanvasHeight,
+                WidgetsJson, IsDefault, UpdatedTime
+            ) VALUES (
+                @ViewId, @Name, @BoundDeviceId, @LayoutMode, @CanvasWidth, @CanvasHeight,
+                @WidgetsJson, @IsDefault, @UpdatedTime
+            )
+            ON CONFLICT(ViewId) DO UPDATE SET
+                Name = excluded.Name,
+                BoundDeviceId = excluded.BoundDeviceId,
+                LayoutMode = excluded.LayoutMode,
+                CanvasWidth = excluded.CanvasWidth,
+                CanvasHeight = excluded.CanvasHeight,
+                WidgetsJson = excluded.WidgetsJson,
+                IsDefault = excluded.IsDefault,
+                UpdatedTime = excluded.UpdatedTime;";
+
+        await connection.ExecuteAsync(sql, new
+        {
+            view.ViewId,
+            view.Name,
+            view.BoundDeviceId,
+            view.LayoutMode,
+            view.CanvasWidth,
+            view.CanvasHeight,
+            WidgetsJson = json,
+            IsDefault = view.IsDefault ? 1 : 0,
+            UpdatedTime = view.UpdatedTime.ToString("yyyy-MM-dd HH:mm:ss")
+        }, transaction);
+
+        await transaction.CommitAsync();
+    }
+
+    public async Task DeleteUiViewAsync(string viewId)
+    {
+        await EnsureInitializedAsync();
+        await using var connection = CreateConnection();
+        const string sql = "DELETE FROM UiViews WHERE ViewId = @ViewId;";
+        await connection.ExecuteAsync(sql, new { ViewId = viewId });
     }
 
     #endregion

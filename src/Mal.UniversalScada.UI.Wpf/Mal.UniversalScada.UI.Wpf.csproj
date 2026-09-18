@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Mal.UniversalScada.Core\Mal.UniversalScada.Core.csproj" />
@@ -6,6 +6,12 @@
     <ProjectReference Include="..\Mal.UniversalScada.Drivers.Siemens\Mal.UniversalScada.Drivers.Siemens.csproj" />
     <ProjectReference Include="..\Mal.UniversalScada.Drivers.CustomSerial\Mal.UniversalScada.Drivers.CustomSerial.csproj" />
     <ProjectReference Include="..\Mal.UniversalScada.Storage.Sqlite\Mal.UniversalScada.Storage.Sqlite.csproj" />
+    <ProjectReference Include="..\Mal.UniversalScada.UI.Controls\Mal.UniversalScada.UI.Controls.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
   </ItemGroup>
 
   <PropertyGroup>

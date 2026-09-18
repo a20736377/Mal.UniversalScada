@@ -20,7 +20,8 @@ public enum ViewMode
     DeviceRoot,     // 设备管理总览
     ChannelDetail,  // 具体通道编辑
     DeviceDetail,   // 具体设备编辑 (含点位列表)
-    TagDetail       // 具体单个点位详细编辑
+    TagDetail,      // 具体单个点位详细编辑
+    UiDesigner      // 可视化画面所见即所得设计器
 }
 
 /// <summary>
@@ -81,6 +82,12 @@ public partial class MainViewModel : ObservableObject
             case TreeNodeType.DeviceRoot:
                 CurrentViewMode = ViewMode.DeviceRoot;
                 StatusMessage = "当前选中：设备管理";
+                break;
+
+            case TreeNodeType.UiDesignerRoot:
+                CurrentViewMode = ViewMode.UiDesigner;
+                StatusMessage = "当前模式：可视化画面所见即所得设计器";
+                _ = DesignerVm.InitializeAsync();
                 break;
 
             case TreeNodeType.ChannelItem when value.DataPayload is ChannelConfig ch:
@@ -216,6 +223,8 @@ public partial class MainViewModel : ObservableObject
 
     #endregion
 
+    public UiDesignerViewModel DesignerVm { get; }
+
     public MainViewModel(
         IConfigurationService configService,
         IAdminAuthService authService,
@@ -229,11 +238,13 @@ public partial class MainViewModel : ObservableObject
         _channelTester = channelTester;
         _tagTester = tagTester;
 
+        DesignerVm = new UiDesignerViewModel(configService);
         CurrentAdmin = _authService.CurrentUser ?? "admin";
 
         RefreshSerialPorts();
         _ = LoadFromDbAsync();
     }
+
 
     [RelayCommand]
     public void RefreshSerialPorts()
@@ -318,6 +329,9 @@ public partial class MainViewModel : ObservableObject
         TreeRoots.Add(deviceRootNode);
         TreeRoots.Add(channelRootNode);
 
+        var uiDesignerNode = new TopologyTreeNode("ROOT_UI_DESIGNER", "🖥️ 可视化画面设计器", TreeNodeType.UiDesignerRoot, null, "🖥️");
+        TreeRoots.Add(uiDesignerNode);
+
         // 默认展开一级节点
         deviceRootNode.IsExpanded = true;
         channelRootNode.IsExpanded = true;
@@ -327,6 +341,15 @@ public partial class MainViewModel : ObservableObject
             SelectedTreeNode = deviceRootNode;
         }
     }
+
+    [RelayCommand]
+    public async Task OpenUiDesignerAsync()
+    {
+        CurrentViewMode = ViewMode.UiDesigner;
+        StatusMessage = "当前模式：可视化画面所见即所得设计器";
+        await DesignerVm.InitializeAsync();
+    }
+
 
     private void RefreshCurrentDeviceTags()
     {
