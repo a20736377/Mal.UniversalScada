@@ -172,7 +172,8 @@ public class UiConfigurationTests
         {
             Type = WidgetType.GaugeCircular,
             MinValue = 0,
-            MaxValue = 100
+            MaxValue = 100,
+            Decimals = 0
         };
 
         // Mid point: 50 -> 50% -> angle = 0°
@@ -190,5 +191,79 @@ public class UiConfigurationTests
         vm.UpdateRuntimeValue(100.0);
         Assert.Equal(1.0, vm.NormalizedProgress, precision: 2);
         Assert.Equal(135.0, vm.GaugeAngle, precision: 1);
+    }
+
+    [Fact]
+    public void WidgetArchitecture_AllWidgetsShareBaseClass_AndHaveSpecializedCompositionProps()
+    {
+        // 1. 验证所有组件均继承自共同基类 WidgetViewModel
+        var gaugeVm = new CircularGaugeWidgetViewModel();
+        var tankVm = new TankLevelWidgetViewModel();
+        var numVm = new NumericCardWidgetViewModel();
+        var ioVm = new IoMatrixWidgetViewModel();
+        var ledVm = new StatusLedWidgetViewModel();
+        var btnVm = new ControlButtonWidgetViewModel();
+
+        Assert.True(gaugeVm is WidgetViewModel);
+        Assert.True(tankVm is WidgetViewModel);
+        Assert.True(numVm is WidgetViewModel);
+        Assert.True(ioVm is WidgetViewModel);
+        Assert.True(ledVm is WidgetViewModel);
+        Assert.True(btnVm is WidgetViewModel);
+
+        // 2. 验证各组件独有的属性存放在独立的组合类中
+        Assert.NotNull(gaugeVm.GaugeProps);
+        Assert.IsType<CircularGaugeProps>(gaugeVm.GaugeProps);
+        Assert.Same(gaugeVm.Props, gaugeVm.GaugeProps);
+
+        Assert.NotNull(tankVm.TankProps);
+        Assert.IsType<TankLevelProps>(tankVm.TankProps);
+
+        Assert.NotNull(numVm.CardProps);
+        Assert.IsType<NumericCardProps>(numVm.CardProps);
+
+        Assert.NotNull(ioVm.IoProps);
+        Assert.IsType<IoMatrixProps>(ioVm.IoProps);
+
+        Assert.NotNull(ledVm.LedProps);
+        Assert.IsType<StatusLedProps>(ledVm.LedProps);
+
+        Assert.NotNull(btnVm.ButtonProps);
+        Assert.IsType<ControlButtonProps>(btnVm.ButtonProps);
+
+        // 3. 验证通过工厂方法 WidgetViewModel.FromConfig 创建后组合类属性正确注入与回写
+        var gaugeConfig = new WidgetConfig
+        {
+            WidgetId = "G_01",
+            Type = WidgetType.GaugeCircular,
+            Title = "主油温",
+            Properties = new()
+            {
+                ["MinValue"] = "20",
+                ["MaxValue"] = "180",
+                ["Unit"] = "℃",
+                ["HighAlarm"] = "150",
+                ["Decimals"] = "2"
+            }
+        };
+
+        var restoredGauge = WidgetViewModel.FromConfig(gaugeConfig) as CircularGaugeWidgetViewModel;
+        Assert.NotNull(restoredGauge);
+        // 验证独有参数存放在组合类中
+        Assert.Equal(20, restoredGauge!.Props.MinValue);
+        Assert.Equal(180, restoredGauge.Props.MaxValue);
+        Assert.Equal("℃", restoredGauge.Props.Unit);
+        Assert.Equal(150, restoredGauge.Props.HighAlarm);
+        Assert.Equal(2, restoredGauge.Props.Decimals);
+        // 验证共有参数在基类中
+        Assert.Equal("G_01", restoredGauge.Id);
+        Assert.Equal("主油温", restoredGauge.Title);
+
+        // 修改组合类参数并验证回写保存
+        restoredGauge.Props.Unit = "degC";
+        restoredGauge.Props.HighAlarm = 160;
+        var exportedConfig = restoredGauge.ToConfig();
+        Assert.Equal("degC", exportedConfig.GetProp("Unit"));
+        Assert.Equal("160", exportedConfig.GetProp("HighAlarm"));
     }
 }

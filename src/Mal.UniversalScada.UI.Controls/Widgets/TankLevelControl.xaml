@@ -30,11 +30,14 @@
                 </StackPanel>
 
                 <!-- 储罐外壳 -->
-                <Border Background="#090D16" BorderBrush="#38BDF8" BorderThickness="2" CornerRadius="16"
+                <Border Background="#090D16"
+                        BorderBrush="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                        BorderThickness="2" CornerRadius="16"
                         ClipToBounds="True" Width="70" HorizontalAlignment="Center">
                     <Grid VerticalAlignment="Bottom">
                         <!-- 动态液位矩形 -->
-                        <Border Background="#0284C7" Opacity="0.85" CornerRadius="0,0,14,14"
+                        <Border Background="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                                Opacity="0.85" CornerRadius="0,0,14,14"
                                 VerticalAlignment="Bottom">
                             <Border.Height>
                                 <MultiBinding Converter="{x:Static vm:TankHeightConverter.Instance}">
@@ -43,7 +46,7 @@
                                 </MultiBinding>
                             </Border.Height>
                             <!-- 液体顶部波浪高光 -->
-                            <Border Height="4" VerticalAlignment="Top" Background="#38BDF8" Opacity="0.9"/>
+                            <Border Height="4" VerticalAlignment="Top" Background="#FFFFFF" Opacity="0.6"/>
                         </Border>
                     </Grid>
                 </Border>
@@ -55,7 +58,9 @@
 
             <!-- 底部数值与单位 -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
-                <TextBlock Text="{Binding FormattedValue}" Foreground="#38BDF8" FontSize="15" FontWeight="Bold"/>
+                <TextBlock Text="{Binding FormattedValue}"
+                           Foreground="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                           FontSize="15" FontWeight="Bold"/>
                 <TextBlock Text="{Binding Unit}" Foreground="#94A3B8" FontSize="11" Margin="4,2,0,0" VerticalAlignment="Center"/>
             </StackPanel>
         </Grid>

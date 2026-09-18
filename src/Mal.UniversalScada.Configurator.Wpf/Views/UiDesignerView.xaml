@@ -215,36 +215,276 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- 量程与单位 -->
-                            <TextBlock Text="量程下限 (MinValue):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedWidget.MinValue, UpdateSourceTrigger=PropertyChanged}" Height="28" Margin="0,0,0,8"/>
+                            <!-- 2.1 仪表盘专属配置 (GaugeCircular) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='GaugeCircular'}">
+                                <StackPanel>
+                                    <TextBlock Text="⏱️ 圆形仪表盘专属组合参数 (CircularGaugeProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
 
-                            <TextBlock Text="量程上限 (MaxValue):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedWidget.MaxValue, UpdateSourceTrigger=PropertyChanged}" Height="28" Margin="0,0,0,8"/>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="量程下限 (Min):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.GaugeProps.MinValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="量程上限 (Max):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.GaugeProps.MaxValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
 
-                            <TextBlock Text="工程单位 (Unit, 如 ℃ / bar / rpm):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedWidget.Unit, UpdateSourceTrigger=PropertyChanged}" Height="28" Margin="0,0,0,12"/>
+                                    <TextBlock Text="工程单位 (Unit, 如 ℃ / bar / rpm):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedWidget.GaugeProps.Unit, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
 
-                            <!-- 按钮专属参数 (按钮文案 & 写入数值) -->
-                            <StackPanel Margin="0,0,0,12">
-                                <TextBlock Text="按钮显示文案 (ButtonText):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
-                                <TextBox Text="{Binding SelectedWidget.ButtonText, UpdateSourceTrigger=PropertyChanged}" Height="28" Margin="0,0,0,8"/>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="高限告警阈值 (HighAlarm):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.GaugeProps.HighAlarm, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="低限告警阈值 (LowAlarm):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.GaugeProps.LowAlarm, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
 
-                                <TextBlock Text="触发下发写入值 (WriteValue):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
-                                <TextBox Text="{Binding SelectedWidget.WriteValue, UpdateSourceTrigger=PropertyChanged}" Height="28"/>
-                            </StackPanel>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="小数位数 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.GaugeProps.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="表盘主题色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.GaugeProps.ColorHex, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
 
-                            <!-- 即时动态预览调试滑块 (所见即所得动态测试) -->
+                            <!-- 2.2 储罐专属配置 (LevelTank) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='LevelTank'}">
+                                <StackPanel>
+                                    <TextBlock Text="🛢️ 立体储罐专属组合参数 (TankLevelProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="容量下限 (Min):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.TankProps.MinValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="容量上限 (Max):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.TankProps.MaxValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="液位单位 (Unit, 如 % / L / m³):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedWidget.TankProps.Unit, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="溢出报警液位 (High):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.TankProps.HighAlarm, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="干涸预警液位 (Low):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.TankProps.LowAlarm, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="液体渲染色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedWidget.TankProps.ColorHex, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 2.3 科技数显卡片专属配置 (NumericCard, TextLabel, SetpointInput) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='NumericCard,TextLabel,SetpointInput'}">
+                                <StackPanel>
+                                    <TextBlock Text="📟 数显科技卡片专属组合参数 (NumericCardProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <TextBlock Text="物理工程单位 (Unit, 如 mm/s / kW / ℃):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedWidget.CardProps.Unit, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="小数保留位数 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.CardProps.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="数显发光色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.CardProps.ColorHex, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 2.4 IO 状态点阵专属配置 (IoMatrix) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='IoMatrix'}">
+                                <StackPanel>
+                                    <TextBlock Text="🎛️ IO 点阵矩阵专属组合参数 (IoMatrixProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="输入通道路数 (Channels):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox Text="{Binding SelectedWidget.IoProps.IoChannels, UpdateSourceTrigger=PropertyChanged}" Height="26" IsEditable="True">
+                                                <ComboBoxItem Content="8"/>
+                                                <ComboBoxItem Content="16"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="显示进制 (DisplayFormat):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox Text="{Binding SelectedWidget.IoProps.DisplayFormat, UpdateSourceTrigger=PropertyChanged}" Height="26" IsEditable="True">
+                                                <ComboBoxItem Content="HEX"/>
+                                                <ComboBoxItem Content="BIN"/>
+                                                <ComboBoxItem Content="DEC"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="导通点亮颜色 (ActiveColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedWidget.IoProps.ActiveColor, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 2.5 工业指示灯专属配置 (StatusLed) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='StatusLed'}">
+                                <StackPanel>
+                                    <TextBlock Text="💡 工业状态指示灯专属组合参数 (StatusLedProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="点亮激活颜色 (Active):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.LedProps.ActiveColor, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="熄灭底色 (Inactive):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.LedProps.InactiveColor, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="导通提示文案 (OnText):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.LedProps.OnText, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="熄灭提示文案 (OffText):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.LedProps.OffText, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <CheckBox Content="🚨 异常呼吸闪烁提醒 (EnableBlink)" IsChecked="{Binding SelectedWidget.LedProps.EnableBlink}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 2.6 控制按钮专属配置 (ControlButton) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='ControlButton'}">
+                                <StackPanel>
+                                    <TextBlock Text="🔘 工业控制按钮专属组合参数 (ControlButtonProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <TextBlock Text="按钮显示文字 (ButtonText):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedWidget.ButtonProps.ButtonText, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="动作模式 (Mode):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox Text="{Binding SelectedWidget.ButtonProps.ButtonMode, UpdateSourceTrigger=PropertyChanged}" Height="26" IsEditable="True">
+                                                <ComboBoxItem Content="DirectWrite"/>
+                                                <ComboBoxItem Content="Toggle"/>
+                                                <ComboBoxItem Content="Momentary"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="写入数值 (Value):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.ButtonProps.WriteValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="按钮底色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedWidget.ButtonProps.ColorHex, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+                                    <CheckBox Content="🛡️ 下发前弹出二次确认窗口 (防误触)" IsChecked="{Binding SelectedWidget.ButtonProps.RequireConfirm}" Margin="0,2,0,4"/>
+                                    <TextBox Text="{Binding SelectedWidget.ButtonProps.ConfirmMessage, UpdateSourceTrigger=PropertyChanged}" Height="26"
+                                             IsEnabled="{Binding SelectedWidget.ButtonProps.RequireConfirm}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 3. 即时动态预览调试 (所见即所得测试) -->
                             <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10">
                                 <StackPanel>
                                     <TextBlock Text="🔍 画面动态即时预览调试" FontWeight="SemiBold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,6"/>
-                                    <DockPanel>
-                                        <TextBlock Text="测试数值:" FontSize="10" Foreground="#64748B" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding SelectedWidget.FormattedValue}" FontWeight="Bold" FontSize="11" Foreground="#0284C7" HorizontalAlignment="Right"/>
+                                    <DockPanel Margin="0,0,0,4">
+                                        <TextBlock Text="当前呈现值:" FontSize="10" Foreground="#64748B" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedWidget.FormattedValue}" FontWeight="Bold" FontSize="12" Foreground="#0284C7" HorizontalAlignment="Right"/>
                                     </DockPanel>
+
+                                    <!-- 模拟量滑块调试 (仪表、储罐、数显) -->
                                     <Slider Minimum="{Binding SelectedWidget.MinValue}" Maximum="{Binding SelectedWidget.MaxValue}"
                                             Value="{Binding SelectedWidget.CurrentRawValue, Mode=TwoWay}"
-                                            Margin="0,6,0,0" ValueChanged="OnPreviewSliderValueChanged"/>
+                                            Margin="0,4,0,6" ValueChanged="OnPreviewSliderValueChanged"/>
+
+                                    <!-- 快速模拟按钮 (针对开关量、状态灯、控制按钮) -->
+                                    <Grid Margin="0,2,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="6"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0" Content="⚡ 快速置 1 (导通/运行)" Height="24" FontSize="10" Background="#DCFCE7" Foreground="#15803D" BorderBrush="#86EFAC" Click="OnSimulateValueOneClick"/>
+                                        <Button Grid.Column="2" Content="⏹️ 快速置 0 (截止/停机)" Height="24" FontSize="10" Background="#F1F5F9" Foreground="#475569" BorderBrush="#CBD5E1" Click="OnSimulateValueZeroClick"/>
+                                    </Grid>
                                 </StackPanel>
                             </Border>
                         </StackPanel>

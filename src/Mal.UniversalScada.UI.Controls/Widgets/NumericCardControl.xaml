@@ -26,10 +26,12 @@
             <!-- 中间核心数显与单位 -->
             <Grid Grid.Row="1" VerticalAlignment="Center" Margin="0,6">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding FormattedValue}" Foreground="#38BDF8" FontSize="26" FontWeight="Bold"
+                    <TextBlock Text="{Binding FormattedValue}"
+                               Foreground="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                               FontSize="26" FontWeight="Bold"
                                FontFamily="Consolas, Segoe UI" VerticalAlignment="Bottom">
                         <TextBlock.Effect>
-                            <DropShadowEffect BlurRadius="10" Color="#38BDF8" ShadowDepth="0" Opacity="0.5"/>
+                            <DropShadowEffect BlurRadius="8" Color="#0284C7" ShadowDepth="0" Opacity="0.5"/>
                         </TextBlock.Effect>
                     </TextBlock>
                     <TextBlock Text="{Binding Unit}" Foreground="#64748B" FontSize="13" FontWeight="SemiBold"
@@ -37,12 +39,12 @@
                 </StackPanel>
             </Grid>
 
-            <!-- 底部点位标识 -->
-            <DockPanel Grid.Row="2" Margin="0,4,0,0">
-                <TextBlock Text="{Binding PrimaryTagId}" Foreground="#475569" FontSize="10" TextTrimming="CharacterEllipsis"
-                           MaxWidth="110"/>
-                <Border Background="#38BDF8" Width="6" Height="6" CornerRadius="3" HorizontalAlignment="Right"
-                        Visibility="{Binding IsActive, Converter={x:Static vm:WidgetUiConverters.BoolToVisibility}}"/>
+            <!-- 底部告警指示 -->
+            <DockPanel Grid.Row="2" Margin="0,4,0,0" LastChildFill="False">
+                <Border Background="#EF4444" CornerRadius="2" Padding="4,1" HorizontalAlignment="Right"
+                        Visibility="{Binding IsAlarm, Converter={x:Static vm:WidgetUiConverters.BoolToVisibility}}">
+                    <TextBlock Text="ALARM" FontSize="8" FontWeight="Bold" Foreground="#FFFFFF"/>
+                </Border>
             </DockPanel>
         </Grid>
     </Border>

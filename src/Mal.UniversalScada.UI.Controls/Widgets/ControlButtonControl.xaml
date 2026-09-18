@@ -13,17 +13,14 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- 标题与绑定点位 -->
-            <DockPanel Grid.Row="0" Margin="0,0,0,6">
-                <TextBlock Text="{Binding Title}" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"
-                           TextTrimming="CharacterEllipsis"/>
-                <TextBlock Text="{Binding PrimaryTagId}" Foreground="#475569" FontSize="9" HorizontalAlignment="Right"
-                           TextTrimming="CharacterEllipsis" MaxWidth="60"/>
-            </DockPanel>
+            <!-- 标题 -->
+            <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
 
-            <!-- 控制按钮主体 -->
+            <!-- 控制按钮主体 (背景颜色由 ColorHex 驱动) -->
             <Button Grid.Row="1" Content="{Binding ButtonText}" Click="OnExecuteClick"
-                    Background="#0284C7" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"
+                    Background="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                    Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"
                     BorderThickness="1" BorderBrush="#38BDF8" Cursor="Hand" Height="36">
                 <Button.Resources>
                     <Style TargetType="Border">

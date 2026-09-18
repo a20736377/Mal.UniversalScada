@@ -23,14 +23,14 @@
                 <!-- 金属外圈 -->
                 <Ellipse Stroke="#334155" StrokeThickness="4" Fill="#090D16"/>
 
-                <!-- 亮灯指示 (依据 IsActive 切换) -->
+                <!-- 亮灯指示 (依据 IsActive 切换颜色) -->
                 <Ellipse Width="38" Height="38">
                     <Ellipse.Style>
                         <Style TargetType="Ellipse">
-                            <Setter Property="Fill" Value="#334155"/>
+                            <Setter Property="Fill" Value="{Binding InactiveColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                    <Setter Property="Fill" Value="#10B981"/>
+                                    <Setter Property="Fill" Value="{Binding ActiveColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"/>
                                     <Setter Property="Effect">
                                         <Setter.Value>
                                             <DropShadowEffect BlurRadius="16" Color="#10B981" ShadowDepth="0" Opacity="0.9"/>
@@ -46,7 +46,7 @@
                 <Ellipse Width="16" Height="10" Fill="#FFFFFF" Opacity="0.25" VerticalAlignment="Top" Margin="0,9,0,0"/>
             </Grid>
 
-            <!-- 状态说明文案 -->
+            <!-- 状态说明文案 (依据 OnText / OffText 呈现) -->
             <TextBlock Grid.Row="2" Text="{Binding FormattedValue}" Foreground="#F8FAFC" FontSize="11" FontWeight="Bold"
                        HorizontalAlignment="Center" Margin="0,2,0,0"/>
         </Grid>

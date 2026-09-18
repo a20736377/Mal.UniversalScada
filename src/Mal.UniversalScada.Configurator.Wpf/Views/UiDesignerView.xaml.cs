@@ -106,6 +106,22 @@ public partial class UiDesignerView : UserControl
         }
     }
 
+    private void OnSimulateValueOneClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is UiDesignerViewModel vm && vm.SelectedWidget != null)
+        {
+            vm.SelectedWidget.UpdateRuntimeValue(1);
+        }
+    }
+
+    private void OnSimulateValueZeroClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is UiDesignerViewModel vm && vm.SelectedWidget != null)
+        {
+            vm.SelectedWidget.UpdateRuntimeValue(0);
+        }
+    }
+
     private static T? FindParent<T>(DependencyObject child) where T : DependencyObject
     {
         var parent = VisualTreeHelper.GetParent(child);

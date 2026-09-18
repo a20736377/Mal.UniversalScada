@@ -91,3 +91,39 @@ public class BitStatusConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }
+
+public class IoBitStatusConverter : IMultiValueConverter
+{
+    public static IoBitStatusConverter Instance { get; } = new();
+
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length >= 3 &&
+            values[0] is not null &&
+            int.TryParse(parameter?.ToString(), out var bitIndex))
+        {
+            long rawLong = 0;
+            if (values[0] is bool b) rawLong = b ? 1 : 0;
+            else if (long.TryParse(values[0].ToString(), out var l)) rawLong = l;
+
+            bool isBitSet = (rawLong & (1L << bitIndex)) != 0;
+            var activeHex = values[1] as string ?? "#10B981";
+            var inactiveHex = values[2] as string ?? "#334155";
+
+            try
+            {
+                var colorStr = isBitSet ? activeHex : inactiveHex;
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorStr));
+            }
+            catch
+            {
+                return isBitSet ? new SolidColorBrush(Color.FromRgb(16, 185, 129)) : new SolidColorBrush(Color.FromRgb(51, 65, 85));
+            }
+        }
+        return new SolidColorBrush(Color.FromRgb(51, 65, 85));
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+

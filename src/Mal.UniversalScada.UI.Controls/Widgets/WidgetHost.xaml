@@ -109,25 +109,6 @@
             </widgets:ControlButtonControl.Style>
         </widgets:ControlButtonControl>
 
-        <!-- 仅设计模式显示的顶部拖拽手柄条 -->
-        <Border Height="18" VerticalAlignment="Top" Background="#1E293B" CornerRadius="8,8,0,0" Opacity="0.85"
-                IsHitTestVisible="False">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsDesignMode}" Value="True">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-            <DockPanel Margin="6,0">
-                <TextBlock Text="⠿" FontSize="11" Foreground="#38BDF8" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding Title}" FontSize="9" Foreground="#94A3B8" VerticalAlignment="Center" Margin="4,0,0,0" TextTrimming="CharacterEllipsis"/>
-            </DockPanel>
-        </Border>
-
         <!-- 设计模式专属：高亮选中框与拖拽遮罩 -->
         <Border x:Name="DesignerAdorner"
                 BorderThickness="2" CornerRadius="10" IsHitTestVisible="False">
