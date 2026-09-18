@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Mal.UniversalScada.Configurator.Wpf.ViewModels;
 using Mal.UniversalScada.Configurator.Wpf.Views;
 using Mal.UniversalScada.Core.Configuration;
+using Mal.UniversalScada.Drivers.Modbus;
 using Mal.UniversalScada.Drivers.Siemens;
 using Mal.UniversalScada.Storage.Sqlite;
 
@@ -38,6 +39,7 @@ public partial class App : Application
 
                     // 2. 核心组态业务服务 (认证、组态引擎、导入导出、硬件连通性探测、通道与驱动工厂、点位测试器)
                     services.AddScadaConfigurationCore();
+                    services.AddModbusDriver();
                     services.AddSiemensS7Driver();
 
                     // 3. ViewModel
