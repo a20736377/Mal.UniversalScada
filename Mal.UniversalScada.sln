@@ -19,6 +19,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.UniversalScada.UI.Wpf",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.UniversalScada.Configurator.Wpf", "src\Mal.UniversalScada.Configurator.Wpf\Mal.UniversalScada.Configurator.Wpf.csproj", "{08E8EED6-C123-4E01-B8E1-5AA86C03CA28}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.UniversalScada.Drivers.Siemens.Tests", "tests\Mal.UniversalScada.Drivers.Siemens.Tests\Mal.UniversalScada.Drivers.Siemens.Tests.csproj", "{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -113,6 +117,18 @@ Global
 		{08E8EED6-C123-4E01-B8E1-5AA86C03CA28}.Release|x64.Build.0 = Release|Any CPU
 		{08E8EED6-C123-4E01-B8E1-5AA86C03CA28}.Release|x86.ActiveCfg = Release|Any CPU
 		{08E8EED6-C123-4E01-B8E1-5AA86C03CA28}.Release|x86.Build.0 = Release|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Debug|x64.Build.0 = Debug|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Debug|x86.Build.0 = Debug|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Release|x64.ActiveCfg = Release|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Release|x64.Build.0 = Release|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Release|x86.ActiveCfg = Release|Any CPU
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -125,5 +141,6 @@ Global
 		{D0D65AEA-23EB-4A0F-A411-C8899CC0A66D} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{26955DE5-6A6C-4996-9D35-827CC9A5F534} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{08E8EED6-C123-4E01-B8E1-5AA86C03CA28} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{A3647CEA-9D9E-4FAB-BACB-81329CA5CFE7} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal
