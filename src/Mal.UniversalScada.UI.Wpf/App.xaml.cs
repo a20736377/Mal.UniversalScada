@@ -2,12 +2,15 @@ using System;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Mal.UniversalScada.Core.Abstractions;
 using Mal.UniversalScada.Core.Configuration;
+using Mal.UniversalScada.Core.Models;
 using Mal.UniversalScada.Drivers.CustomSerial;
 using Mal.UniversalScada.Drivers.Modbus;
 using Mal.UniversalScada.Drivers.Siemens;
 using Mal.UniversalScada.Storage.Sqlite;
 using Mal.UniversalScada.UI.Wpf.ViewModels;
+using Mal.UniversalScada.UI.Wpf.Views;
 
 namespace Mal.UniversalScada.UI.Wpf;
 
@@ -18,6 +21,9 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // 核心设置：设置显式退出模式，防止登录窗口关闭时直接退出整个应用程序
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         DispatcherUnhandledException += (s, args) =>
         {
@@ -53,14 +59,34 @@ public partial class App : Application
                     services.AddSingleton<Mal.UniversalScada.UI.Controls.ViewModels.AlarmBannerViewModel>();
                     services.AddSingleton<MainViewModel>();
                     services.AddSingleton<MainWindow>();
+                    services.AddTransient<LoginWindow>();
                 })
                 .Build();
 
             await AppHost.StartAsync();
 
-            var mainWindow = AppHost.Services.GetRequiredService<MainWindow>();
-            MainWindow = mainWindow;
-            mainWindow.Show();
+            // 步骤 1：前置强制登录验证（禁止访客免密浏览）
+            var authService = AppHost.Services.GetRequiredService<IUserAuthService>();
+            var loginWindow = new LoginWindow(authService, UserRole.Operator, "请输入系统账号与密码登录以访问 SCADA 监控系统。系统已关闭访客浏览，未经授权无法查看画面。")
+            {
+                WindowStartupLocation = WindowStartupLocation.CenterScreen
+            };
+
+            bool? loginSuccess = loginWindow.ShowDialog();
+
+            if (loginSuccess == true && authService.CurrentUser.Role > UserRole.Guest)
+            {
+                // 步骤 2：验证通过，加载监控主界面，恢复主窗体关闭时自动退出
+                var mainWindow = AppHost.Services.GetRequiredService<MainWindow>();
+                MainWindow = mainWindow;
+                ShutdownMode = ShutdownMode.OnMainWindowClose;
+                mainWindow.Show();
+            }
+            else
+            {
+                // 取消登录或关闭登录弹窗，退出程序
+                Shutdown();
+            }
         }
         catch (Exception ex)
         {

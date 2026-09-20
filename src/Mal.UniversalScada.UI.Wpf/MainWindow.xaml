@@ -42,19 +42,19 @@
                 <!-- 中间：画面切换、多屏投射、工艺配方 -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <!-- 画面选择器 -->
-                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,0,12,0">
+                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="10,4" Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🖥️ 画面:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="🖥️ 画面:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <ComboBox ItemsSource="{Binding Views}" SelectedItem="{Binding CurrentView}" DisplayMemberPath="Name"
-                                      Width="180" Height="28" FontSize="12" FontWeight="Bold"
-                                      Background="#1E293B" Foreground="#38BDF8" BorderBrush="#38BDF8" BorderThickness="1"
+                                      Width="230" Height="30" FontSize="12" FontWeight="Bold"
+                                      Background="#1E293B" Foreground="#38BDF8" BorderBrush="#0284C7" BorderThickness="1"
                                       VerticalContentAlignment="Center" Cursor="Hand"/>
-                            <Button Content="🔄 刷新" Margin="6,0,0,0" Height="28" Padding="8,2" FontSize="11" FontWeight="Bold"
-                                    Background="#1E293B" Foreground="#38BDF8" BorderBrush="#334155" BorderThickness="1" Cursor="Hand"
+                            <Button Content="🔄 刷新" Margin="8,0,0,0" Height="30" Padding="10,2" FontSize="11" FontWeight="Bold"
+                                    Background="#1E293B" Foreground="#38BDF8" BorderBrush="#0284C7" BorderThickness="1" Cursor="Hand"
                                     Command="{Binding ReloadViewsCommand}" ToolTip="热重载最新的画面方案列表 (同步设计器配置)">
                                 <Button.Resources>
                                     <Style TargetType="Border">
-                                        <Setter Property="CornerRadius" Value="4"/>
+                                        <Setter Property="CornerRadius" Value="5"/>
                                     </Style>
                                 </Button.Resources>
                             </Button>
@@ -62,28 +62,28 @@
                     </Border>
 
                     <!-- 多屏投射大屏管理 -->
-                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,0,12,0">
+                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="10,4" Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📽️ 投屏:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="📽️ 投屏:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <ComboBox ItemsSource="{Binding Screens}" SelectedItem="{Binding SelectedScreen}" DisplayMemberPath="DisplayText"
-                                      Width="160" Height="28" FontSize="11"
+                                      Width="210" Height="30" FontSize="11" FontWeight="SemiBold"
                                       Background="#1E293B" Foreground="#F8FAFC" BorderBrush="#334155" BorderThickness="1"
                                       VerticalContentAlignment="Center" Cursor="Hand"/>
-                            <Button Content="全屏投射" Margin="6,0,0,0" Height="28" Padding="8,2" FontSize="11" FontWeight="Bold"
-                                    Background="#0369A1" Foreground="#F0F9FF" BorderThickness="0" Cursor="Hand"
+                            <Button Content="全屏投射" Margin="8,0,0,0" Height="30" Padding="10,2" FontSize="11" FontWeight="Bold"
+                                    Background="#0284C7" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand"
                                     Command="{Binding ProjectCurrentViewCommand}" ToolTip="在所选物理显示器上开启 Kiosk 全屏无边框看板">
                                 <Button.Resources>
                                     <Style TargetType="Border">
-                                        <Setter Property="CornerRadius" Value="4"/>
+                                        <Setter Property="CornerRadius" Value="5"/>
                                     </Style>
                                 </Button.Resources>
                             </Button>
-                            <Button Content="关闭" Margin="4,0,0,0" Height="28" Padding="6,2" FontSize="11"
-                                    Background="#334155" Foreground="#CBD5E1" BorderThickness="0" Cursor="Hand"
+                            <Button Content="关闭" Margin="6,0,0,0" Height="30" Padding="8,2" FontSize="11" FontWeight="SemiBold"
+                                    Background="#334155" Foreground="#E2E8F0" BorderBrush="#475569" BorderThickness="1" Cursor="Hand"
                                     Command="{Binding CloseAllProjectionsCommand}" ToolTip="关闭所有副屏投射视窗">
                                 <Button.Resources>
                                     <Style TargetType="Border">
-                                        <Setter Property="CornerRadius" Value="4"/>
+                                        <Setter Property="CornerRadius" Value="5"/>
                                     </Style>
                                 </Button.Resources>
                             </Button>
@@ -91,19 +91,19 @@
                     </Border>
 
                     <!-- 工艺配方管理 -->
-                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="8,4">
+                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="10,4">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📜 配方:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="📜 配方:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <ComboBox ItemsSource="{Binding Recipes}" SelectedItem="{Binding SelectedRecipe}" DisplayMemberPath="Name"
-                                      Width="150" Height="28" FontSize="11"
-                                      Background="#1E293B" Foreground="#FDE047" BorderBrush="#CA8A04" BorderThickness="1"
+                                      Width="220" Height="30" FontSize="11" FontWeight="SemiBold"
+                                      Background="#1E293B" Foreground="#FBBF24" BorderBrush="#D97706" BorderThickness="1"
                                       VerticalContentAlignment="Center" Cursor="Hand"/>
-                            <Button Content="⚡ 下发" Margin="6,0,0,0" Height="28" Padding="8,2" FontSize="11" FontWeight="Bold"
-                                    Background="#B45309" Foreground="#FEF3C7" BorderThickness="0" Cursor="Hand"
+                            <Button Content="⚡ 下发" Margin="8,0,0,0" Height="30" Padding="12,2" FontSize="11" FontWeight="Bold"
+                                    Background="#D97706" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand"
                                     Command="{Binding ApplySelectedRecipeCommand}" ToolTip="一键将选中的工艺配方下发至 PLC">
                                 <Button.Resources>
                                     <Style TargetType="Border">
-                                        <Setter Property="CornerRadius" Value="4"/>
+                                        <Setter Property="CornerRadius" Value="5"/>
                                     </Style>
                                 </Button.Resources>
                             </Button>
@@ -157,6 +157,15 @@
                                     </Style>
                                 </Button.Resources>
                             </Button>
+                            <Button Content="注销" Height="22" Padding="6,1" Margin="4,0,0,0" FontSize="10" FontWeight="SemiBold"
+                                    Background="#DC2626" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand"
+                                    Command="{Binding LogoutCommand}">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="3"/>
+                                    </Style>
+                                </Button.Resources>
+                            </Button>
                         </StackPanel>
                     </Border>
 
@@ -174,7 +183,8 @@
 
         <!-- 3. 中间：实时动态工业画布 -->
         <Border Grid.Row="2" Background="#070B14">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                 <Grid Width="{Binding CurrentView.CanvasWidth, FallbackValue=1600}"
                       Height="{Binding CurrentView.CanvasHeight, FallbackValue=900}"
                       HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -224,7 +234,37 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Grid>
-            </ScrollViewer>
+                </ScrollViewer>
+
+                <!-- 当用户未被分配任何画面权限时的空状态提示 -->
+                <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Background="#1E293B" BorderBrush="#334155" BorderThickness="1.5" CornerRadius="12"
+                        Padding="36,28">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentView}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="🛡️" FontSize="42" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                        <TextBlock Text="暂无监控画面方案访问权限" FontSize="18" FontWeight="Bold" Foreground="#F8FAFC" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="当前登录账户尚未被管理员分配任何可用画面。" FontSize="13" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="🔄 刷新权限" Padding="12,6" Height="32" Margin="0,0,10,0"
+                                    Background="#0284C7" Foreground="#FFFFFF" FontWeight="Bold" BorderThickness="0"
+                                    Command="{Binding ReloadViewsCommand}"/>
+                            <Button Content="👤 切换用户" Padding="12,6" Height="32"
+                                    Background="#334155" Foreground="#F8FAFC" FontWeight="Bold" BorderThickness="0"
+                                    Command="{Binding SwitchUserCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Border>
 
         <!-- 4. 底部状态栏 -->

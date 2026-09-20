@@ -24,7 +24,10 @@ public enum TreeNodeType
     TagItem,
 
     /// <summary>一级：可视化画面所见即所得设计器根节点</summary>
-    UiDesignerRoot
+    UiDesignerRoot,
+
+    /// <summary>一级：用户与权限管理根节点</summary>
+    UserManagerRoot
 }
 
 /// <summary>

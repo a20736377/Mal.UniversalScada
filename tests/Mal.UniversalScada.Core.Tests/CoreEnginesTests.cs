@@ -427,6 +427,8 @@ public class CoreEnginesTests
     private class MockDriver : IDriver
     {
         public ProtocolType ProtocolType => ProtocolType.ModbusTcp;
+        private readonly Dictionary<string, object> _currentValues = new();
+
         public string ProtocolName => "MockDriver";
 
         public Task<bool> InitializeAsync(IChannel channel, DeviceNode device, CancellationToken ct = default) => Task.FromResult(true);
@@ -437,11 +439,12 @@ public class CoreEnginesTests
             var dict = new Dictionary<string, TagValueSnapshot>();
             foreach (var t in tags)
             {
+                var val = _currentValues.TryGetValue(t.TagId, out var v) ? v : 100.0;
                 dict[t.TagId] = new TagValueSnapshot
                 {
                     TagId = t.TagId,
-                    Value = 100.0,
-                    RawValue = 100,
+                    Value = val,
+                    RawValue = val,
                     Quality = QualityCode.Good,
                     Timestamp = DateTime.Now
                 };
@@ -451,6 +454,7 @@ public class CoreEnginesTests
 
         public Task<WriteResult> WriteTagAsync(TagNode tag, object value, CancellationToken ct = default)
         {
+            _currentValues[tag.TagId] = value;
             return Task.FromResult(WriteResult.Success(tag.TagId, value, 10));
         }
 
@@ -461,6 +465,7 @@ public class CoreEnginesTests
             {
                 foreach (var w in writes)
                 {
+                    _currentValues[w.Key.TagId] = w.Value;
                     dict[w.Key.TagId] = WriteResult.Success(w.Key.TagId, w.Value, 10);
                 }
             }

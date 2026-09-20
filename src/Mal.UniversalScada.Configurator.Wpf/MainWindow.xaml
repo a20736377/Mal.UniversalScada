@@ -109,9 +109,13 @@
                             Background="#0284C7" Foreground="#FFFFFF" FontWeight="Bold" BorderThickness="0"
                             Command="{Binding SaveAllCommand}"/>
 
-                    <Button Content="🖥️ 可视化画面设计器" Padding="14,6" Height="34" Margin="0,0,14,0"
+                    <Button Content="🖥️ 可视化画面设计器" Padding="14,6" Height="34" Margin="0,0,8,0"
                             Background="#059669" Foreground="#FFFFFF" FontWeight="Bold" BorderThickness="0"
                             Command="{Binding OpenUiDesignerCommand}"/>
+
+                    <Button Content="👥 用户与权限" Padding="14,6" Height="34" Margin="0,0,14,0"
+                            Background="#7C3AED" Foreground="#FFFFFF" FontWeight="Bold" BorderThickness="0"
+                            Command="{Binding OpenUserManagerCommand}"/>
 
                     <Button Content="🔑 修改密码" Padding="10,6" Height="34" Margin="0,0,8,0"
                             Background="#F8FAFC" Foreground="#475569" BorderBrush="#CBD5E1" BorderThickness="1"
@@ -813,6 +817,21 @@
                         </Style>
                     </Border.Style>
                     <views:UiDesignerView DataContext="{Binding DesignerVm}"/>
+                </Border>
+
+                <!-- 模式 G：用户管理与画面方案权限授权 (UserManager) -->
+                <Border>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentViewMode}" Value="{x:Static vm:ViewMode.UserManager}">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <views:UserManagementView DataContext="{Binding UserManagerVm}"/>
                 </Border>
             </Grid>
         </Grid>

@@ -68,7 +68,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="0" Content="取消 / 保持访客" Height="36"
+                <Button Grid.Column="0" Content="退出系统" Height="36"
                         Background="#1E293B" Foreground="#94A3B8" BorderBrush="#334155" BorderThickness="1"
                         Cursor="Hand" Click="OnCancelClick"/>
 

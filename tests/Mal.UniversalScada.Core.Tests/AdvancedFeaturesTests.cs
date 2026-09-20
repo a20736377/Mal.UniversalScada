@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -226,6 +227,134 @@ public class AdvancedFeaturesTests
         Assert.False(authService.CheckPermission(UserRole.Operator));
     }
 
+    [Fact]
+    public async Task UserCrudAndPermissions_AddUpdateDisableDeleteAndMultiToMultiViews_WorkCorrectly()
+    {
+        var repo = new InMemoryUserRepository();
+
+        // 1. 添加新用户
+        var newUser = new UserInfo
+        {
+            Username = "tech01",
+            DisplayName = "产线技术员1",
+            Role = UserRole.Operator,
+            IsEnabled = true
+        };
+        await repo.SaveUserAsync(newUser, "pwd123");
+
+        var fetched = await repo.GetUserAsync("tech01");
+        Assert.NotNull(fetched);
+        Assert.Equal("产线技术员1", fetched.DisplayName);
+        Assert.True(fetched.IsEnabled);
+
+        // 2. 禁用用户
+        fetched.IsEnabled = false;
+        await repo.SaveUserAsync(fetched);
+        var disabled = await repo.GetUserAsync("tech01");
+        Assert.False(disabled?.IsEnabled);
+
+        // 禁用后密码验证应返回 null
+        var valResult = await repo.ValidateCredentialsAsync("tech01", "pwd123");
+        Assert.Null(valResult);
+
+        // 重新启用
+        fetched.IsEnabled = true;
+        await repo.SaveUserAsync(fetched);
+        var valSuccess = await repo.ValidateCredentialsAsync("tech01", "pwd123");
+        Assert.NotNull(valSuccess);
+
+        // 3. 多对多画面授权测试
+        var allowedViews = new List<string> { "View_Reflow_Oven", "View_Filling_Station" };
+        await repo.SetAllowedViewIdsAsync("tech01", allowedViews);
+
+        var retrievedViews = await repo.GetAllowedViewIdsAsync("tech01");
+        Assert.Equal(2, retrievedViews.Count);
+        Assert.Contains("View_Reflow_Oven", retrievedViews);
+        Assert.Contains("View_Filling_Station", retrievedViews);
+
+        // 更新授权（移除一个，增加另一个）
+        await repo.SetAllowedViewIdsAsync("tech01", new[] { "View_Reflow_Oven", "View_Packaging" });
+        var updatedViews = await repo.GetAllowedViewIdsAsync("tech01");
+        Assert.Equal(2, updatedViews.Count);
+        Assert.Contains("View_Packaging", updatedViews);
+        Assert.DoesNotContain("View_Filling_Station", updatedViews);
+
+        // 4. 超级管理员安全保护（禁止删除 admin）
+        var deleteAdmin = await repo.DeleteUserAsync("admin");
+        Assert.False(deleteAdmin);
+        Assert.NotNull(await repo.GetUserAsync("admin"));
+
+        // 5. 删除普通用户，级联清理其画面方案授权
+        var deleteTech = await repo.DeleteUserAsync("tech01");
+        Assert.True(deleteTech);
+        Assert.Null(await repo.GetUserAsync("tech01"));
+
+        var viewsAfterDelete = await repo.GetAllowedViewIdsAsync("tech01");
+        Assert.Empty(viewsAfterDelete);
+    }
+
+    [Fact]
+    public async Task SqliteUserRepository_FullLifecycleAndPermissions_Succeeds()
+    {
+        var tempDb = Path.Combine(Path.GetTempPath(), $"scada_test_{Guid.NewGuid():N}.db");
+        var connStr = $"Data Source={tempDb}";
+        try
+        {
+            var sqliteRepo = new Mal.UniversalScada.Storage.Sqlite.SqliteUserRepository(connStr);
+
+            // 1. 验证预置种子用户存在
+            var allUsers = await sqliteRepo.GetAllUsersAsync();
+            Assert.Contains(allUsers, u => u.Username == "admin");
+            Assert.Contains(allUsers, u => u.Username == "engineer");
+            Assert.Contains(allUsers, u => u.Username == "operator");
+
+            // 2. 验证默认 admin 密码验证 (admin888)
+            var adminAuth = await sqliteRepo.ValidateCredentialsAsync("admin", "admin888");
+            Assert.NotNull(adminAuth);
+            Assert.Equal(UserRole.Administrator, adminAuth.Role);
+
+            // 3. 新建操作员用户
+            var testUser = new UserInfo
+            {
+                Username = "op_line2",
+                DisplayName = "二车间操作员",
+                Role = UserRole.Operator,
+                IsEnabled = true
+            };
+            await sqliteRepo.SaveUserAsync(testUser, "secret456");
+
+            var validated = await sqliteRepo.ValidateCredentialsAsync("op_line2", "secret456");
+            Assert.NotNull(validated);
+            Assert.Equal("二车间操作员", validated.DisplayName);
+
+            // 4. 画面方案多对多授权
+            await sqliteRepo.SetAllowedViewIdsAsync("op_line2", new[] { "View_01", "View_02" });
+            var allowed = await sqliteRepo.GetAllowedViewIdsAsync("op_line2");
+            Assert.Equal(2, allowed.Count);
+            Assert.Contains("View_01", allowed);
+            Assert.Contains("View_02", allowed);
+
+            // 5. 尝试删除系统超级管理员 admin，应受到保护返回 false
+            var delAdmin = await sqliteRepo.DeleteUserAsync("admin");
+            Assert.False(delAdmin);
+            Assert.NotNull(await sqliteRepo.GetUserAsync("admin"));
+
+            // 6. 正常删除用户，并级联清理画面权限
+            var delUser = await sqliteRepo.DeleteUserAsync("op_line2");
+            Assert.True(delUser);
+            Assert.Null(await sqliteRepo.GetUserAsync("op_line2"));
+            var remainingPerms = await sqliteRepo.GetAllowedViewIdsAsync("op_line2");
+            Assert.Empty(remainingPerms);
+        }
+        finally
+        {
+            if (File.Exists(tempDb))
+            {
+                try { File.Delete(tempDb); } catch { }
+            }
+        }
+    }
+
     #endregion
 
     private class InMemoryUserRepository : IUserRepository
@@ -236,6 +365,8 @@ public class AdvancedFeaturesTests
             new UserInfo { Username = "engineer", PasswordHash = "eng123", Role = UserRole.Engineer, IsEnabled = true },
             new UserInfo { Username = "operator", PasswordHash = "op123", Role = UserRole.Operator, IsEnabled = true }
         };
+
+        private readonly Dictionary<string, HashSet<string>> _userViewPermissions = new(StringComparer.OrdinalIgnoreCase);
 
         public Task<UserInfo?> GetUserAsync(string username) =>
             Task.FromResult(_users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase)));
@@ -278,5 +409,32 @@ public class AdvancedFeaturesTests
 
         public Task<IReadOnlyList<UserInfo>> GetAllUsersAsync() =>
             Task.FromResult<IReadOnlyList<UserInfo>>(_users);
+
+        public Task<bool> DeleteUserAsync(string username)
+        {
+            if (string.Equals(username, "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                return Task.FromResult(false);
+            }
+
+            var removed = _users.RemoveAll(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+            _userViewPermissions.Remove(username);
+            return Task.FromResult(removed > 0);
+        }
+
+        public Task<IReadOnlyList<string>> GetAllowedViewIdsAsync(string username)
+        {
+            if (_userViewPermissions.TryGetValue(username, out var set))
+            {
+                return Task.FromResult<IReadOnlyList<string>>(set.ToList());
+            }
+            return Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+        }
+
+        public Task SetAllowedViewIdsAsync(string username, IEnumerable<string> viewIds)
+        {
+            _userViewPermissions[username] = new HashSet<string>(viewIds, StringComparer.OrdinalIgnoreCase);
+            return Task.CompletedTask;
+        }
     }
 }

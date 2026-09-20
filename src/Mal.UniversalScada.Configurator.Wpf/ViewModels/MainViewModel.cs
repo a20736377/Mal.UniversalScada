@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using Mal.UniversalScada.Configurator.Wpf.Models;
 using Mal.UniversalScada.Configurator.Wpf.Views;
+using Mal.UniversalScada.Core.Abstractions;
 using Mal.UniversalScada.Core.Configuration;
 using Mal.UniversalScada.Core.Enums;
 using Mal.UniversalScada.Core.Models;
@@ -21,7 +22,8 @@ public enum ViewMode
     ChannelDetail,  // 具体通道编辑
     DeviceDetail,   // 具体设备编辑 (含点位列表)
     TagDetail,      // 具体单个点位详细编辑
-    UiDesigner      // 可视化画面所见即所得设计器
+    UiDesigner,     // 可视化画面所见即所得设计器
+    UserManager     // 用户与画面方案授权管理
 }
 
 /// <summary>
@@ -35,6 +37,7 @@ public partial class MainViewModel : ObservableObject
     private readonly ITagImportExportService _importExportService;
     private readonly IChannelTester _channelTester;
     private readonly ITagTester _tagTester;
+    private readonly IUserRepository _userRepository;
 
     [ObservableProperty]
     private string _currentAdmin = "admin";
@@ -88,6 +91,12 @@ public partial class MainViewModel : ObservableObject
                 CurrentViewMode = ViewMode.UiDesigner;
                 StatusMessage = "当前模式：可视化画面所见即所得设计器";
                 _ = DesignerVm.InitializeAsync();
+                break;
+
+            case TreeNodeType.UserManagerRoot:
+                CurrentViewMode = ViewMode.UserManager;
+                StatusMessage = "当前模式：用户与画面方案授权管理";
+                _ = UserManagerVm.InitializeAsync();
                 break;
 
             case TreeNodeType.ChannelItem when value.DataPayload is ChannelConfig ch:
@@ -224,21 +233,25 @@ public partial class MainViewModel : ObservableObject
     #endregion
 
     public UiDesignerViewModel DesignerVm { get; }
+    public UserManagementViewModel UserManagerVm { get; }
 
     public MainViewModel(
         IConfigurationService configService,
         IAdminAuthService authService,
         ITagImportExportService importExportService,
         IChannelTester channelTester,
-        ITagTester tagTester)
+        ITagTester tagTester,
+        IUserRepository userRepository)
     {
         _configService = configService;
         _authService = authService;
         _importExportService = importExportService;
         _channelTester = channelTester;
         _tagTester = tagTester;
+        _userRepository = userRepository;
 
         DesignerVm = new UiDesignerViewModel(configService);
+        UserManagerVm = new UserManagementViewModel(userRepository, configService);
         CurrentAdmin = _authService.CurrentUser ?? "admin";
 
         RefreshSerialPorts();
@@ -333,6 +346,9 @@ public partial class MainViewModel : ObservableObject
         var uiDesignerNode = new TopologyTreeNode("ROOT_UI_DESIGNER", "🖥️ 可视化画面设计器", TreeNodeType.UiDesignerRoot, null, "🖥️");
         TreeRoots.Add(uiDesignerNode);
 
+        var userManagerNode = new TopologyTreeNode("ROOT_USER_MANAGER", "👥 用户与权限管理", TreeNodeType.UserManagerRoot, null, "👥");
+        TreeRoots.Add(userManagerNode);
+
         // 默认展开一级节点
         deviceRootNode.IsExpanded = true;
         channelRootNode.IsExpanded = true;
@@ -349,6 +365,14 @@ public partial class MainViewModel : ObservableObject
         CurrentViewMode = ViewMode.UiDesigner;
         StatusMessage = "当前模式：可视化画面所见即所得设计器";
         await DesignerVm.InitializeAsync();
+    }
+
+    [RelayCommand]
+    public async Task OpenUserManagerAsync()
+    {
+        CurrentViewMode = ViewMode.UserManager;
+        StatusMessage = "当前模式：用户与画面方案授权管理";
+        await UserManagerVm.InitializeAsync();
     }
 
 

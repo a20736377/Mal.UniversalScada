@@ -27,6 +27,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly IRecipeService _recipeService;
     private readonly IScreenManager _screenManager;
     private readonly IUserAuthService _authService;
+    private readonly IUserRepository _userRepository;
 
     private readonly List<ChannelConfig> _channels = new();
     private readonly List<DeviceNode> _devices = new();
@@ -111,6 +112,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IRecipeService recipeService,
         IScreenManager screenManager,
         IUserAuthService authService,
+        IUserRepository userRepository,
         AlarmBannerViewModel alarmBanner)
     {
         _configService = configService ?? throw new ArgumentNullException(nameof(configService));
@@ -122,6 +124,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
         _screenManager = screenManager ?? throw new ArgumentNullException(nameof(screenManager));
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _alarmBanner = alarmBanner ?? throw new ArgumentNullException(nameof(alarmBanner));
 
         // 订阅用户身份变更通知
@@ -227,7 +230,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
             _tags.AddRange(configData.Tags);
 
             var list = await _configService.GetUiViewsAsync();
-            Views.Clear();
 
             // 若数据库暂无画面，生成示范画面
             if (list.Count == 0)
@@ -239,13 +241,24 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 list = await _configService.GetUiViewsAsync();
             }
 
-            foreach (var item in list)
+            // 根据当前登录用户身份及多对多授权列表进行严格过滤
+            var allowedViews = await FilterViewsByUserAsync(list);
+            Views.Clear();
+            foreach (var item in allowedViews)
             {
                 Views.Add(item);
             }
 
-            // 优先选择默认画面
-            CurrentView = Views.FirstOrDefault(v => v.IsDefault) ?? Views.FirstOrDefault();
+            if (allowedViews.Count == 0)
+            {
+                CurrentView = null;
+                StatusMessage = $"⚠️ 账户 [{_authService.CurrentUser.Username}] 暂未被分配任何画面方案权限，请联系管理员分配。";
+            }
+            else
+            {
+                // 优先选择默认画面
+                CurrentView = Views.FirstOrDefault(v => v.IsDefault) ?? Views.FirstOrDefault();
+            }
         }
         catch (Exception ex)
         {
@@ -254,7 +267,24 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 热重载画面方案列表（与设计器最新保存的数据保持实时同步）
+    /// 根据当前登录用户的角色与多对多授权配置筛选可用画面方案
+    /// </summary>
+    private async Task<List<UiViewConfig>> FilterViewsByUserAsync(IReadOnlyList<UiViewConfig> allViews)
+    {
+        var currentUser = _authService.CurrentUser;
+        if (currentUser.Role == UserRole.Administrator)
+        {
+            return allViews.ToList();
+        }
+
+        var allowedIds = await _userRepository.GetAllowedViewIdsAsync(currentUser.Username);
+        var allowedSet = new HashSet<string>(allowedIds, StringComparer.OrdinalIgnoreCase);
+
+        return allViews.Where(v => allowedSet.Contains(v.ViewId)).ToList();
+    }
+
+    /// <summary>
+    /// 热重载画面方案列表（与设计器最新保存的数据保持实时同步，并按当前用户权限过滤）
     /// </summary>
     [RelayCommand]
     public async Task ReloadViewsAsync()
@@ -263,17 +293,27 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             var previousViewId = CurrentView?.ViewId;
             var list = await _configService.GetUiViewsAsync();
+            var allowedViews = await FilterViewsByUserAsync(list);
+
             Views.Clear();
-            foreach (var item in list)
+            foreach (var item in allowedViews)
             {
                 Views.Add(item);
             }
 
-            CurrentView = Views.FirstOrDefault(v => v.ViewId == previousViewId)
-                       ?? Views.FirstOrDefault(v => v.IsDefault)
-                       ?? Views.FirstOrDefault();
+            if (allowedViews.Count == 0)
+            {
+                CurrentView = null;
+                StatusMessage = $"⚠️ 账户 [{_authService.CurrentUser.Username}] 暂无可用画面方案授权，请联系管理员分配。";
+            }
+            else
+            {
+                CurrentView = Views.FirstOrDefault(v => v.ViewId == previousViewId)
+                           ?? Views.FirstOrDefault(v => v.IsDefault)
+                           ?? Views.FirstOrDefault();
 
-            StatusMessage = $"🔄 已同步最新画面方案列表 (共加载 {Views.Count} 个画面)";
+                StatusMessage = $"🔄 已同步最新画面方案列表 (当前用户已授权 {Views.Count} 个画面)";
+            }
         }
         catch (Exception ex)
         {
@@ -468,15 +508,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
     };
 
     [RelayCommand]
-    public void SwitchUser()
+    public async Task SwitchUserAsync()
     {
         var loginWin = new Views.LoginWindow(_authService, UserRole.Operator, "请登录或切换不同角色账号。")
         {
             Owner = Application.Current?.MainWindow
         };
-        loginWin.ShowDialog();
-        RefreshUserState();
-        StatusMessage = $"当前已切换登录用户: {_authService.CurrentUser.Username} ({CurrentUserRoleName})";
+        if (loginWin.ShowDialog() == true && _authService.CurrentUser.Role > UserRole.Guest)
+        {
+            RefreshUserState();
+            await ReloadViewsAsync();
+            StatusMessage = $"当前已切换登录用户: {_authService.CurrentUser.Username} ({CurrentUserRoleName})";
+        }
     }
 
     [RelayCommand]
@@ -484,7 +527,23 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         _authService.Logout();
         RefreshUserState();
-        StatusMessage = "当前用户已注销，恢复为访客只读模式";
+
+        // 强登录约束：关闭访客浏览，注销后必须重新登录，取消则退出监控系统
+        var loginWin = new Views.LoginWindow(_authService, UserRole.Operator, "用户已注销。系统已关闭访客浏览，请重新登录以继续监控。")
+        {
+            Owner = Application.Current?.MainWindow
+        };
+        if (loginWin.ShowDialog() == true && _authService.CurrentUser.Role > UserRole.Guest)
+        {
+            RefreshUserState();
+            _ = ReloadViewsAsync();
+            StatusMessage = $"当前已重新登录用户: {_authService.CurrentUser.Username} ({CurrentUserRoleName})";
+        }
+        else
+        {
+            // 取消登录，直接退出系统
+            Application.Current?.Shutdown();
+        }
     }
 
     private void OnWidgetControlExecuted(WidgetViewModel widget)

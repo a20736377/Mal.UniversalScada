@@ -48,29 +48,43 @@ public class SqliteUserRepository : IUserRepository
                     IsEnabled INTEGER NOT NULL,
                     LastLoginTime TEXT,
                     CreatedAt TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS UserViewPermissions (
+                    Username TEXT NOT NULL,
+                    ViewId TEXT NOT NULL,
+                    PRIMARY KEY (Username, ViewId)
                 );";
             await connection.ExecuteAsync(createUsersTableSql);
 
-            // 检查是否存在初始管理员，若无则自动注入 admin / admin888
+            // 检查是否存在初始管理员与预置账户
             var count = await connection.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM Users;");
             if (count == 0)
             {
-                var (hash, salt) = HashPassword("admin888");
-                var adminUser = new UserInfo
+                var seedUsers = new List<(string u, string d, string p, UserRole r)>
                 {
-                    Username = "admin",
-                    DisplayName = "超级管理员",
-                    PasswordHash = hash,
-                    PasswordSalt = salt,
-                    Role = UserRole.Administrator,
-                    IsEnabled = true,
-                    CreatedAt = DateTime.Now
+                    ("admin", "超级管理员", "admin888", UserRole.Administrator),
+                    ("engineer", "现场工程师", "eng123", UserRole.Engineer),
+                    ("operator", "产线操作员", "op123", UserRole.Operator)
                 };
 
-                const string insertAdminSql = @"
+                const string insertUserSql = @"
                     INSERT INTO Users (Username, DisplayName, PasswordHash, PasswordSalt, Role, IsEnabled, CreatedAt)
                     VALUES (@Username, @DisplayName, @PasswordHash, @PasswordSalt, @Role, @IsEnabled, @CreatedAt);";
-                await connection.ExecuteAsync(insertAdminSql, adminUser);
+
+                foreach (var (u, d, p, r) in seedUsers)
+                {
+                    var (hash, salt) = HashPassword(p);
+                    await connection.ExecuteAsync(insertUserSql, new UserInfo
+                    {
+                        Username = u,
+                        DisplayName = d,
+                        PasswordHash = hash,
+                        PasswordSalt = salt,
+                        Role = r,
+                        IsEnabled = true,
+                        CreatedAt = DateTime.Now
+                    });
+                }
             }
 
             _isInitialized = true;
@@ -169,6 +183,60 @@ public class SqliteUserRepository : IUserRepository
         const string sql = "SELECT * FROM Users ORDER BY Username;";
         var list = await connection.QueryAsync<UserInfo>(sql);
         return list.AsList();
+    }
+
+    public async Task<bool> DeleteUserAsync(string username)
+    {
+        if (string.Equals(username, "admin", StringComparison.OrdinalIgnoreCase))
+        {
+            // 保护内置管理员不能被删除
+            return false;
+        }
+
+        await EnsureInitializedAsync();
+        await using var connection = CreateConnection();
+        await connection.OpenAsync();
+        using var tx = await connection.BeginTransactionAsync();
+
+        // 1. 级联清理授权记录
+        await connection.ExecuteAsync("DELETE FROM UserViewPermissions WHERE Username = @Username;", new { Username = username }, tx);
+
+        // 2. 删除用户
+        int affected = await connection.ExecuteAsync("DELETE FROM Users WHERE Username = @Username;", new { Username = username }, tx);
+
+        await tx.CommitAsync();
+        return affected > 0;
+    }
+
+    public async Task<IReadOnlyList<string>> GetAllowedViewIdsAsync(string username)
+    {
+        await EnsureInitializedAsync();
+        await using var connection = CreateConnection();
+        const string sql = "SELECT ViewId FROM UserViewPermissions WHERE Username = @Username ORDER BY ViewId;";
+        var list = await connection.QueryAsync<string>(sql, new { Username = username });
+        return list.AsList();
+    }
+
+    public async Task SetAllowedViewIdsAsync(string username, IEnumerable<string> viewIds)
+    {
+        await EnsureInitializedAsync();
+        await using var connection = CreateConnection();
+        await connection.OpenAsync();
+        using var tx = await connection.BeginTransactionAsync();
+
+        // 1. 清理已有授权
+        await connection.ExecuteAsync("DELETE FROM UserViewPermissions WHERE Username = @Username;", new { Username = username }, tx);
+
+        // 2. 插入新授权
+        var distinctIds = viewIds.Distinct().ToList();
+        if (distinctIds.Count > 0)
+        {
+            const string insertSql = "INSERT INTO UserViewPermissions (Username, ViewId) VALUES (@Username, @ViewId);";
+            var paramList = distinctIds.Select(vid => new { Username = username, ViewId = vid });
+            await connection.ExecuteAsync(insertSql, paramList, tx);
+        }
+
+        await tx.CommitAsync();
     }
 
     #region 密码加盐散列加密核心算法 (SHA256 + Salt)

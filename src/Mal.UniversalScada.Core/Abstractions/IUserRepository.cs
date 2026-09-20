@@ -43,4 +43,24 @@ public interface IUserRepository
     /// 获取系统中所有注册的用户列表
     /// </summary>
     Task<IReadOnlyList<UserInfo>> GetAllUsersAsync();
+
+    /// <summary>
+    /// 删除指定用户 (级联清理其所有画面授权映射)
+    /// </summary>
+    /// <param name="username">待删除的用户名</param>
+    /// <returns>是否删除成功</returns>
+    Task<bool> DeleteUserAsync(string username);
+
+    /// <summary>
+    /// 获取指定用户被授权的可视化画面方案 ID 列表 (多对多关系)
+    /// </summary>
+    /// <param name="username">用户名</param>
+    Task<IReadOnlyList<string>> GetAllowedViewIdsAsync(string username);
+
+    /// <summary>
+    /// 批量设置指定用户的可视化画面方案授权集合 (多对多关系)
+    /// </summary>
+    /// <param name="username">用户名</param>
+    /// <param name="viewIds">授权的画面方案 ID 集合</param>
+    Task SetAllowedViewIdsAsync(string username, IEnumerable<string> viewIds);
 }
