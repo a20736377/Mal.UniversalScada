@@ -40,7 +40,16 @@ public partial class App : Application
                     services.AddSiemensS7Driver();
                     services.AddCustomSerialDriver();
 
-                    // 3. ViewModel 与主窗体
+                    // 3. 高性能中枢与工业核心服务 (阶段二 & 阶段三)
+                    services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IRealtimeDataBus, Mal.UniversalScada.Core.Services.RealtimeDataBus>();
+                    services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IPriorityScheduler, Mal.UniversalScada.Core.Services.PriorityScheduler>();
+                    services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IAlarmEngine, Mal.UniversalScada.Core.Services.AlarmEngine>();
+                    services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IAuditService, Mal.UniversalScada.Core.Services.AuditService>();
+                    services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IRecipeService, Mal.UniversalScada.Core.Services.RecipeService>();
+                    services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IScreenManager, Mal.UniversalScada.UI.Wpf.Services.ScreenManager>();
+
+                    // 4. ViewModel 与主窗体
+                    services.AddSingleton<Mal.UniversalScada.UI.Controls.ViewModels.AlarmBannerViewModel>();
                     services.AddSingleton<MainViewModel>();
                     services.AddSingleton<MainWindow>();
                 })

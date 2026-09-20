@@ -12,6 +12,12 @@ public class DefaultDriverFactory : IDriverFactory
     private static readonly Dictionary<ProtocolType, Type> _registeredDriverTypes = new();
     private static readonly Dictionary<string, Type> _namedDriverTypes = new(StringComparer.OrdinalIgnoreCase);
 
+    static DefaultDriverFactory()
+    {
+        RegisterDriver<Mal.UniversalScada.Core.Drivers.MitsubishiMcDriver>(ProtocolType.MitsubishiMc, "MitsubishiMc");
+        RegisterDriver<Mal.UniversalScada.Core.Drivers.OmronFinsDriver>(ProtocolType.OmronFins, "OmronFins");
+    }
+
     public DefaultDriverFactory(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;

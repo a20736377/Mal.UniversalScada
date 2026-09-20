@@ -1,0 +1,66 @@
+<Window x:Class="Mal.UniversalScada.UI.Wpf.Views.RuntimeScreenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:widgets="clr-namespace:Mal.UniversalScada.UI.Controls.Widgets;assembly=Mal.UniversalScada.UI.Controls"
+        mc:Ignorable="d"
+        Title="工业实时监控独立投射大屏"
+        Background="#070B14"
+        Foreground="#F8FAFC"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- 顶部实时报警浮动条 (可选) -->
+            <RowDefinition Height="*"/>    <!-- 工业组态动态画布 -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. 顶部极简标题与快捷关闭按钮 (悬浮微光) -->
+        <Border Grid.Row="0" Background="#0F172A" Height="32" Padding="12,0" BorderBrush="#1E293B" BorderThickness="0,0,0,1">
+            <DockPanel LastChildFill="True">
+                <Button DockPanel.Dock="Right" Content="✕ 退出投射" Click="OnCloseClick"
+                        Height="22" Padding="8,1" FontSize="11" FontWeight="SemiBold"
+                        Background="#7F1D1D" Foreground="#FEE2E2" BorderBrush="#EF4444"
+                        Cursor="Hand" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="🖥️ " FontSize="12" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtScreenTitle" Text="独立投射大屏" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" VerticalAlignment="Center"/>
+                    <Border Background="#064E3B" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="KIOSK FULLSCREEN" FontSize="9" FontWeight="Bold" Foreground="#34D399"/>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- 2. 中间：实时组态大屏画布 -->
+        <Border Grid.Row="1" Background="#070B14">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Grid x:Name="CanvasContainer" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10">
+                    <ItemsControl x:Name="WidgetsItemsControl">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas Width="{Binding CanvasWidth, FallbackValue=1920}"
+                                        Height="{Binding CanvasHeight, FallbackValue=1080}"
+                                        Background="#070B14"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                                <Setter Property="Panel.ZIndex" Value="{Binding ZIndex}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <widgets:WidgetHost DataContext="{Binding}" Width="{Binding Width}" Height="{Binding Height}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Window>

@@ -7,46 +7,97 @@
         xmlns:widgets="clr-namespace:Mal.UniversalScada.UI.Controls.Widgets;assembly=Mal.UniversalScada.UI.Controls"
         mc:Ignorable="d"
         Title="SCADA 实时工业测控系统 (Mal.UniversalScada.UI)"
-        Height="860" Width="1440"
+        Height="900" Width="1500"
         WindowStartupLocation="CenterScreen"
         Background="#070B14"
         Foreground="#F8FAFC">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="64"/> <!-- 顶部高科技导航与画面选择条 -->
-            <RowDefinition Height="*"/>  <!-- 中间实时动态工业画布 -->
-            <RowDefinition Height="32"/> <!-- 底部状态与通信性能条 -->
+            <RowDefinition Height="64"/> <!-- 0: 顶部高科技导航与操作条 -->
+            <RowDefinition Height="Auto"/> <!-- 1: 实时报警横幅流水条 -->
+            <RowDefinition Height="*"/>  <!-- 2: 中间实时动态工业画布 -->
+            <RowDefinition Height="32"/> <!-- 3: 底部状态与通信性能条 -->
         </Grid.RowDefinitions>
 
         <!-- 1. 顶部操作栏 -->
-        <Border Grid.Row="0" Background="#0B1120" BorderBrush="#1E293B" BorderThickness="0,0,0,1" Padding="20,0">
+        <Border Grid.Row="0" Background="#0B1120" BorderBrush="#1E293B" BorderThickness="0,0,0,1" Padding="16,0">
             <Grid>
                 <!-- 左侧：系统 Logo 与标题 -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="#0284C7" Width="36" Height="36" CornerRadius="8" Margin="0,0,12,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
+                    <Border Background="#0284C7" Width="36" Height="36" CornerRadius="8" Margin="0,0,10,0">
                         <TextBlock Text="🏭" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="SCADA 实时工业测控系统" FontSize="16" FontWeight="Bold" Foreground="#38BDF8"/>
-                            <Border Background="#064E3B" CornerRadius="4" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="LIVE" FontSize="10" FontWeight="Bold" Foreground="#34D399"/>
+                            <TextBlock Text="SCADA 实时工业测控系统" FontSize="15" FontWeight="Bold" Foreground="#38BDF8"/>
+                            <Border Background="#064E3B" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="LIVE" FontSize="9" FontWeight="Bold" Foreground="#34D399"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="Universal Industrial SCADA Platform" FontSize="10" Foreground="#64748B"/>
+                        <TextBlock Text="Universal Industrial SCADA Platform v2.0" FontSize="10" Foreground="#64748B"/>
                     </StackPanel>
                 </StackPanel>
 
-                <!-- 中间：【UI 画面选择器】 -->
+                <!-- 中间：画面切换、多屏投射、工艺配方 -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="12,6">
+                    <!-- 画面选择器 -->
+                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🖥️ 监控画面:" Foreground="#94A3B8" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="🖥️ 画面:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <ComboBox ItemsSource="{Binding Views}" SelectedItem="{Binding CurrentView}" DisplayMemberPath="Name"
-                                      Width="260" Height="34" FontSize="13" FontWeight="Bold"
-                                      Background="#1E293B" Foreground="#38BDF8" BorderBrush="#38BDF8" BorderThickness="1.5"
+                                      Width="180" Height="28" FontSize="12" FontWeight="Bold"
+                                      Background="#1E293B" Foreground="#38BDF8" BorderBrush="#38BDF8" BorderThickness="1"
                                       VerticalContentAlignment="Center" Cursor="Hand"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 多屏投射大屏管理 -->
+                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📽️ 投屏:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox ItemsSource="{Binding Screens}" SelectedItem="{Binding SelectedScreen}" DisplayMemberPath="DisplayText"
+                                      Width="160" Height="28" FontSize="11"
+                                      Background="#1E293B" Foreground="#F8FAFC" BorderBrush="#334155" BorderThickness="1"
+                                      VerticalContentAlignment="Center" Cursor="Hand"/>
+                            <Button Content="全屏投射" Margin="6,0,0,0" Height="28" Padding="8,2" FontSize="11" FontWeight="Bold"
+                                    Background="#0369A1" Foreground="#F0F9FF" BorderThickness="0" Cursor="Hand"
+                                    Command="{Binding ProjectCurrentViewCommand}" ToolTip="在所选物理显示器上开启 Kiosk 全屏无边框看板">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="4"/>
+                                    </Style>
+                                </Button.Resources>
+                            </Button>
+                            <Button Content="关闭" Margin="4,0,0,0" Height="28" Padding="6,2" FontSize="11"
+                                    Background="#334155" Foreground="#CBD5E1" BorderThickness="0" Cursor="Hand"
+                                    Command="{Binding CloseAllProjectionsCommand}" ToolTip="关闭所有副屏投射视窗">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="4"/>
+                                    </Style>
+                                </Button.Resources>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 工艺配方管理 -->
+                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="8,4">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📜 配方:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox ItemsSource="{Binding Recipes}" SelectedItem="{Binding SelectedRecipe}" DisplayMemberPath="Name"
+                                      Width="150" Height="28" FontSize="11"
+                                      Background="#1E293B" Foreground="#FDE047" BorderBrush="#CA8A04" BorderThickness="1"
+                                      VerticalContentAlignment="Center" Cursor="Hand"/>
+                            <Button Content="⚡ 下发" Margin="6,0,0,0" Height="28" Padding="8,2" FontSize="11" FontWeight="Bold"
+                                    Background="#B45309" Foreground="#FEF3C7" BorderThickness="0" Cursor="Hand"
+                                    Command="{Binding ApplySelectedRecipeCommand}" ToolTip="一键将选中的工艺配方下发至 PLC">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="4"/>
+                                    </Style>
+                                </Button.Resources>
+                            </Button>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -54,22 +105,22 @@
                 <!-- 右侧：引擎控制、缩放与时钟 -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <!-- 缩放控制 -->
-                    <Border Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Margin="0,0,12,0">
+                    <Border Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="➖" Width="28" Height="28" Background="Transparent" Foreground="#94A3B8" BorderThickness="0"
+                            <Button Content="➖" Width="26" Height="26" Background="Transparent" Foreground="#94A3B8" BorderThickness="0"
                                     Command="{Binding ZoomOutCommand}" ToolTip="缩小画布"/>
                             <TextBlock Text="{Binding ZoomScale, StringFormat={}{0:P0}}" Foreground="#38BDF8" FontWeight="Bold" FontSize="11"
                                        VerticalAlignment="Center" Margin="4,0"/>
-                            <Button Content="➕" Width="28" Height="28" Background="Transparent" Foreground="#94A3B8" BorderThickness="0"
+                            <Button Content="➕" Width="26" Height="26" Background="Transparent" Foreground="#94A3B8" BorderThickness="0"
                                     Command="{Binding ZoomInCommand}" ToolTip="放大画布"/>
-                            <Button Content="1:1" Width="32" Height="28" Background="Transparent" Foreground="#64748B" BorderThickness="0"
+                            <Button Content="1:1" Width="28" Height="26" Background="Transparent" Foreground="#64748B" BorderThickness="0"
                                     Command="{Binding ResetZoomCommand}" ToolTip="重置缩放"/>
                         </StackPanel>
                     </Border>
 
                     <!-- 采集引擎启停按钮 -->
                     <Button Content="{Binding IsEngineRunning, Converter={x:Static vm:RuntimeUiConverters.EngineStateText}}"
-                            Padding="12,5" Height="32" Margin="0,0,14,0" FontWeight="Bold" FontSize="11"
+                            Padding="10,4" Height="28" Margin="0,0,10,0" FontWeight="Bold" FontSize="11"
                             Background="#064E3B" Foreground="#34D399" BorderBrush="#059669" BorderThickness="1"
                             Command="{Binding ToggleEngineCommand}">
                         <Button.Resources>
@@ -81,20 +132,23 @@
 
                     <!-- 实时时钟 -->
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding CurrentTime}" Foreground="#94A3B8" FontSize="12" FontFamily="Consolas" FontWeight="SemiBold"/>
-                        <TextBlock Text="UTC+8 Beijing" Foreground="#475569" FontSize="9" HorizontalAlignment="Right"/>
+                        <TextBlock Text="{Binding CurrentTime}" Foreground="#94A3B8" FontSize="11" FontFamily="Consolas" FontWeight="SemiBold"/>
+                        <TextBlock Text="UTC+8" Foreground="#475569" FontSize="9" HorizontalAlignment="Right"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- 2. 中间：实时动态工业画布 -->
-        <Border Grid.Row="1" Background="#070B14">
+        <!-- 2. 挂载实时报警横幅流水条 (AlarmBannerControl) -->
+        <widgets:AlarmBannerControl Grid.Row="1" DataContext="{Binding AlarmBanner}"/>
+
+        <!-- 3. 中间：实时动态工业画布 -->
+        <Border Grid.Row="2" Background="#070B14">
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                 <Grid Width="{Binding CurrentView.CanvasWidth, FallbackValue=1600}"
                       Height="{Binding CurrentView.CanvasHeight, FallbackValue=900}"
                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                      Margin="30">
+                      Margin="20">
                     <!-- 暗黑科技网格背景 -->
                     <Grid.Background>
                         <DrawingBrush TileMode="Tile" Viewport="0,0,40,40" ViewportUnits="Absolute">
@@ -143,23 +197,23 @@
             </ScrollViewer>
         </Border>
 
-        <!-- 3. 底部状态栏 -->
-        <Border Grid.Row="2" Background="#0B1120" BorderBrush="#1E293B" BorderThickness="0,1,0,0" Padding="20,0">
+        <!-- 4. 底部状态栏 -->
+        <Border Grid.Row="3" Background="#0B1120" BorderBrush="#1E293B" BorderThickness="0,1,0,0" Padding="16,0">
             <Grid VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="{Binding StatusMessage}" Foreground="#38BDF8" FontSize="11" FontWeight="SemiBold"/>
-                    <TextBlock Text="|" Foreground="#334155" Margin="10,0"/>
-                    <TextBlock Text="已连接画面: " Foreground="#64748B" FontSize="11"/>
+                    <TextBlock Text="|" Foreground="#334155" Margin="8,0"/>
+                    <TextBlock Text="画面: " Foreground="#64748B" FontSize="11"/>
                     <TextBlock Text="{Binding CurrentView.Name}" Foreground="#F8FAFC" FontSize="11" FontWeight="SemiBold"/>
-                    <TextBlock Text="|" Foreground="#334155" Margin="10,0"/>
-                    <TextBlock Text="活动组件: " Foreground="#64748B" FontSize="11"/>
+                    <TextBlock Text="|" Foreground="#334155" Margin="8,0"/>
+                    <TextBlock Text="活动图元: " Foreground="#64748B" FontSize="11"/>
                     <TextBlock Text="{Binding Widgets.Count}" Foreground="#34D399" FontSize="11" FontWeight="Bold"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock Text="数据包总数: " Foreground="#64748B" FontSize="11"/>
+                    <TextBlock Text="总线报文: " Foreground="#64748B" FontSize="11"/>
                     <TextBlock Text="{Binding PacketCounter}" Foreground="#38BDF8" FontSize="11" FontWeight="Bold" Margin="0,0,16,0"/>
-                    <TextBlock Text="Mal.UniversalScada Runtime v2.0" Foreground="#475569" FontSize="10"/>
+                    <TextBlock Text="Mal.UniversalScada Kiosk Edition v2.0" Foreground="#475569" FontSize="10"/>
                 </StackPanel>
             </Grid>
         </Border>
