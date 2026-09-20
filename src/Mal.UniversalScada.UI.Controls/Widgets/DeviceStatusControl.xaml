@@ -1,0 +1,111 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.DeviceStatusControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
+    <Border Background="#0A1120" BorderBrush="#1E293B" BorderThickness="1.5" CornerRadius="10" Padding="12,10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 1. 顶部设备名称、ID 与 在线通信状态徽章 -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                <!-- 右侧：通信健康度与状态徽标 -->
+                <Border DockPanel.Dock="Right" CornerRadius="12" Padding="8,3" Background="#111D33" BorderBrush="#1E293B" BorderThickness="1" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="7" Height="7" Margin="0,0,5,0" VerticalAlignment="Center"
+                                 Fill="{Binding StatusColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}, FallbackValue='#10B981'}">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOnline}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding StatusBadgeText, FallbackValue='在线 (12ms)'}"
+                                   Foreground="{Binding StatusColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}, FallbackValue='#10B981'}"
+                                   FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 左侧：图标与名称 -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="28" Height="28" Background="#13233F" BorderBrush="#1E3A8A" BorderThickness="1" CornerRadius="6" Margin="0,0,8,0">
+                        <TextBlock Text="🖥️" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DeviceProps.DeviceName, FallbackValue='主线灌装PLC'}"
+                                   Foreground="#F1F5F9" FontSize="12" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding DeviceProps.TargetDeviceId, StringFormat='[{0}]', FallbackValue='[PLC_Main]'}"
+                                   Foreground="#64748B" FontSize="10"/>
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- 2. 协议与挂载通道徽章 (紧凑模式下折叠) -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8"
+                        Visibility="{Binding DeviceProps.IsCompact, Converter={x:Static vm:WidgetUiConverters.InverseBoolToVisibility}}">
+                <!-- 协议胶囊 -->
+                <Border Background="#172554" BorderBrush="#1D4ED8" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0">
+                    <TextBlock Text="{Binding DeviceProps.Protocol, FallbackValue='MODBUS TCP'}"
+                               Foreground="#38BDF8" FontSize="9" FontWeight="Bold"/>
+                </Border>
+                <!-- 通道胶囊 -->
+                <Border Background="#1E293B" CornerRadius="4" Padding="6,2">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🔗 " FontSize="8" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding DeviceProps.ChannelId, FallbackValue='CH_TCP_01'}"
+                                   Foreground="#94A3B8" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- 3. 核心通信参数 (站号、轮询周期、挂载测点数) (紧凑模式下折叠) -->
+            <Border Grid.Row="2" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="8,6" Margin="0,0,0,8"
+                    Visibility="{Binding DeviceProps.IsCompact, Converter={x:Static vm:WidgetUiConverters.InverseBoolToVisibility}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- 站号 -->
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                        <TextBlock Text="站号 / 地址" FontSize="9" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding DeviceProps.StationAddress, FallbackValue='1'}" FontSize="12" FontWeight="Bold" Foreground="#E2E8F0" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <!-- 轮询周期 -->
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <TextBlock Text="采集周期" FontSize="9" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding DeviceProps.PollIntervalMs, StringFormat='{}{0}ms', FallbackValue='100ms'}" FontSize="12" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <!-- 挂载测点数 -->
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                        <TextBlock Text="关联测点" FontSize="9" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding DeviceProps.TagCount, StringFormat='{}{0} 点', FallbackValue='16 点'}" FontSize="12" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 4. 底部健康度指标微反馈 -->
+            <DockPanel Grid.Row="3">
+                <TextBlock Text="往返延迟:" FontSize="9" Foreground="#64748B" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding DeviceProps.LatencyMs, StringFormat=' {0} ms', FallbackValue=' 12 ms'}"
+                           Foreground="#94A3B8" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Text="{Binding StatusBadgeText}" FontSize="9"
+                           Foreground="{Binding StatusColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Grid>
+    </Border>
+</UserControl>

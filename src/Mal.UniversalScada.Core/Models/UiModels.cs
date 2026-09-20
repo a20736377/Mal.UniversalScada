@@ -65,7 +65,12 @@ public enum WidgetType
     /// <summary>
     /// P&amp;ID 工业工艺管道图元 (带介质颜色与跑马灯流动动效)
     /// </summary>
-    Pipe = 12
+    Pipe = 12,
+
+    /// <summary>
+    /// 工业设备状态监视卡片 (绑定通信设备，展示在线/离线、通信延迟、协议与通道拓扑)
+    /// </summary>
+    DeviceStatus = 13
 }
 
 /// <summary>

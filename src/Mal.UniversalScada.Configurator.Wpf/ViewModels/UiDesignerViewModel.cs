@@ -42,6 +42,44 @@ public partial class UiDesignerViewModel : ObservableObject
     [ObservableProperty]
     private TagOptionItem? _selectedTagInfo;
 
+    [ObservableProperty]
+    private ObservableCollection<DeviceOptionItem> _availableDevices = new();
+
+    private DeviceOptionItem? _selectedDeviceOption;
+    public DeviceOptionItem? SelectedDeviceOption
+    {
+        get => _selectedDeviceOption;
+        set
+        {
+            if (SetProperty(ref _selectedDeviceOption, value))
+            {
+                if (SelectedWidget is DeviceStatusWidgetViewModel devVm && value != null)
+                {
+                    if (!string.IsNullOrEmpty(value.DeviceId))
+                    {
+                        devVm.TargetDeviceId = value.DeviceId;
+                        devVm.DeviceName = value.Name;
+                        devVm.ChannelId = value.ChannelId;
+                        devVm.Protocol = value.ProtocolType.ToString();
+                        devVm.StationAddress = value.StationAddress;
+                        devVm.PollIntervalMs = value.DefaultPollIntervalMs;
+                        devVm.TagCount = value.TagCount;
+                        if (string.IsNullOrWhiteSpace(devVm.Title) || devVm.Title.StartsWith("工位") || devVm.Title == "设备状态监视卡片")
+                        {
+                            devVm.Title = value.Name;
+                        }
+                    }
+                    else
+                    {
+                        devVm.TargetDeviceId = string.Empty;
+                        devVm.DeviceName = "未关联设备";
+                    }
+                    devVm.SyncPropertiesFromFields();
+                }
+            }
+        }
+    }
+
     private readonly List<TagNode> _allRawTags = new();
 
     [ObservableProperty]
@@ -59,7 +97,8 @@ public partial class UiDesignerViewModel : ObservableObject
         new(WidgetType.IoMatrix, "8路 IO 状态板", "🎛️", "8路开关量点阵矩阵，状态自感"),
         new(WidgetType.StatusLed, "工业状态指示灯", "💡", "三态高光状态灯，带运行/告警标识"),
         new(WidgetType.ControlButton, "普通按钮", "🔘", "下发置位控制指令至下位机点位"),
-        new(WidgetType.Pipe, "工艺管道", "🌊", "P&ID 工业工艺管道，带动态介质流动动效")
+        new(WidgetType.Pipe, "工艺管道", "🌊", "P&ID 工业工艺管道，带动态介质流动动效"),
+        new(WidgetType.DeviceStatus, "设备状态卡片", "🖥️", "通信节点状态监视，展示在线/延时/协议/通道")
     };
 
     public UiDesignerViewModel(IConfigurationService configService)
@@ -75,6 +114,7 @@ public partial class UiDesignerViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         await ReloadAvailableTagsAsync();
+        await ReloadAvailableDevicesAsync();
         await ReloadViewsAsync();
     }
 
@@ -106,10 +146,48 @@ public partial class UiDesignerViewModel : ObservableObject
 
             UpdateFilteredTagsForSelectedWidget();
             OnPrimaryTagIdChanged();
+            await ReloadAvailableDevicesAsync();
         }
         catch (Exception ex)
         {
             StatusMessage = $"加载点位列表失败: {ex.Message}";
+        }
+    }
+
+    public async Task ReloadAvailableDevicesAsync()
+    {
+        try
+        {
+            var devices = await _configService.GetDevicesAsync();
+            AvailableDevices.Clear();
+            AvailableDevices.Add(DeviceOptionItem.CreateUnbound());
+
+            foreach (var d in devices)
+            {
+                int tagCount = _allRawTags.Count(t => t.DeviceId == d.DeviceId);
+                AvailableDevices.Add(DeviceOptionItem.FromDevice(d, tagCount));
+            }
+
+            SyncSelectedDeviceOption();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"加载设备列表失败: {ex.Message}";
+        }
+    }
+
+    public void SyncSelectedDeviceOption()
+    {
+        if (SelectedWidget is DeviceStatusWidgetViewModel devVm)
+        {
+            _selectedDeviceOption = AvailableDevices.FirstOrDefault(d => d.DeviceId == devVm.TargetDeviceId)
+                                 ?? AvailableDevices.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedDeviceOption));
+        }
+        else
+        {
+            _selectedDeviceOption = null;
+            OnPropertyChanged(nameof(SelectedDeviceOption));
         }
     }
 
@@ -179,6 +257,7 @@ public partial class UiDesignerViewModel : ObservableObject
 
         UpdateFilteredTagsForSelectedWidget();
         OnPrimaryTagIdChanged();
+        SyncSelectedDeviceOption();
     }
 
     private void OnCurrentWidgetPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -186,6 +265,10 @@ public partial class UiDesignerViewModel : ObservableObject
         if (e.PropertyName == nameof(WidgetViewModel.PrimaryTagId))
         {
             OnPrimaryTagIdChanged();
+        }
+        else if (e.PropertyName == nameof(DeviceStatusProps.TargetDeviceId))
+        {
+            SyncSelectedDeviceOption();
         }
     }
 
@@ -734,6 +817,22 @@ public partial class UiDesignerViewModel : ObservableObject
         {
             wConfig.PrimaryTagId = string.Empty;
         }
+        else if (type == WidgetType.DeviceStatus)
+        {
+            wConfig.PrimaryTagId = string.Empty;
+            if (AvailableDevices.Count > 1)
+            {
+                var dev = AvailableDevices[1];
+                wConfig.Title = dev.Name;
+                wConfig.Properties["TargetDeviceId"] = dev.DeviceId;
+                wConfig.Properties["DeviceName"] = dev.Name;
+                wConfig.Properties["ChannelId"] = dev.ChannelId;
+                wConfig.Properties["Protocol"] = dev.ProtocolType.ToString();
+                wConfig.Properties["StationAddress"] = dev.StationAddress.ToString();
+                wConfig.Properties["PollIntervalMs"] = dev.DefaultPollIntervalMs.ToString();
+                wConfig.Properties["TagCount"] = dev.TagCount.ToString();
+            }
+        }
         else if (FilteredAvailableTags.Count > 1)
         {
             wConfig.PrimaryTagId = FilteredAvailableTags[1].TagId;
@@ -804,6 +903,7 @@ public partial class UiDesignerViewModel : ObservableObject
         WidgetType.StatusLed => "运行就绪指示灯",
         WidgetType.ControlButton => "普通按钮",
         WidgetType.Pipe => "工艺输送管道",
+        WidgetType.DeviceStatus => "设备状态监视卡片",
         _ => "监控卡片"
     };
 

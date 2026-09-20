@@ -108,6 +108,11 @@ public class ConfigurationService : IConfigurationService
         };
     }
 
+    public async Task<IReadOnlyList<DeviceNode>> GetDevicesAsync()
+    {
+        return await _configRepository.GetDevicesAsync();
+    }
+
     public async Task<int> DeleteDeviceAsync(string deviceId, IEnumerable<TagNode> allTags)
     {
         var tagsToDelete = allTags.Where(t => t.DeviceId == deviceId).ToList();

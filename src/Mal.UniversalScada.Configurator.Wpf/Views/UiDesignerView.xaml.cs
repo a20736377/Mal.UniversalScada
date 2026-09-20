@@ -218,6 +218,30 @@ public partial class UiDesignerView : UserControl
         }
     }
 
+    private void OnSimulateDeviceOnlineClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is UiDesignerViewModel vm && vm.SelectedWidget != null)
+        {
+            vm.SelectedWidget.UpdateRuntimeValue("Online");
+        }
+    }
+
+    private void OnSimulateDeviceTimeoutClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is UiDesignerViewModel vm && vm.SelectedWidget != null)
+        {
+            vm.SelectedWidget.UpdateRuntimeValue("Timeout");
+        }
+    }
+
+    private void OnSimulateDeviceOfflineClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is UiDesignerViewModel vm && vm.SelectedWidget != null)
+        {
+            vm.SelectedWidget.UpdateRuntimeValue("Offline");
+        }
+    }
+
     private static T? FindParent<T>(DependencyObject child) where T : DependencyObject
     {
         var parent = VisualTreeHelper.GetParent(child);

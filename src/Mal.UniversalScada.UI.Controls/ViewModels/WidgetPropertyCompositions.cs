@@ -330,4 +330,63 @@ public partial class PipeProps : ObservableObject
     private bool _isFlowing = true;
 }
 
+/// <summary>
+/// 工业设备状态监视卡片专属组合属性类 (绑定具体下位机设备，展示在线/离线、通信延迟、协议与通道拓扑)
+/// </summary>
+public partial class DeviceStatusProps : ObservableObject
+{
+    [ObservableProperty]
+    private string _targetDeviceId = string.Empty;
+
+    [ObservableProperty]
+    private string _deviceName = "未关联设备";
+
+    [ObservableProperty]
+    private string _channelId = "--";
+
+    [ObservableProperty]
+    private string _protocol = "Modbus TCP";
+
+    [ObservableProperty]
+    private int _stationAddress = 1;
+
+    [ObservableProperty]
+    private int _pollIntervalMs = 100;
+
+    [ObservableProperty]
+    private string _connectionStatus = "Online"; // Online, Offline, Timeout, Fault
+
+    [ObservableProperty]
+    private int _latencyMs = 12;
+
+    [ObservableProperty]
+    private int _tagCount = 0;
+
+    [ObservableProperty]
+    private string _activeColor = "#10B981";
+
+    [ObservableProperty]
+    private string _offlineColor = "#EF4444";
+
+    [ObservableProperty]
+    private string _warningColor = "#F59E0B";
+
+    [ObservableProperty]
+    private bool _isCompact = false;
+
+    // 友好兼容别名 (方便 XAML 与测试绑定)
+    public string ProtocolType
+    {
+        get => Protocol;
+        set => Protocol = value;
+    }
+
+    public int ResponseLatencyMs
+    {
+        get => LatencyMs;
+        set => LatencyMs = value;
+    }
+}
+
+
 

@@ -52,6 +52,11 @@ public interface IConfigurationService
         int pollIntervalMs = 100);
 
     /// <summary>
+    /// 获取当前系统配置的所有通信设备节点列表
+    /// </summary>
+    Task<IReadOnlyList<DeviceNode>> GetDevicesAsync();
+
+    /// <summary>
     /// 删除指定设备，并级联删除归属于该设备的所有点位
     /// </summary>
     /// <returns>级联删除的点位数量</returns>

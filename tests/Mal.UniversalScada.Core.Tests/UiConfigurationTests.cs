@@ -1048,7 +1048,85 @@ public class UiConfigurationTests
         pipe.SyncPropertiesFromFields();
         Assert.Equal("Reverse", pipe.Properties["FlowDirection"]);
     }
+
+    [Fact]
+    public void DeviceStatus_ViewModel_And_StylePreset_Tests()
+    {
+        // 1. 验证工厂创建与默认尺寸
+        var widget = WidgetViewModel.Create(WidgetType.DeviceStatus);
+        Assert.IsType<DeviceStatusWidgetViewModel>(widget);
+        var devVm = (DeviceStatusWidgetViewModel)widget;
+
+        Assert.Equal(WidgetType.DeviceStatus, devVm.Type);
+        Assert.Equal(280, devVm.Width);
+        Assert.Equal(140, devVm.Height);
+        Assert.Equal("Online", devVm.ConnectionStatus);
+        Assert.Equal("#10B981", devVm.ActiveColor);
+        Assert.Equal("#EF4444", devVm.OfflineColor);
+        Assert.Equal("#F59E0B", devVm.WarningColor);
+
+        // 2. 验证设备选择与绑定联动 (ApplyDevice)
+        var devNode = new DeviceNode
+        {
+            DeviceId = "DEV_PLC_LINE1",
+            Name = "1号涂布产线 PLC",
+            ChannelId = "CH_ETHERNET_01",
+            ProtocolType = ProtocolType.ModbusTcp,
+            StationAddress = 1,
+            DefaultPollIntervalMs = 500
+        };
+        var devOption = DeviceOptionItem.FromDeviceNode(devNode, tagCount: 48);
+        Assert.Contains("1号涂布产线 PLC", devOption.DisplayName);
+        Assert.Contains("DEV_PLC_LINE1", devOption.DisplayName);
+
+        devVm.ApplyDevice(devOption);
+        Assert.Equal("DEV_PLC_LINE1", devVm.DeviceId);
+        Assert.Equal("1号涂布产线 PLC", devVm.Title);
+        Assert.Equal("ModbusTcp", devVm.ProtocolType);
+        Assert.Equal("CH_ETHERNET_01", devVm.ChannelId);
+        Assert.Equal(1, devVm.StationAddress);
+        Assert.Equal(500, devVm.PollIntervalMs);
+        Assert.Equal(48, devVm.TagCount);
+
+        // 验证回写持久化字典
+        devVm.SyncPropertiesFromFields();
+        Assert.Equal("DEV_PLC_LINE1", devVm.Properties["DeviceId"]);
+        Assert.Equal("ModbusTcp", devVm.Properties["ProtocolType"]);
+        Assert.Equal("48", devVm.Properties["TagCount"]);
+
+        // 3. 验证状态计算与色彩呈现
+        devVm.UpdateRuntimeValue("Timeout");
+        Assert.Equal("Timeout", devVm.ConnectionStatus);
+        Assert.Equal(devVm.WarningColor, devVm.StatusColor);
+
+        devVm.UpdateRuntimeValue("Offline");
+        Assert.Equal("Offline", devVm.ConnectionStatus);
+        Assert.Equal(devVm.OfflineColor, devVm.StatusColor);
+
+        devVm.UpdateRuntimeValue(1); // 模拟整型 1 映射为 Online
+        Assert.Equal("Online", devVm.ConnectionStatus);
+        Assert.Equal(devVm.ActiveColor, devVm.StatusColor);
+
+        // 4. 验证行业模板预设
+        var presets = WidgetStylePresetCatalog.GetPresets(WidgetType.DeviceStatus);
+        Assert.Equal(3, presets.Count);
+
+        var compactPreset = presets.FirstOrDefault(p => p.Id == "Dev_Compact_Tag");
+        Assert.NotNull(compactPreset);
+        devVm.ApplyPreset(compactPreset!);
+        Assert.Equal(220, devVm.Width);
+        Assert.Equal(90, devVm.Height);
+        Assert.True(devVm.IsCompact);
+
+        var serverPreset = presets.FirstOrDefault(p => p.Id == "Dev_Server_Panel");
+        Assert.NotNull(serverPreset);
+        devVm.ApplyPreset(serverPreset!);
+        Assert.Equal(320, devVm.Width);
+        Assert.Equal(175, devVm.Height);
+        Assert.False(devVm.IsCompact);
+    }
 }
+
 
 
 

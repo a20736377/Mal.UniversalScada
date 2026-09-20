@@ -134,6 +134,11 @@ public partial class WidgetViewModel : ObservableObject
     public virtual PipeProps? PipeProps => (this as PipeWidgetViewModel)?.Props;
 
     /// <summary>
+    /// 快捷转换：设备状态监视卡片专属组合属性
+    /// </summary>
+    public virtual DeviceStatusProps? DeviceProps => (this as DeviceStatusWidgetViewModel)?.Props;
+
+    /// <summary>
     /// 当前组件类型可用的样式与行业预设模板列表
     /// </summary>
     public IReadOnlyList<WidgetStylePreset> AvailablePresets => WidgetStylePresetCatalog.GetPresets(Type);
@@ -587,6 +592,7 @@ public partial class WidgetViewModel : ObservableObject
             WidgetType.TrendChart => new TrendChartWidgetViewModel(),
             WidgetType.PanelContainer => new PanelContainerWidgetViewModel(),
             WidgetType.Pipe => new PipeWidgetViewModel(),
+            WidgetType.DeviceStatus => new DeviceStatusWidgetViewModel(),
             _ => new NumericCardWidgetViewModel()
         };
 
@@ -633,6 +639,7 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.TrendChart => 380,
         WidgetType.PanelContainer => 360,
         WidgetType.Pipe => 240,
+        WidgetType.DeviceStatus => 280,
         _ => 160
     };
 
@@ -650,6 +657,7 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.TrendChart => 220,
         WidgetType.PanelContainer => 260,
         WidgetType.Pipe => 24,
+        WidgetType.DeviceStatus => 140,
         _ => 140
     };
 }

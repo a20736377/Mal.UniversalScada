@@ -171,6 +171,19 @@
             </widgets:PipeControl.Style>
         </widgets:PipeControl>
 
+        <widgets:DeviceStatusControl>
+            <widgets:DeviceStatusControl.Style>
+                <Style TargetType="widgets:DeviceStatusControl">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.DeviceStatus}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </widgets:DeviceStatusControl.Style>
+        </widgets:DeviceStatusControl>
+
         <!-- 设计模式专属：高亮选中框与拖拽遮罩 -->
         <Border x:Name="DesignerAdorner"
                 BorderThickness="2" CornerRadius="10" IsHitTestVisible="False">

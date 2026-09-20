@@ -1353,3 +1353,179 @@ public partial class PipeWidgetViewModel : WidgetViewModel
     }
 }
 
+/// <summary>
+/// 工业设备状态监视卡片组件视图模型（继承自基类 WidgetViewModel，组合包含 DeviceStatusProps）
+/// </summary>
+public partial class DeviceStatusWidgetViewModel : WidgetViewModel
+{
+    [ObservableProperty]
+    private DeviceStatusProps _props = new();
+
+    public override object ComponentProps => Props;
+
+    public DeviceStatusWidgetViewModel()
+    {
+        Type = WidgetType.DeviceStatus;
+        Width = 280;
+        Height = 140;
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null)
+            {
+                OnPropertyChanged(e.PropertyName);
+                if (e.PropertyName == nameof(DeviceStatusProps.ConnectionStatus) ||
+                    e.PropertyName == nameof(DeviceStatusProps.ActiveColor) ||
+                    e.PropertyName == nameof(DeviceStatusProps.OfflineColor) ||
+                    e.PropertyName == nameof(DeviceStatusProps.WarningColor) ||
+                    e.PropertyName == nameof(DeviceStatusProps.LatencyMs))
+                {
+                    OnPropertyChanged(nameof(StatusColor));
+                    OnPropertyChanged(nameof(StatusBadgeText));
+                    OnPropertyChanged(nameof(IsOnline));
+                }
+            }
+        };
+    }
+
+    public string TargetDeviceId { get => Props.TargetDeviceId; set => Props.TargetDeviceId = value; }
+    public string DeviceId { get => Props.TargetDeviceId; set => Props.TargetDeviceId = value; }
+    public string DeviceName { get => Props.DeviceName; set => Props.DeviceName = value; }
+    public string ChannelId { get => Props.ChannelId; set => Props.ChannelId = value; }
+    public string Protocol { get => Props.Protocol; set => Props.Protocol = value; }
+    public string ProtocolType { get => Props.Protocol; set => Props.Protocol = value; }
+    public int StationAddress { get => Props.StationAddress; set => Props.StationAddress = value; }
+    public int PollIntervalMs { get => Props.PollIntervalMs; set => Props.PollIntervalMs = value; }
+    public string ConnectionStatus { get => Props.ConnectionStatus; set => Props.ConnectionStatus = value; }
+    public int LatencyMs { get => Props.LatencyMs; set => Props.LatencyMs = value; }
+    public int ResponseLatencyMs { get => Props.LatencyMs; set => Props.LatencyMs = value; }
+    public int TagCount { get => Props.TagCount; set => Props.TagCount = value; }
+    public bool IsCompact { get => Props.IsCompact; set => Props.IsCompact = value; }
+    public override string ActiveColor { get => Props.ActiveColor; set => Props.ActiveColor = value; }
+    public string OfflineColor { get => Props.OfflineColor; set => Props.OfflineColor = value; }
+    public string WarningColor { get => Props.WarningColor; set => Props.WarningColor = value; }
+
+    public bool IsOnline => string.Equals(Props.ConnectionStatus, "Online", StringComparison.OrdinalIgnoreCase);
+
+    public string StatusColor => Props.ConnectionStatus?.ToLowerInvariant() switch
+    {
+        "online" => Props.ActiveColor,
+        "timeout" or "warning" => Props.WarningColor,
+        _ => Props.OfflineColor
+    };
+
+    public string StatusBadgeText => Props.ConnectionStatus?.ToLowerInvariant() switch
+    {
+        "online" => $"在线 ({Props.LatencyMs}ms)",
+        "timeout" => "通信超时",
+        "fault" => "设备故障",
+        _ => "离线未连接"
+    };
+
+    public void ApplyDevice(DeviceNode device, int tagCount = 0)
+    {
+        Props.TargetDeviceId = device.DeviceId;
+        Props.DeviceName = device.Name;
+        Title = device.Name;
+        Props.ChannelId = device.ChannelId;
+        Props.Protocol = device.ProtocolType.ToString();
+        Props.StationAddress = device.StationAddress;
+        Props.PollIntervalMs = device.DefaultPollIntervalMs;
+        Props.TagCount = tagCount;
+        SyncPropertiesFromFields();
+        OnPropertyChanged(string.Empty);
+    }
+
+    public void ApplyDevice(DeviceOptionItem option)
+    {
+        if (option == null) return;
+        Props.TargetDeviceId = option.DeviceId;
+        Props.DeviceName = option.Name;
+        Title = string.IsNullOrWhiteSpace(option.Name) ? Title : option.Name;
+        Props.ChannelId = option.ChannelId;
+        Props.Protocol = option.ProtocolType.ToString();
+        Props.StationAddress = option.StationAddress;
+        Props.PollIntervalMs = option.DefaultPollIntervalMs;
+        Props.TagCount = option.TagCount;
+        SyncPropertiesFromFields();
+        OnPropertyChanged(string.Empty);
+    }
+
+    public override void LoadProperties(Dictionary<string, string> properties)
+    {
+        base.LoadProperties(properties);
+
+        if (properties.TryGetValue("TargetDeviceId", out var devId)) Props.TargetDeviceId = devId;
+        if (properties.TryGetValue("DeviceId", out var devId2)) Props.TargetDeviceId = devId2;
+        if (properties.TryGetValue("DeviceName", out var devName)) Props.DeviceName = devName;
+        if (properties.TryGetValue("ChannelId", out var chId)) Props.ChannelId = chId;
+        if (properties.TryGetValue("Protocol", out var proto)) Props.Protocol = proto;
+        if (properties.TryGetValue("ProtocolType", out var protoType)) Props.Protocol = protoType;
+        if (properties.TryGetValue("StationAddress", out var saStr) && int.TryParse(saStr, out var sa)) Props.StationAddress = sa;
+        if (properties.TryGetValue("PollIntervalMs", out var piStr) && int.TryParse(piStr, out var pi)) Props.PollIntervalMs = pi;
+        if (properties.TryGetValue("ConnectionStatus", out var cs)) Props.ConnectionStatus = cs;
+        if (properties.TryGetValue("LatencyMs", out var latStr) && int.TryParse(latStr, out var lat)) Props.LatencyMs = lat;
+        if (properties.TryGetValue("TagCount", out var tcStr) && int.TryParse(tcStr, out var tc)) Props.TagCount = tc;
+        if (properties.TryGetValue("ActiveColor", out var ac)) Props.ActiveColor = ac;
+        if (properties.TryGetValue("OfflineColor", out var oc)) Props.OfflineColor = oc;
+        if (properties.TryGetValue("WarningColor", out var wc)) Props.WarningColor = wc;
+        if (properties.TryGetValue("IsCompact", out var compStr) && bool.TryParse(compStr, out var comp)) Props.IsCompact = comp;
+
+        OnPropertyChanged(nameof(StatusColor));
+        OnPropertyChanged(nameof(StatusBadgeText));
+        OnPropertyChanged(nameof(IsOnline));
+    }
+
+    public override void SyncPropertiesFromFields()
+    {
+        base.SyncPropertiesFromFields();
+
+        Properties["TargetDeviceId"] = Props.TargetDeviceId ?? string.Empty;
+        Properties["DeviceId"] = Props.TargetDeviceId ?? string.Empty;
+        Properties["DeviceName"] = Props.DeviceName ?? "未关联设备";
+        Properties["ChannelId"] = Props.ChannelId ?? "--";
+        Properties["Protocol"] = Props.Protocol ?? "Modbus TCP";
+        Properties["ProtocolType"] = Props.Protocol ?? "Modbus TCP";
+        Properties["StationAddress"] = Props.StationAddress.ToString();
+        Properties["PollIntervalMs"] = Props.PollIntervalMs.ToString();
+        Properties["ConnectionStatus"] = Props.ConnectionStatus ?? "Online";
+        Properties["LatencyMs"] = Props.LatencyMs.ToString();
+        Properties["TagCount"] = Props.TagCount.ToString();
+        Properties["ActiveColor"] = Props.ActiveColor ?? "#10B981";
+        Properties["OfflineColor"] = Props.OfflineColor ?? "#EF4444";
+        Properties["WarningColor"] = Props.WarningColor ?? "#F59E0B";
+        Properties["IsCompact"] = Props.IsCompact.ToString();
+    }
+
+    public override void UpdateRuntimeValue(object? rawValue, string quality = "Good")
+    {
+        CurrentRawValue = rawValue;
+        Quality = quality;
+
+        if (string.Equals(quality, "Bad", StringComparison.OrdinalIgnoreCase))
+        {
+            Props.ConnectionStatus = "Offline";
+        }
+        else if (rawValue is bool b)
+        {
+            Props.ConnectionStatus = b ? "Online" : "Offline";
+        }
+        else if (rawValue is int or long or double or float)
+        {
+            if (int.TryParse(rawValue.ToString(), out var num))
+            {
+                Props.LatencyMs = Math.Max(0, num);
+                Props.ConnectionStatus = num > 1000 ? "Timeout" : "Online";
+            }
+        }
+        else if (rawValue is string s && !string.IsNullOrWhiteSpace(s))
+        {
+            Props.ConnectionStatus = s;
+        }
+
+        OnPropertyChanged(nameof(StatusColor));
+        OnPropertyChanged(nameof(StatusBadgeText));
+        OnPropertyChanged(nameof(IsOnline));
+    }
+}
+
+

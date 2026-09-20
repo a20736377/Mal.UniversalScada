@@ -38,6 +38,7 @@ public static class WidgetStylePresetCatalog
         RegisterDisplayBoxPresets();
         RegisterPanelContainerPresets();
         RegisterPipePresets();
+        RegisterDeviceStatusPresets();
     }
 
     public static IReadOnlyList<WidgetStylePreset> GetPresets(WidgetType type)
@@ -1039,6 +1040,86 @@ public static class WidgetStylePresetCatalog
                     p.FlowDirection = "Forward";
                     p.FlowSpeed = 1.0;
                     p.IsFlowing = true;
+                }
+            }
+        ));
+    }
+    #endregion
+
+    #region 设备状态卡片预设 (DeviceStatus)
+    private static void RegisterDeviceStatusPresets()
+    {
+        Register(new WidgetStylePreset(
+            Id: "Dev_Standard_Card",
+            Type: WidgetType.DeviceStatus,
+            Name: "工业标准通信卡片 (280×140)",
+            Icon: "🖥️",
+            Category: "通信拓扑",
+            Description: "标准工控通信卡片，展示协议徽标、通道名称、站号、轮询周期与延时",
+            Apply: vm =>
+            {
+                if (vm is DeviceStatusWidgetViewModel dev)
+                {
+                    dev.Title = "PLC 主控制器";
+                    dev.Width = 280;
+                    dev.Height = 140;
+                    dev.DeviceName = "主线生产PLC";
+                    dev.ConnectionStatus = "Online";
+                    dev.LatencyMs = 12;
+                    dev.IsCompact = false;
+                    dev.ActiveColor = "#10B981";
+                    dev.OfflineColor = "#EF4444";
+                    dev.WarningColor = "#F59E0B";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Dev_Compact_Tag",
+            Type: WidgetType.DeviceStatus,
+            Name: "密集机柜紧凑标签 (220×90)",
+            Icon: "🏷️",
+            Category: "通信拓扑",
+            Description: "紧凑微型设备标签，适合多设备密集排列的高密度监控画面",
+            Apply: vm =>
+            {
+                if (vm is DeviceStatusWidgetViewModel dev)
+                {
+                    dev.Title = "温湿度传感器模块";
+                    dev.Width = 220;
+                    dev.Height = 90;
+                    dev.DeviceName = "环境监测仪";
+                    dev.ConnectionStatus = "Online";
+                    dev.LatencyMs = 8;
+                    dev.IsCompact = true;
+                    dev.ActiveColor = "#06B6D4";
+                    dev.OfflineColor = "#EF4444";
+                    dev.WarningColor = "#F59E0B";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Dev_Server_Panel",
+            Type: WidgetType.DeviceStatus,
+            Name: "核心服务器监视面板 (320×175)",
+            Icon: "🖧",
+            Category: "通信拓扑",
+            Description: "大型主站设备面板，高对比发光指示，突出测点规模与链路质量",
+            Apply: vm =>
+            {
+                if (vm is DeviceStatusWidgetViewModel dev)
+                {
+                    dev.Title = "SCADA 数据采集服务器";
+                    dev.Width = 320;
+                    dev.Height = 175;
+                    dev.DeviceName = "SCADA_IO_SERVER";
+                    dev.ConnectionStatus = "Online";
+                    dev.LatencyMs = 5;
+                    dev.IsCompact = false;
+                    dev.ActiveColor = "#38BDF8";
+                    dev.OfflineColor = "#DC2626";
+                    dev.WarningColor = "#EAB308";
                 }
             }
         ));
