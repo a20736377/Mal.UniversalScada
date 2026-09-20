@@ -60,7 +60,12 @@ public enum WidgetType
     /// <summary>
     /// 区域容器分组框 (工位边框、组件容器卡片与背景框)
     /// </summary>
-    PanelContainer = 11
+    PanelContainer = 11,
+
+    /// <summary>
+    /// P&amp;ID 工业工艺管道图元 (带介质颜色与跑马灯流动动效)
+    /// </summary>
+    Pipe = 12
 }
 
 /// <summary>

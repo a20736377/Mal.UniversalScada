@@ -10,11 +10,13 @@ namespace Mal.UniversalScada.UI.Controls.Widgets;
 public partial class WidgetHost : UserControl
 {
     public static event Action<WidgetViewModel>? WidgetSelected;
+    public static event Action<WidgetViewModel, bool>? WidgetSelectionRequested;
     public static event Action<WidgetViewModel>? WidgetDeleteRequested;
 
     private bool _isDragging;
     private Point _dragStartMouse;
     private Point _dragStartPos;
+    private readonly List<(WidgetViewModel Vm, Point StartPos)> _multiDragPositions = new();
 
     public WidgetHost()
     {
@@ -23,7 +25,11 @@ public partial class WidgetHost : UserControl
         PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
         PreviewMouseMove += OnPreviewMouseMove;
         PreviewMouseLeftButtonUp += OnPreviewMouseLeftButtonUp;
-        LostMouseCapture += (s, e) => _isDragging = false;
+        LostMouseCapture += (s, e) =>
+        {
+            _isDragging = false;
+            _multiDragPositions.Clear();
+        };
     }
 
     private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -36,6 +42,8 @@ public partial class WidgetHost : UserControl
             return;
         }
 
+        bool isCtrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+        WidgetSelectionRequested?.Invoke(vm, isCtrl);
         WidgetSelected?.Invoke(vm);
 
         var parentCanvas = FindParent<Canvas>(this);
@@ -44,6 +52,21 @@ public partial class WidgetHost : UserControl
             _isDragging = true;
             _dragStartMouse = e.GetPosition(parentCanvas);
             _dragStartPos = new Point(vm.X, vm.Y);
+
+            _multiDragPositions.Clear();
+            var itemsControl = FindParent<ItemsControl>(parentCanvas);
+            if (itemsControl?.ItemsSource is IEnumerable<WidgetViewModel> allVms)
+            {
+                var selected = allVms.Where(w => w.IsSelected).ToList();
+                if (selected.Contains(vm) && selected.Count > 1)
+                {
+                    foreach (var item in selected)
+                    {
+                        _multiDragPositions.Add((item, new Point(item.X, item.Y)));
+                    }
+                }
+            }
+
             CaptureMouse();
             e.Handled = true;
         }
@@ -56,6 +79,7 @@ public partial class WidgetHost : UserControl
         if (e.LeftButton != MouseButtonState.Pressed)
         {
             _isDragging = false;
+            _multiDragPositions.Clear();
             ReleaseMouseCapture();
             return;
         }
@@ -67,12 +91,27 @@ public partial class WidgetHost : UserControl
         var deltaX = currentMouse.X - _dragStartMouse.X;
         var deltaY = currentMouse.Y - _dragStartMouse.Y;
 
-        // 磁吸网格 (以 10px 为栅格单位)
-        var newX = Math.Max(0, Math.Round((_dragStartPos.X + deltaX) / 10.0) * 10.0);
-        var newY = Math.Max(0, Math.Round((_dragStartPos.Y + deltaY) / 10.0) * 10.0);
+        if (_multiDragPositions.Count > 1)
+        {
+            var snapDx = Math.Round(deltaX / 10.0) * 10.0;
+            var snapDy = Math.Round(deltaY / 10.0) * 10.0;
 
-        vm.X = newX;
-        vm.Y = newY;
+            foreach (var (item, startPos) in _multiDragPositions)
+            {
+                item.X = Math.Max(0, Math.Round((startPos.X + snapDx) / 10.0) * 10.0);
+                item.Y = Math.Max(0, Math.Round((startPos.Y + snapDy) / 10.0) * 10.0);
+            }
+        }
+        else
+        {
+            // 磁吸网格 (以 10px 为栅格单位)
+            var newX = Math.Max(0, Math.Round((_dragStartPos.X + deltaX) / 10.0) * 10.0);
+            var newY = Math.Max(0, Math.Round((_dragStartPos.Y + deltaY) / 10.0) * 10.0);
+
+            vm.X = newX;
+            vm.Y = newY;
+        }
+
         e.Handled = true;
     }
 
@@ -81,6 +120,7 @@ public partial class WidgetHost : UserControl
         if (_isDragging)
         {
             _isDragging = false;
+            _multiDragPositions.Clear();
             ReleaseMouseCapture();
             e.Handled = true;
         }

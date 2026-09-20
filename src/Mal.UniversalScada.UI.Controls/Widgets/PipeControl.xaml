@@ -1,0 +1,52 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.PipeControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
+    <Grid>
+        <!-- 管道外壁 -->
+        <Border x:Name="PipeBorder"
+                Background="#080D1A"
+                BorderBrush="{Binding PipeProps.PipeColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                BorderThickness="2"
+                CornerRadius="4"
+                ClipToBounds="True">
+            <Grid>
+                <!-- 介质底色微发光 -->
+                <Border Background="{Binding PipeProps.LiquidColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                        Opacity="0.15"/>
+
+                <!-- 水平管道跑马灯流动线 -->
+                <Canvas Visibility="{Binding PipeProps.Orientation, Converter={x:Static vm:WidgetUiConverters.StringEqualsToVisibility}, ConverterParameter=Horizontal}">
+                    <Line x:Name="HorizontalFlowLine"
+                          X1="-200" Y1="{Binding ActualHeight, ElementName=PipeBorder, Converter={x:Static vm:WidgetUiConverters.HalfValueConverter}}"
+                          X2="5000" Y2="{Binding ActualHeight, ElementName=PipeBorder, Converter={x:Static vm:WidgetUiConverters.HalfValueConverter}}"
+                          Stroke="{Binding PipeProps.LiquidColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                          StrokeThickness="5"
+                          StrokeDashArray="8,6"
+                          StrokeDashCap="Round"/>
+                </Canvas>
+
+                <!-- 纵向管道跑马灯流动线 -->
+                <Canvas Visibility="{Binding PipeProps.Orientation, Converter={x:Static vm:WidgetUiConverters.StringEqualsToVisibility}, ConverterParameter=Vertical}">
+                    <Line x:Name="VerticalFlowLine"
+                          X1="{Binding ActualWidth, ElementName=PipeBorder, Converter={x:Static vm:WidgetUiConverters.HalfValueConverter}}" Y1="-200"
+                          X2="{Binding ActualWidth, ElementName=PipeBorder, Converter={x:Static vm:WidgetUiConverters.HalfValueConverter}}" Y2="5000"
+                          Stroke="{Binding PipeProps.LiquidColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
+                          StrokeThickness="5"
+                          StrokeDashArray="8,6"
+                          StrokeDashCap="Round"/>
+                </Canvas>
+
+                <!-- 管道高光反射层 (金属立体质感) -->
+                <Border VerticalAlignment="Top" Height="2" Background="#FFFFFF" Opacity="0.2"
+                        Visibility="{Binding PipeProps.Orientation, Converter={x:Static vm:WidgetUiConverters.StringEqualsToVisibility}, ConverterParameter=Horizontal}"/>
+                <Border HorizontalAlignment="Left" Width="2" Background="#FFFFFF" Opacity="0.2"
+                        Visibility="{Binding PipeProps.Orientation, Converter={x:Static vm:WidgetUiConverters.StringEqualsToVisibility}, ConverterParameter=Vertical}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

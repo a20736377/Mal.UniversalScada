@@ -609,9 +609,40 @@ public partial class IoMatrixWidgetViewModel : WidgetViewModel
     public IoMatrixWidgetViewModel()
     {
         Type = WidgetType.IoMatrix;
-        Width = 260;
-        Height = 140;
-        _props.PropertyChanged += (s, e) => { if (e.PropertyName != null) OnPropertyChanged(e.PropertyName); };
+        Width = 280;
+        Height = 115;
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null)
+            {
+                OnPropertyChanged(e.PropertyName);
+                if (e.PropertyName == nameof(IoMatrixProps.IoChannels))
+                {
+                    OnPropertyChanged(nameof(ChannelGroupSummary));
+                    AdjustDimensionsForChannels();
+                }
+                else if (e.PropertyName == nameof(IoMatrixProps.DisplayFormat))
+                {
+                    UpdateRuntimeValue(CurrentRawValue, Quality);
+                }
+            }
+        };
+    }
+
+    public override string ChannelGroupSummary => $"{Props.IoChannels} 点 ({(Props.IoChannels + 7) / 8} 组 Byte)";
+
+    public void AdjustDimensionsForChannels()
+    {
+        (double w, double h) = Props.IoChannels switch
+        {
+            <= 8 => (280, 115),
+            <= 16 => (280, 160),
+            <= 24 => (280, 210),
+            _ => (280, 260)
+        };
+        Width = w;
+        Height = h;
+        UpdateRuntimeValue(CurrentRawValue, Quality);
     }
 
     public override int IoChannels { get => Props.IoChannels; set => Props.IoChannels = value; }
@@ -659,11 +690,18 @@ public partial class IoMatrixWidgetViewModel : WidgetViewModel
 
         if (long.TryParse(rawValue.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var num))
         {
+            int hexDigits = Props.IoChannels switch
+            {
+                <= 8 => 2,
+                <= 16 => 4,
+                <= 24 => 6,
+                _ => 8
+            };
             FormattedValue = Props.DisplayFormat?.ToUpperInvariant() switch
             {
                 "BIN" => Convert.ToString(num, 2).PadLeft(Props.IoChannels, '0'),
                 "DEC" => num.ToString(),
-                _ => $"0x{num:X2}"
+                _ => $"0x{num.ToString($"X{hexDigits}")}"
             };
         }
         else
@@ -1188,6 +1226,130 @@ public partial class PanelContainerWidgetViewModel : WidgetViewModel
         Properties["FillColor"] = Props.FillColor ?? "#0A0F1D";
         Properties["CornerRadius"] = Props.CornerRadius.ToString(CultureInfo.InvariantCulture);
         Properties["BorderThickness"] = Props.BorderThickness.ToString(CultureInfo.InvariantCulture);
+    }
+}
+
+/// <summary>
+/// 工业工艺管道组件视图模型 (支持横向/纵向介质流向、流动跑马灯速度、管径与介质颜色)
+/// </summary>
+public partial class PipeWidgetViewModel : WidgetViewModel
+{
+    [ObservableProperty]
+    private PipeProps _props = new();
+
+    public override object ComponentProps => Props;
+
+    public PipeWidgetViewModel()
+    {
+        Type = WidgetType.Pipe;
+        Width = 240;
+        Height = 24;
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null)
+            {
+                OnPropertyChanged(e.PropertyName);
+                if (e.PropertyName == nameof(PipeProps.Orientation))
+                {
+                    OnPropertyChanged(nameof(IsHorizontal));
+                    AdjustDimensionsForOrientation();
+                }
+            }
+        };
+    }
+
+    public bool IsHorizontal => Props.Orientation == "Horizontal";
+
+    public string Orientation
+    {
+        get => Props.Orientation;
+        set
+        {
+            if (Props.Orientation != value)
+            {
+                Props.Orientation = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsHorizontal));
+                AdjustDimensionsForOrientation();
+            }
+        }
+    }
+
+    public double PipeDiameter { get => Props.PipeDiameter; set => Props.PipeDiameter = value; }
+    public string PipeColor { get => Props.PipeColor; set => Props.PipeColor = value; }
+    public string LiquidColor { get => Props.LiquidColor; set => Props.LiquidColor = value; }
+    public string FlowDirection { get => Props.FlowDirection; set => Props.FlowDirection = value; }
+    public double FlowSpeed { get => Props.FlowSpeed; set => Props.FlowSpeed = value; }
+    public bool IsFlowing { get => Props.IsFlowing; set => Props.IsFlowing = value; }
+
+    public void AdjustDimensionsForOrientation()
+    {
+        if (IsHorizontal)
+        {
+            if (Width < Height)
+            {
+                var prevW = Width;
+                var prevH = Height;
+                Width = Math.Max(prevH, 200);
+                Height = Math.Min(prevW, 28);
+            }
+        }
+        else
+        {
+            if (Width > Height)
+            {
+                var prevW = Width;
+                var prevH = Height;
+                Width = Math.Min(prevH, 28);
+                Height = Math.Max(prevW, 200);
+            }
+        }
+    }
+
+    public override void LoadProperties(Dictionary<string, string> properties)
+    {
+        base.LoadProperties(properties);
+
+        if (properties.TryGetValue("Orientation", out var ori)) Props.Orientation = ori;
+        if (properties.TryGetValue("PipeDiameter", out var pdStr) && double.TryParse(pdStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var pd))
+            Props.PipeDiameter = pd;
+        if (properties.TryGetValue("PipeColor", out var pc)) Props.PipeColor = pc;
+        if (properties.TryGetValue("LiquidColor", out var lc)) Props.LiquidColor = lc;
+        if (properties.TryGetValue("FlowDirection", out var fd)) Props.FlowDirection = fd;
+        if (properties.TryGetValue("FlowSpeed", out var fsStr) && double.TryParse(fsStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var fs))
+            Props.FlowSpeed = fs;
+        if (properties.TryGetValue("IsFlowing", out var flowStr) && bool.TryParse(flowStr, out var flowVal))
+            Props.IsFlowing = flowVal;
+
+        OnPropertyChanged(nameof(IsHorizontal));
+    }
+
+    public override void SyncPropertiesFromFields()
+    {
+        base.SyncPropertiesFromFields();
+
+        Properties["Orientation"] = Props.Orientation ?? "Horizontal";
+        Properties["PipeDiameter"] = Props.PipeDiameter.ToString(CultureInfo.InvariantCulture);
+        Properties["PipeColor"] = Props.PipeColor ?? "#1E293B";
+        Properties["LiquidColor"] = Props.LiquidColor ?? "#0284C7";
+        Properties["FlowDirection"] = Props.FlowDirection ?? "Forward";
+        Properties["FlowSpeed"] = Props.FlowSpeed.ToString(CultureInfo.InvariantCulture);
+        Properties["IsFlowing"] = Props.IsFlowing.ToString();
+    }
+
+    public override void UpdateRuntimeValue(object? rawValue, string quality = "Good")
+    {
+        CurrentRawValue = rawValue;
+        Quality = quality;
+
+        if (rawValue is bool b)
+        {
+            Props.IsFlowing = b;
+        }
+        else if (double.TryParse(rawValue?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var num))
+        {
+            Props.IsFlowing = num > 0;
+        }
     }
 }
 

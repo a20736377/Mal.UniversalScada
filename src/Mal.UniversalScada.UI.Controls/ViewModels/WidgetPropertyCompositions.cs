@@ -303,3 +303,31 @@ public partial class PanelContainerProps : ObservableObject
     private double _borderThickness = 1;
 }
 
+/// <summary>
+/// 工业工艺管道专属组合属性类 (支持横向/纵向介质流向、流动跑马灯速度、管径与介质颜色)
+/// </summary>
+public partial class PipeProps : ObservableObject
+{
+    [ObservableProperty]
+    private string _orientation = "Horizontal"; // Horizontal, Vertical
+
+    [ObservableProperty]
+    private double _pipeDiameter = 20;
+
+    [ObservableProperty]
+    private string _pipeColor = "#1E293B";
+
+    [ObservableProperty]
+    private string _liquidColor = "#0284C7";
+
+    [ObservableProperty]
+    private string _flowDirection = "Forward"; // Forward, Reverse
+
+    [ObservableProperty]
+    private double _flowSpeed = 2.0; // 动画周期秒数
+
+    [ObservableProperty]
+    private bool _isFlowing = true;
+}
+
+

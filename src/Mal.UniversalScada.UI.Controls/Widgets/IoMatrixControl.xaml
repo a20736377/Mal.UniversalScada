@@ -6,7 +6,7 @@
              xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
-    <Border Background="#0F172A" BorderBrush="#1E293B" BorderThickness="1.5" CornerRadius="10" Padding="10">
+    <Border Background="#0B132B" BorderBrush="#1E293B" BorderThickness="1.5" CornerRadius="10" Padding="10">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -14,122 +14,483 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- 顶部标题 -->
-            <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <!-- 顶部标题与质量指示 -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                <TextBlock Text="{Binding Title}" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Ellipse Width="6" Height="6" Fill="#10B981" HorizontalAlignment="Right" VerticalAlignment="Center" ToolTip="通信质量: 正常 (Good)"/>
+            </DockPanel>
 
-            <!-- 8 路 IO 点阵 (2行4列) -->
-            <UniformGrid Grid.Row="1" Rows="2" Columns="4" Margin="2">
-                <!-- DI0 -->
-                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
-                    <Ellipse Width="12" Height="12">
-                        <Ellipse.Fill>
-                            <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="0">
-                                <Binding Path="CurrentRawValue"/>
-                                <Binding Path="ActiveColor"/>
-                                <Binding Path="InactiveColor"/>
-                            </MultiBinding>
-                        </Ellipse.Fill>
-                    </Ellipse>
-                    <TextBlock Text="0" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <!-- DI1 -->
-                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
-                    <Ellipse Width="12" Height="12">
-                        <Ellipse.Fill>
-                            <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="1">
-                                <Binding Path="CurrentRawValue"/>
-                                <Binding Path="ActiveColor"/>
-                                <Binding Path="InactiveColor"/>
-                            </MultiBinding>
-                        </Ellipse.Fill>
-                    </Ellipse>
-                    <TextBlock Text="1" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <!-- DI2 -->
-                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
-                    <Ellipse Width="12" Height="12">
-                        <Ellipse.Fill>
-                            <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="2">
-                                <Binding Path="CurrentRawValue"/>
-                                <Binding Path="ActiveColor"/>
-                                <Binding Path="InactiveColor"/>
-                            </MultiBinding>
-                        </Ellipse.Fill>
-                    </Ellipse>
-                    <TextBlock Text="2" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <!-- DI3 -->
-                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
-                    <Ellipse Width="12" Height="12">
-                        <Ellipse.Fill>
-                            <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="3">
-                                <Binding Path="CurrentRawValue"/>
-                                <Binding Path="ActiveColor"/>
-                                <Binding Path="InactiveColor"/>
-                            </MultiBinding>
-                        </Ellipse.Fill>
-                    </Ellipse>
-                    <TextBlock Text="3" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <!-- DI4 -->
-                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
-                    <Ellipse Width="12" Height="12">
-                        <Ellipse.Fill>
-                            <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="4">
-                                <Binding Path="CurrentRawValue"/>
-                                <Binding Path="ActiveColor"/>
-                                <Binding Path="InactiveColor"/>
-                            </MultiBinding>
-                        </Ellipse.Fill>
-                    </Ellipse>
-                    <TextBlock Text="4" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <!-- DI5 -->
-                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
-                    <Ellipse Width="12" Height="12">
-                        <Ellipse.Fill>
-                            <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="5">
-                                <Binding Path="CurrentRawValue"/>
-                                <Binding Path="ActiveColor"/>
-                                <Binding Path="InactiveColor"/>
-                            </MultiBinding>
-                        </Ellipse.Fill>
-                    </Ellipse>
-                    <TextBlock Text="5" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <!-- DI6 -->
-                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
-                    <Ellipse Width="12" Height="12">
-                        <Ellipse.Fill>
-                            <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="6">
-                                <Binding Path="CurrentRawValue"/>
-                                <Binding Path="ActiveColor"/>
-                                <Binding Path="InactiveColor"/>
-                            </MultiBinding>
-                        </Ellipse.Fill>
-                    </Ellipse>
-                    <TextBlock Text="6" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <!-- DI7 -->
-                <StackPanel Orientation="Horizontal" Margin="4,3" HorizontalAlignment="Center">
-                    <Ellipse Width="12" Height="12">
-                        <Ellipse.Fill>
-                            <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="7">
-                                <Binding Path="CurrentRawValue"/>
-                                <Binding Path="ActiveColor"/>
-                                <Binding Path="InactiveColor"/>
-                            </MultiBinding>
-                        </Ellipse.Fill>
-                    </Ellipse>
-                    <TextBlock Text="7" Foreground="#94A3B8" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
-            </UniformGrid>
+            <!-- 动态分组 IO 点阵 (工业标准: 严格每 8 个指示灯为 1 个 Byte 组) -->
+            <StackPanel Grid.Row="1" VerticalAlignment="Center">
+                <!-- Byte 0 (Bit 0 ~ 7) : 总是显示 -->
+                <Border Background="#131F33" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,2">
+                    <DockPanel>
+                        <Border Width="30" Height="22" Background="#1E293B" CornerRadius="4" VerticalAlignment="Center" Margin="0,0,6,0">
+                            <TextBlock Text="B0" Foreground="#38BDF8" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <UniformGrid Columns="8" VerticalAlignment="Center">
+                            <!-- Bit 0 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 0 (DI 0.0)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="0">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="0" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 1 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 1 (DI 0.1)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="1">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="1" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 2 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 2 (DI 0.2)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="2">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="2" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 3 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 3 (DI 0.3)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="3">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="3" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 4 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 4 (DI 0.4)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="4">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="4" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 5 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 5 (DI 0.5)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="5">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="5" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 6 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 6 (DI 0.6)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="6">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="6" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 7 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 7 (DI 0.7)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="7">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="7" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </UniformGrid>
+                    </DockPanel>
+                </Border>
 
-            <!-- 底部原始 HEX / 数值 -->
+                <!-- Byte 1 (Bit 8 ~ 15) : IoChannels >= 16 时显示 -->
+                <Border Background="#131F33" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,2"
+                        Visibility="{Binding IoProps.IoChannels, Converter={x:Static vm:WidgetUiConverters.MinChannelsToVisibility}, ConverterParameter=16}">
+                    <DockPanel>
+                        <Border Width="30" Height="22" Background="#1E293B" CornerRadius="4" VerticalAlignment="Center" Margin="0,0,6,0">
+                            <TextBlock Text="B1" Foreground="#38BDF8" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <UniformGrid Columns="8" VerticalAlignment="Center">
+                            <!-- Bit 8 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 8 (DI 1.0)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="8">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="0" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 9 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 9 (DI 1.1)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="9">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="1" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 10 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 10 (DI 1.2)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="10">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="2" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 11 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 11 (DI 1.3)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="11">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="3" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 12 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 12 (DI 1.4)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="12">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="4" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 13 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 13 (DI 1.5)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="13">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="5" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 14 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 14 (DI 1.6)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="14">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="6" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 15 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 15 (DI 1.7)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="15">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="7" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </UniformGrid>
+                    </DockPanel>
+                </Border>
+
+                <!-- Byte 2 (Bit 16 ~ 23) : IoChannels >= 24 时显示 -->
+                <Border Background="#131F33" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,2"
+                        Visibility="{Binding IoProps.IoChannels, Converter={x:Static vm:WidgetUiConverters.MinChannelsToVisibility}, ConverterParameter=24}">
+                    <DockPanel>
+                        <Border Width="30" Height="22" Background="#1E293B" CornerRadius="4" VerticalAlignment="Center" Margin="0,0,6,0">
+                            <TextBlock Text="B2" Foreground="#38BDF8" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <UniformGrid Columns="8" VerticalAlignment="Center">
+                            <!-- Bit 16 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 16 (DI 2.0)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="16">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="0" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 17 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 17 (DI 2.1)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="17">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="1" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 18 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 18 (DI 2.2)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="18">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="2" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 19 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 19 (DI 2.3)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="19">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="3" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 20 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 20 (DI 2.4)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="20">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="4" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 21 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 21 (DI 2.5)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="21">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="5" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 22 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 22 (DI 2.6)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="22">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="6" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 23 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 23 (DI 2.7)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="23">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="7" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </UniformGrid>
+                    </DockPanel>
+                </Border>
+
+                <!-- Byte 3 (Bit 24 ~ 31) : IoChannels >= 32 时显示 -->
+                <Border Background="#131F33" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,2"
+                        Visibility="{Binding IoProps.IoChannels, Converter={x:Static vm:WidgetUiConverters.MinChannelsToVisibility}, ConverterParameter=32}">
+                    <DockPanel>
+                        <Border Width="30" Height="22" Background="#1E293B" CornerRadius="4" VerticalAlignment="Center" Margin="0,0,6,0">
+                            <TextBlock Text="B3" Foreground="#38BDF8" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <UniformGrid Columns="8" VerticalAlignment="Center">
+                            <!-- Bit 24 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 24 (DI 3.0)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="24">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="0" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 25 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 25 (DI 3.1)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="25">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="1" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 26 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 26 (DI 3.2)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="26">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="2" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 27 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 27 (DI 3.3)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="27">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="3" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 28 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 28 (DI 3.4)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="28">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="4" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 29 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 29 (DI 3.5)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="29">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="5" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 30 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 30 (DI 3.6)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="30">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="6" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <!-- Bit 31 -->
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Bit 31 (DI 3.7)">
+                                <Ellipse Width="12" Height="12">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{x:Static vm:IoBitStatusConverter.Instance}" ConverterParameter="31">
+                                            <Binding Path="CurrentRawValue"/>
+                                            <Binding Path="IoProps.ActiveColor"/>
+                                            <Binding Path="IoProps.InactiveColor"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="7" Foreground="#64748B" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </UniformGrid>
+                    </DockPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- 底部原始 HEX / 数值 与 通道分组摘要 -->
             <DockPanel Grid.Row="2" Margin="0,6,0,0">
-                <TextBlock Text="HEX:" Foreground="#64748B" FontSize="10"/>
-                <TextBlock Text="{Binding FormattedValue}" Foreground="#38BDF8" FontSize="11" FontWeight="Bold" Margin="4,0,0,0"/>
-                <TextBlock Text="8-Bit Status" Foreground="#475569" FontSize="10" HorizontalAlignment="Right"/>
+                <TextBlock Text="{Binding IoProps.DisplayFormat, StringFormat='{}{0}:'}" Foreground="#64748B" FontSize="10" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding FormattedValue}" Foreground="#38BDF8" FontSize="11" FontWeight="Bold" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding ChannelGroupSummary}" Foreground="#475569" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
             </DockPanel>
         </Grid>
     </Border>

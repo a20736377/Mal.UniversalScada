@@ -97,67 +97,242 @@
 
             <!-- 中间：暗色科技网格画布 (所见即所得编辑区) -->
             <Border Grid.Column="2" Background="#070B14">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <Grid x:Name="DesignerCanvasGrid" Width="1600" Height="900" HorizontalAlignment="Left" VerticalAlignment="Top"
-                          Margin="20" MouseDown="OnCanvasMouseDown"
-                          AllowDrop="True" DragOver="OnCanvasDragOver" Drop="OnCanvasDrop">
-                        <!-- 暗黑网格装饰线 (100px 与 20px) -->
-                        <Grid.Background>
-                            <DrawingBrush TileMode="Tile" Viewport="0,0,40,40" ViewportUnits="Absolute">
-                                <DrawingBrush.Drawing>
-                                    <GeometryDrawing>
-                                        <GeometryDrawing.Geometry>
-                                            <RectangleGeometry Rect="0,0,40,40"/>
-                                        </GeometryDrawing.Geometry>
-                                        <GeometryDrawing.Pen>
-                                            <Pen Brush="#131F37" Thickness="1"/>
-                                        </GeometryDrawing.Pen>
-                                    </GeometryDrawing>
-                                </DrawingBrush.Drawing>
-                            </DrawingBrush>
-                        </Grid.Background>
+                <DockPanel>
+                    <!-- 画布顶部快捷排版工具条 (多选对齐、图层层级、剪贴板) -->
+                    <Border DockPanel.Dock="Top" Background="#0D1424" BorderBrush="#1E293B" BorderThickness="0,0,0,1" Padding="12,6">
+                        <Border.Resources>
+                            <!-- 科技暗黑风格工具条按钮模板 (彻底杜绝 WPF 禁用态变白、文字看不清的系统缺陷) -->
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                                <Setter Property="BorderBrush" Value="#334155"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Padding" Value="7,3"/>
+                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="btnBorder"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="4"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter x:Name="contentPresenter"
+                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                  RecognizesAccessKey="True"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <!-- 鼠标悬停高亮 -->
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="btnBorder" Property="Background" Value="#2563EB"/>
+                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="#3B82F6"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </Trigger>
+                                                <!-- 鼠标按下微下沉 -->
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="btnBorder" Property="Background" Value="#1D4ED8"/>
+                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="#1E40AF"/>
+                                                    <Setter Property="Foreground" Value="#93C5FD"/>
+                                                </Trigger>
+                                                <!-- 禁用态：深沉微暗底色 + 清晰可读灰色文字，彻底杜绝白底反光！ -->
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="btnBorder" Property="Background" Value="#111A2E"/>
+                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="#1A2438"/>
+                                                    <Setter Property="Foreground" Value="#4B5563"/>
+                                                    <Setter Property="Cursor" Value="Arrow"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
 
-                        <!-- 画布工艺流程/设备底图 (支持透明度与拉伸模式) -->
-                        <Image Source="{Binding SelectedView.BackgroundImagePath}"
-                               Stretch="{Binding SelectedView.BackgroundImageStretch}"
-                               Opacity="{Binding SelectedView.BackgroundImageOpacity}"
-                               IsHitTestVisible="False"
-                               HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                            <!-- 危险操作专用模板 (如删除按钮) -->
+                            <Style x:Key="ToolbarDangerButtonStyle" TargetType="Button">
+                                <Setter Property="Background" Value="#2D1515"/>
+                                <Setter Property="Foreground" Value="#F87171"/>
+                                <Setter Property="BorderBrush" Value="#451A1A"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Padding" Value="7,3"/>
+                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="btnBorder"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="4"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                  RecognizesAccessKey="True"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="btnBorder" Property="Background" Value="#DC2626"/>
+                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="#EF4444"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="btnBorder" Property="Background" Value="#991B1B"/>
+                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="#B91C1C"/>
+                                                    <Setter Property="Foreground" Value="#FECACA"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="btnBorder" Property="Background" Value="#111A2E"/>
+                                                    <Setter TargetName="btnBorder" Property="BorderBrush" Value="#1A2438"/>
+                                                    <Setter Property="Foreground" Value="#4B5563"/>
+                                                    <Setter Property="Cursor" Value="Arrow"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Border.Resources>
 
-                        <!-- 画布顶部水印标尺 -->
-                        <TextBlock Text="[ WYSIWYG DESIGNER CANVAS - 1600 x 900 | 支持组件自由拖拽与属性即时联动 ]" Foreground="#334155" FontSize="11"
-                                   FontFamily="Consolas" Margin="14,10,0,0" IsHitTestVisible="False"/>
+                        <DockPanel>
+                            <!-- 左侧：选中计数与状态指示 -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                                <TextBlock Text="📐 画布排版工具" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <Border Background="#1E293B" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding SelectedCount, StringFormat='已选中 {0} 项'}" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                                </Border>
+                            </StackPanel>
 
-                        <!-- 组件集合容器 (以 Canvas 绝对定位呈现) -->
-                        <ItemsControl ItemsSource="{Binding Widgets}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <Canvas IsItemsHost="True" Width="1600" Height="900" Background="Transparent"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemContainerStyle>
-                                <Style TargetType="ContentPresenter">
-                                    <Setter Property="Canvas.Left" Value="{Binding X, Mode=TwoWay}"/>
-                                    <Setter Property="Canvas.Top" Value="{Binding Y, Mode=TwoWay}"/>
-                                    <Setter Property="Panel.ZIndex" Value="1"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Type}" Value="PanelContainer">
-                                            <Setter Property="Panel.ZIndex" Value="0"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="Panel.ZIndex" Value="999"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ItemsControl.ItemContainerStyle>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <widgets:WidgetHost />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </ScrollViewer>
+                            <!-- 工具按钮区 -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- 对齐组 (左/右/顶/底/水平居中/垂直居中) -->
+                                <Button Content="⇤ 左对齐" ToolTip="选中的组件以最左侧基准对齐"
+                                        Command="{Binding AlignLeftCommand}" IsEnabled="{Binding HasMultipleSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="⇥ 右对齐" ToolTip="选中的组件以最右侧基准对齐"
+                                        Command="{Binding AlignRightCommand}" IsEnabled="{Binding HasMultipleSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="⤒ 顶对齐" ToolTip="选中的组件以最上方基准对齐"
+                                        Command="{Binding AlignTopCommand}" IsEnabled="{Binding HasMultipleSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="⤓ 底对齐" ToolTip="选中的组件以最下方基准对齐"
+                                        Command="{Binding AlignBottomCommand}" IsEnabled="{Binding HasMultipleSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="⫾ 水平居中" ToolTip="选中的组件水平中心线对齐"
+                                        Command="{Binding AlignCenterHorizontalCommand}" IsEnabled="{Binding HasMultipleSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="⫿ 垂直居中" ToolTip="选中的组件垂直中心线对齐"
+                                        Command="{Binding AlignCenterVerticalCommand}" IsEnabled="{Binding HasMultipleSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="⇹ 横向均分" ToolTip="选中的 3 个及以上组件水平等间距均分分布"
+                                        Command="{Binding DistributeHorizontallyCommand}" IsEnabled="{Binding HasMultipleSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="⇳ 纵向均分" ToolTip="选中的 3 个及以上组件垂直等间距均分分布"
+                                        Command="{Binding DistributeVerticallyCommand}" IsEnabled="{Binding HasMultipleSelection}"
+                                        Margin="2,0"/>
+
+                                <Rectangle Width="1" Height="16" Fill="#334155" Margin="6,0"/>
+
+                                <!-- 图层层级控制 -->
+                                <Button Content="⤊ 置顶" ToolTip="将所选组件移到图层最顶层"
+                                        Command="{Binding BringToFrontCommand}" IsEnabled="{Binding HasSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="⤋ 置底" ToolTip="将所选组件移到图层最底层"
+                                        Command="{Binding SendToBackCommand}" IsEnabled="{Binding HasSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="∧ 上移" ToolTip="将所选组件上移一层"
+                                        Command="{Binding BringForwardCommand}" IsEnabled="{Binding HasSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="∨ 下移" ToolTip="将所选组件下移一层"
+                                        Command="{Binding SendBackwardCommand}" IsEnabled="{Binding HasSelection}"
+                                        Margin="2,0"/>
+
+                                <Rectangle Width="1" Height="16" Fill="#334155" Margin="6,0"/>
+
+                                <!-- 剪贴板与快捷操作 -->
+                                <Button Content="📄 复制" ToolTip="复制所选组件 (Ctrl+C)"
+                                        Command="{Binding CopySelectionCommand}" IsEnabled="{Binding HasSelection}"
+                                        Margin="2,0"/>
+                                <Button Content="📋 粘贴" ToolTip="粘贴组件副本 (Ctrl+V)"
+                                        Command="{Binding PasteSelectionCommand}"
+                                        Margin="2,0"/>
+                                <Button Content="🔲 全选" ToolTip="全选所有组件 (Ctrl+A)"
+                                        Command="{Binding SelectAllWidgetsCommand}"
+                                        Margin="2,0"/>
+                                <Button Content="🗑️ 删除" ToolTip="删除所选组件 (Delete)"
+                                        Style="{StaticResource ToolbarDangerButtonStyle}"
+                                        Command="{Binding DeleteSelectedWidgetsCommand}" IsEnabled="{Binding HasSelection}"
+                                        Margin="2,0"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <Grid x:Name="DesignerCanvasGrid" Width="1600" Height="900" HorizontalAlignment="Left" VerticalAlignment="Top"
+                              Margin="20" MouseDown="OnCanvasMouseDown"
+                              AllowDrop="True" DragOver="OnCanvasDragOver" Drop="OnCanvasDrop">
+                            <!-- 暗黑网格装饰线 (100px 与 20px) -->
+                            <Grid.Background>
+                                <DrawingBrush TileMode="Tile" Viewport="0,0,40,40" ViewportUnits="Absolute">
+                                    <DrawingBrush.Drawing>
+                                        <GeometryDrawing>
+                                            <GeometryDrawing.Geometry>
+                                                <RectangleGeometry Rect="0,0,40,40"/>
+                                            </GeometryDrawing.Geometry>
+                                            <GeometryDrawing.Pen>
+                                                <Pen Brush="#131F37" Thickness="1"/>
+                                            </GeometryDrawing.Pen>
+                                        </GeometryDrawing>
+                                    </DrawingBrush.Drawing>
+                                </DrawingBrush>
+                            </Grid.Background>
+
+                            <!-- 画布工艺流程/设备底图 (支持透明度与拉伸模式) -->
+                            <Image Source="{Binding SelectedView.BackgroundImagePath}"
+                                   Stretch="{Binding SelectedView.BackgroundImageStretch}"
+                                   Opacity="{Binding SelectedView.BackgroundImageOpacity}"
+                                   IsHitTestVisible="False"
+                                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
+                            <!-- 画布顶部水印标尺 -->
+                            <TextBlock Text="[ WYSIWYG DESIGNER CANVAS - 1600 x 900 | 支持组件自由拖拽与属性即时联动 ]" Foreground="#334155" FontSize="11"
+                                       FontFamily="Consolas" Margin="14,10,0,0" IsHitTestVisible="False"/>
+
+                            <!-- 组件集合容器 (以 Canvas 绝对定位呈现) -->
+                            <ItemsControl ItemsSource="{Binding Widgets}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Canvas IsItemsHost="True" Width="1600" Height="900" Background="Transparent"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style TargetType="ContentPresenter">
+                                        <Setter Property="Canvas.Left" Value="{Binding X, Mode=TwoWay}"/>
+                                        <Setter Property="Canvas.Top" Value="{Binding Y, Mode=TwoWay}"/>
+                                        <Setter Property="Panel.ZIndex" Value="1"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Type}" Value="PanelContainer">
+                                                <Setter Property="Panel.ZIndex" Value="0"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="Panel.ZIndex" Value="999"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <widgets:WidgetHost />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </ScrollViewer>
+                </DockPanel>
             </Border>
 
             <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" Background="#E2E8F0"/>
@@ -539,6 +714,8 @@
                                             <ComboBox Text="{Binding SelectedWidget.IoProps.IoChannels, UpdateSourceTrigger=PropertyChanged}" Height="26" IsEditable="True">
                                                 <ComboBoxItem Content="8"/>
                                                 <ComboBoxItem Content="16"/>
+                                                <ComboBoxItem Content="24"/>
+                                                <ComboBoxItem Content="32"/>
                                             </ComboBox>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2">
@@ -865,7 +1042,70 @@
                                 </StackPanel>
                             </Border>
 
-                             <!-- 3. 即时动态预览调试 (依组件/数据类型自适应呈现) -->
+                            <!-- 2.11 工艺管道专属配置 (Pipe) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='Pipe'}">
+                                <StackPanel>
+                                    <TextBlock Text="🌊 工业工艺管道参数 (PipeProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="管道方向 (Orientation):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox SelectedValue="{Binding SelectedWidget.PipeProps.Orientation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      SelectedValuePath="Tag" Height="26">
+                                                <ComboBoxItem Content="横向 (Horizontal)" Tag="Horizontal"/>
+                                                <ComboBoxItem Content="纵向 (Vertical)" Tag="Vertical"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="流动方向 (FlowDirection):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <ComboBox SelectedValue="{Binding SelectedWidget.PipeProps.FlowDirection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      SelectedValuePath="Tag" Height="26">
+                                                <ComboBoxItem Content="正向流动 (Forward)" Tag="Forward"/>
+                                                <ComboBoxItem Content="反向流动 (Reverse)" Tag="Reverse"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="管壁外壳颜色 (PipeColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.PipeProps.PipeColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="介质流体颜色 (LiquidColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.PipeProps.LiquidColor, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="流动周期秒数 (FlowSpeed):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.PipeProps.FlowSpeed, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Bottom" Margin="0,0,0,4">
+                                            <CheckBox Content="开启流动跑马灯" IsChecked="{Binding SelectedWidget.PipeProps.IsFlowing, Mode=TwoWay}" FontSize="11" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 3. 即时动态预览调试 (依组件/数据类型自适应呈现) -->
                              <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10">
                                  <StackPanel>
                                      <TextBlock Text="🔍 画面动态即时预览调试" FontWeight="SemiBold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,6"/>

@@ -14,6 +14,9 @@ public static class WidgetUiConverters
     public static IValueConverter ColorHexToColor { get; } = new ColorHexToColorConverterImpl();
     public static IValueConverter BoolToFontWeight { get; } = new BoolToFontWeightConverterImpl();
     public static IValueConverter StringToHorizontalAlignment { get; } = new StringToHorizontalAlignmentConverterImpl();
+    public static IValueConverter HalfValueConverter { get; } = new HalfValueConverterImpl();
+    public static IValueConverter StringEqualsToVisibility { get; } = new StringEqualsToVisibilityConverterImpl();
+    public static IValueConverter MinChannelsToVisibility { get; } = new MinChannelsToVisibilityConverterImpl();
 
     private class InverseBoolToVisibilityConverterImpl : IValueConverter
     {
@@ -204,4 +207,49 @@ public class IoBitStatusConverter : IMultiValueConverter
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }
+
+public class HalfValueConverterImpl : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is double d) return d / 2.0;
+        if (value is float f) return f / 2.0;
+        if (value is int i) return i / 2.0;
+        return 12.0;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+public class StringEqualsToVisibilityConverterImpl : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        string? v = value?.ToString();
+        string? p = parameter?.ToString();
+        return string.Equals(v, p, StringComparison.OrdinalIgnoreCase) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+public class MinChannelsToVisibilityConverterImpl : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value != null && int.TryParse(value.ToString(), out var channels) &&
+            parameter != null && int.TryParse(parameter.ToString(), out var minRequired))
+        {
+            return channels >= minRequired ? Visibility.Visible : Visibility.Collapsed;
+        }
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+
 

@@ -158,6 +158,19 @@
             </widgets:ControlButtonControl.Style>
         </widgets:ControlButtonControl>
 
+        <widgets:PipeControl>
+            <widgets:PipeControl.Style>
+                <Style TargetType="widgets:PipeControl">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.Pipe}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </widgets:PipeControl.Style>
+        </widgets:PipeControl>
+
         <!-- 设计模式专属：高亮选中框与拖拽遮罩 -->
         <Border x:Name="DesignerAdorner"
                 BorderThickness="2" CornerRadius="10" IsHitTestVisible="False">

@@ -96,6 +96,7 @@ public partial class WidgetViewModel : ObservableObject
     /// 快捷转换：IO 点阵矩阵专属组合属性
     /// </summary>
     public virtual IoMatrixProps? IoProps => (this as IoMatrixWidgetViewModel)?.Props;
+    public virtual string? ChannelGroupSummary => (this as IoMatrixWidgetViewModel)?.ChannelGroupSummary;
 
     /// <summary>
     /// 快捷转换：工业指示灯专属组合属性
@@ -126,6 +127,11 @@ public partial class WidgetViewModel : ObservableObject
     /// 快捷转换：区域容器分组框专属组合属性
     /// </summary>
     public virtual PanelContainerProps? PanelProps => (this as PanelContainerWidgetViewModel)?.Props;
+
+    /// <summary>
+    /// 快捷转换：工艺管道专属组合属性
+    /// </summary>
+    public virtual PipeProps? PipeProps => (this as PipeWidgetViewModel)?.Props;
 
     /// <summary>
     /// 当前组件类型可用的样式与行业预设模板列表
@@ -580,6 +586,7 @@ public partial class WidgetViewModel : ObservableObject
             WidgetType.DisplayBox => new DisplayBoxWidgetViewModel(),
             WidgetType.TrendChart => new TrendChartWidgetViewModel(),
             WidgetType.PanelContainer => new PanelContainerWidgetViewModel(),
+            WidgetType.Pipe => new PipeWidgetViewModel(),
             _ => new NumericCardWidgetViewModel()
         };
 
@@ -617,7 +624,7 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.GaugeCircular => 180,
         WidgetType.LevelTank => 150,
         WidgetType.NumericCard => 190,
-        WidgetType.IoMatrix => 260,
+        WidgetType.IoMatrix => 280,
         WidgetType.StatusLed => 130,
         WidgetType.ControlButton => 100,
         WidgetType.SetpointInput => 180,
@@ -625,6 +632,7 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.DisplayBox => 200,
         WidgetType.TrendChart => 380,
         WidgetType.PanelContainer => 360,
+        WidgetType.Pipe => 240,
         _ => 160
     };
 
@@ -633,7 +641,7 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.GaugeCircular => 180,
         WidgetType.LevelTank => 220,
         WidgetType.NumericCard => 130,
-        WidgetType.IoMatrix => 140,
+        WidgetType.IoMatrix => 115,
         WidgetType.StatusLed => 120,
         WidgetType.ControlButton => 36,
         WidgetType.SetpointInput => 100,
@@ -641,6 +649,7 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.DisplayBox => 58,
         WidgetType.TrendChart => 220,
         WidgetType.PanelContainer => 260,
+        WidgetType.Pipe => 24,
         _ => 140
     };
 }

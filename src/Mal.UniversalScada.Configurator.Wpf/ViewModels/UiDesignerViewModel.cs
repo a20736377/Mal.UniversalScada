@@ -58,14 +58,16 @@ public partial class UiDesignerViewModel : ObservableObject
         new(WidgetType.NumericCard, "数显科技卡片", "📟", "大号数显，带单位徽章与品质状态"),
         new(WidgetType.IoMatrix, "8路 IO 状态板", "🎛️", "8路开关量点阵矩阵，状态自感"),
         new(WidgetType.StatusLed, "工业状态指示灯", "💡", "三态高光状态灯，带运行/告警标识"),
-        new(WidgetType.ControlButton, "普通按钮", "🔘", "下发置位控制指令至下位机点位")
+        new(WidgetType.ControlButton, "普通按钮", "🔘", "下发置位控制指令至下位机点位"),
+        new(WidgetType.Pipe, "工艺管道", "🌊", "P&ID 工业工艺管道，带动态介质流动动效")
     };
 
     public UiDesignerViewModel(IConfigurationService configService)
     {
         _configService = configService;
 
-        // 订阅组件选中与删除全局事件
+        // 订阅组件选中与删除全局事件 (支持 Ctrl 多选与多选拖拽)
+        WidgetHost.WidgetSelectionRequested += OnWidgetSelectionRequested;
         WidgetHost.WidgetSelected += OnWidgetSelected;
         WidgetHost.WidgetDeleteRequested += OnWidgetDeleteRequested;
     }
@@ -187,19 +189,350 @@ public partial class UiDesignerViewModel : ObservableObject
         }
     }
 
+    public bool HasMultipleSelection => Widgets.Count(w => w.IsSelected) >= 2;
+    public bool HasSelection => Widgets.Any(w => w.IsSelected) || SelectedWidget != null;
+    public int SelectedCount => Widgets.Count(w => w.IsSelected);
+
+    public void NotifySelectionChanged()
+    {
+        OnPropertyChanged(nameof(HasMultipleSelection));
+        OnPropertyChanged(nameof(HasSelection));
+        OnPropertyChanged(nameof(SelectedCount));
+    }
+
+    private void OnWidgetSelectionRequested(WidgetViewModel vm, bool isCtrl)
+    {
+        if (isCtrl)
+        {
+            vm.IsSelected = !vm.IsSelected;
+            if (vm.IsSelected)
+            {
+                SelectedWidget = vm;
+            }
+            else if (SelectedWidget == vm)
+            {
+                SelectedWidget = Widgets.FirstOrDefault(w => w.IsSelected);
+            }
+        }
+        else
+        {
+            if (!vm.IsSelected || Widgets.Count(w => w.IsSelected) <= 1)
+            {
+                foreach (var w in Widgets)
+                {
+                    w.IsSelected = (w == vm);
+                }
+                SelectedWidget = vm;
+            }
+            else
+            {
+                SelectedWidget = vm;
+            }
+        }
+        NotifySelectionChanged();
+    }
+
     private void OnWidgetSelected(WidgetViewModel vm)
     {
-        foreach (var w in Widgets)
-        {
-            w.IsSelected = (w == vm);
-        }
-        SelectedWidget = vm;
+        NotifySelectionChanged();
     }
 
     private void OnWidgetDeleteRequested(WidgetViewModel vm)
     {
         DeleteWidget(vm);
     }
+
+    #region 画布排版与多选对齐
+
+    [RelayCommand]
+    public void AlignLeft()
+    {
+        var targets = Widgets.Where(w => w.IsSelected).ToList();
+        if (targets.Count < 2) return;
+
+        double minX = targets.Min(w => w.X);
+        foreach (var w in targets) w.X = minX;
+        StatusMessage = $"已将 {targets.Count} 个组件左对齐 (X={minX})";
+    }
+
+    [RelayCommand]
+    public void AlignRight()
+    {
+        var targets = Widgets.Where(w => w.IsSelected).ToList();
+        if (targets.Count < 2) return;
+
+        double maxRight = targets.Max(w => w.X + w.Width);
+        foreach (var w in targets) w.X = maxRight - w.Width;
+        StatusMessage = $"已将 {targets.Count} 个组件右对齐";
+    }
+
+    [RelayCommand]
+    public void AlignTop()
+    {
+        var targets = Widgets.Where(w => w.IsSelected).ToList();
+        if (targets.Count < 2) return;
+
+        double minY = targets.Min(w => w.Y);
+        foreach (var w in targets) w.Y = minY;
+        StatusMessage = $"已将 {targets.Count} 个组件顶端对齐 (Y={minY})";
+    }
+
+    [RelayCommand]
+    public void AlignBottom()
+    {
+        var targets = Widgets.Where(w => w.IsSelected).ToList();
+        if (targets.Count < 2) return;
+
+        double maxBottom = targets.Max(w => w.Y + w.Height);
+        foreach (var w in targets) w.Y = maxBottom - w.Height;
+        StatusMessage = $"已将 {targets.Count} 个组件底端对齐";
+    }
+
+    [RelayCommand]
+    public void AlignCenterHorizontal()
+    {
+        var targets = Widgets.Where(w => w.IsSelected).ToList();
+        if (targets.Count < 2) return;
+
+        double avgCenterX = targets.Average(w => w.X + w.Width / 2.0);
+        foreach (var w in targets) w.X = Math.Round((avgCenterX - w.Width / 2.0) / 10.0) * 10.0;
+        StatusMessage = $"已将 {targets.Count} 个组件水平中线居中对齐";
+    }
+
+    [RelayCommand]
+    public void AlignCenterVertical()
+    {
+        var targets = Widgets.Where(w => w.IsSelected).ToList();
+        if (targets.Count < 2) return;
+
+        double avgCenterY = targets.Average(w => w.Y + w.Height / 2.0);
+        foreach (var w in targets) w.Y = Math.Round((avgCenterY - w.Height / 2.0) / 10.0) * 10.0;
+        StatusMessage = $"已将 {targets.Count} 个组件垂直中线居中对齐";
+    }
+
+    [RelayCommand]
+    public void DistributeHorizontally()
+    {
+        var targets = Widgets.Where(w => w.IsSelected).ToList();
+        if (targets.Count < 3)
+        {
+            StatusMessage = "水平等间距均分至少需要选中 3 个组件";
+            return;
+        }
+
+        var sorted = targets.OrderBy(w => w.X).ToList();
+        double totalItemsWidth = sorted.Sum(w => w.Width);
+        double span = (sorted.Last().X + sorted.Last().Width) - sorted.First().X;
+        double totalGap = span - totalItemsWidth;
+        double gap = totalGap / (sorted.Count - 1);
+
+        double currentX = sorted[0].X;
+        for (int i = 1; i < sorted.Count - 1; i++)
+        {
+            currentX += sorted[i - 1].Width + gap;
+            sorted[i].X = Math.Round(currentX / 10.0) * 10.0;
+        }
+        StatusMessage = $"已将 {targets.Count} 个组件水平等间距均分排列";
+    }
+
+    [RelayCommand]
+    public void DistributeVertically()
+    {
+        var targets = Widgets.Where(w => w.IsSelected).ToList();
+        if (targets.Count < 3)
+        {
+            StatusMessage = "垂直等间距均分至少需要选中 3 个组件";
+            return;
+        }
+
+        var sorted = targets.OrderBy(w => w.Y).ToList();
+        double totalItemsHeight = sorted.Sum(w => w.Height);
+        double span = (sorted.Last().Y + sorted.Last().Height) - sorted.First().Y;
+        double totalGap = span - totalItemsHeight;
+        double gap = totalGap / (sorted.Count - 1);
+
+        double currentY = sorted[0].Y;
+        for (int i = 1; i < sorted.Count - 1; i++)
+        {
+            currentY += sorted[i - 1].Height + gap;
+            sorted[i].Y = Math.Round(currentY / 10.0) * 10.0;
+        }
+        StatusMessage = $"已将 {targets.Count} 个组件垂直等间距均分排列";
+    }
+
+    #endregion
+
+    #region 图层层级控制 (Z-Index)
+
+    [RelayCommand]
+    public void BringToFront()
+    {
+        var selected = Widgets.Where(w => w.IsSelected).ToList();
+        if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
+        if (selected.Count == 0) return;
+
+        foreach (var w in selected)
+        {
+            Widgets.Remove(w);
+            Widgets.Add(w);
+        }
+        StatusMessage = $"已将选中的 {selected.Count} 个组件移到最顶层";
+    }
+
+    [RelayCommand]
+    public void SendToBack()
+    {
+        var selected = Widgets.Where(w => w.IsSelected).ToList();
+        if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
+        if (selected.Count == 0) return;
+
+        for (int i = 0; i < selected.Count; i++)
+        {
+            Widgets.Remove(selected[i]);
+            Widgets.Insert(i, selected[i]);
+        }
+        StatusMessage = $"已将选中的 {selected.Count} 个组件移到最底层";
+    }
+
+    [RelayCommand]
+    public void BringForward()
+    {
+        var selected = Widgets.Where(w => w.IsSelected).ToList();
+        if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
+        if (selected.Count == 0) return;
+
+        for (int i = Widgets.Count - 2; i >= 0; i--)
+        {
+            if (Widgets[i].IsSelected && !Widgets[i + 1].IsSelected)
+            {
+                Widgets.Move(i, i + 1);
+            }
+        }
+        StatusMessage = "已将选中的组件上移一层";
+    }
+
+    [RelayCommand]
+    public void SendBackward()
+    {
+        var selected = Widgets.Where(w => w.IsSelected).ToList();
+        if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
+        if (selected.Count == 0) return;
+
+        for (int i = 1; i < Widgets.Count; i++)
+        {
+            if (Widgets[i].IsSelected && !Widgets[i - 1].IsSelected)
+            {
+                Widgets.Move(i, i - 1);
+            }
+        }
+        StatusMessage = "已将选中的组件下移一层";
+    }
+
+    #endregion
+
+    #region 剪贴板与批量操作
+
+    private List<WidgetConfig> _clipboard = new();
+
+    [RelayCommand]
+    public void CopySelection()
+    {
+        var selected = Widgets.Where(w => w.IsSelected).ToList();
+        if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
+        if (selected.Count == 0) return;
+
+        _clipboard = selected.Select(w => w.ToConfig()).ToList();
+        StatusMessage = $"已复制 {selected.Count} 个组件到剪贴板";
+    }
+
+    [RelayCommand]
+    public void PasteSelection()
+    {
+        if (_clipboard.Count == 0) return;
+
+        foreach (var w in Widgets) w.IsSelected = false;
+
+        var added = new List<WidgetViewModel>();
+        foreach (var cfg in _clipboard)
+        {
+            var clone = new WidgetConfig
+            {
+                WidgetId = Guid.NewGuid().ToString("N")[..8],
+                Type = cfg.Type,
+                Title = cfg.Title + " (副本)",
+                X = cfg.X + 20,
+                Y = cfg.Y + 20,
+                Width = cfg.Width,
+                Height = cfg.Height,
+                PrimaryTagId = cfg.PrimaryTagId,
+                Properties = new Dictionary<string, string>(cfg.Properties),
+                Action = cfg.Action != null ? new WidgetActionConfig
+                {
+                    ActionType = cfg.Action.ActionType,
+                    TargetTagId = cfg.Action.TargetTagId,
+                    Value = cfg.Action.Value,
+                    ConfirmPrompt = cfg.Action.ConfirmPrompt
+                } : null
+            };
+
+            var vm = WidgetViewModel.FromConfig(clone, isDesignMode: true);
+            vm.IsSelected = true;
+            Widgets.Add(vm);
+            added.Add(vm);
+        }
+
+        SelectedWidget = added.LastOrDefault();
+        NotifySelectionChanged();
+        StatusMessage = $"已粘贴 {added.Count} 个组件 (偏移 +20px)";
+    }
+
+    [RelayCommand]
+    public void SelectAllWidgets()
+    {
+        foreach (var w in Widgets) w.IsSelected = true;
+        SelectedWidget = Widgets.FirstOrDefault();
+        NotifySelectionChanged();
+        StatusMessage = $"已全选 {Widgets.Count} 个组件";
+    }
+
+    [RelayCommand]
+    public void ClearSelection()
+    {
+        foreach (var w in Widgets) w.IsSelected = false;
+        SelectedWidget = null;
+        NotifySelectionChanged();
+        StatusMessage = "已取消所有选中";
+    }
+
+    [RelayCommand]
+    public void DeleteSelectedWidgets()
+    {
+        var selected = Widgets.Where(w => w.IsSelected).ToList();
+        if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
+        if (selected.Count == 0) return;
+
+        foreach (var w in selected)
+        {
+            Widgets.Remove(w);
+        }
+        SelectedWidget = Widgets.FirstOrDefault();
+        if (SelectedWidget != null) SelectedWidget.IsSelected = true;
+        NotifySelectionChanged();
+        StatusMessage = $"已删除 {selected.Count} 个组件";
+    }
+
+    public void NudgeSelectedWidgets(double dx, double dy)
+    {
+        var selected = Widgets.Where(w => w.IsSelected).ToList();
+        if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
+        foreach (var w in selected)
+        {
+            w.X = Math.Max(0, w.X + dx);
+            w.Y = Math.Max(0, w.Y + dy);
+        }
+    }
+
+    #endregion
 
     /// <summary>
     /// 依据当前选中的组件类型，对可用点位进行严格的数据类型兼容性过滤
@@ -470,6 +803,7 @@ public partial class UiDesignerViewModel : ObservableObject
         WidgetType.IoMatrix => "8路数字量状态板",
         WidgetType.StatusLed => "运行就绪指示灯",
         WidgetType.ControlButton => "普通按钮",
+        WidgetType.Pipe => "工艺输送管道",
         _ => "监控卡片"
     };
 

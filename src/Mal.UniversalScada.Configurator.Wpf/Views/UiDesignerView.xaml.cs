@@ -18,6 +18,9 @@ public partial class UiDesignerView : UserControl
     {
         InitializeComponent();
 
+        Focusable = true;
+        PreviewKeyDown += OnDesignerPreviewKeyDown;
+
         Loaded += (_, _) =>
         {
             if (DataContext is UiDesignerViewModel vm)
@@ -33,6 +36,59 @@ public partial class UiDesignerView : UserControl
                 _ = vm.ReloadAvailableTagsAsync();
             }
         };
+    }
+
+    private void OnDesignerPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (DataContext is not UiDesignerViewModel vm) return;
+
+        // 如果光标在输入框中，不拦截文本编辑按键
+        if (e.OriginalSource is TextBox || e.OriginalSource is PasswordBox) return;
+
+        bool isCtrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+        bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+        double step = isShift ? 10.0 : 1.0;
+
+        if (isCtrl && e.Key == Key.C)
+        {
+            vm.CopySelectionCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (isCtrl && e.Key == Key.V)
+        {
+            vm.PasteSelectionCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (isCtrl && e.Key == Key.A)
+        {
+            vm.SelectAllWidgetsCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Delete)
+        {
+            vm.DeleteSelectedWidgetsCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Left)
+        {
+            vm.NudgeSelectedWidgets(-step, 0);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Right)
+        {
+            vm.NudgeSelectedWidgets(step, 0);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Up)
+        {
+            vm.NudgeSelectedWidgets(0, -step);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Down)
+        {
+            vm.NudgeSelectedWidgets(0, step);
+            e.Handled = true;
+        }
     }
 
     #region 工具箱拖拽与双击
@@ -103,6 +159,7 @@ public partial class UiDesignerView : UserControl
 
     private void OnCanvasMouseDown(object sender, MouseButtonEventArgs e)
     {
+        Focus();
         // 只有当真正点击空白画布区域（非 WidgetHost 内部）时，才取消组件选中
         if (e.OriginalSource is DependencyObject dep && FindParent<WidgetHost>(dep) == null && DataContext is UiDesignerViewModel vm)
         {
@@ -111,6 +168,7 @@ public partial class UiDesignerView : UserControl
                 w.IsSelected = false;
             }
             vm.SelectedWidget = null;
+            vm.NotifySelectionChanged();
         }
     }
 

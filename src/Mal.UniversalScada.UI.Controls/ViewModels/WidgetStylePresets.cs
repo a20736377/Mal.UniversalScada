@@ -32,6 +32,12 @@ public static class WidgetStylePresetCatalog
         RegisterTankLevelPresets();
         RegisterStatusLedPresets();
         RegisterNumericCardPresets();
+        RegisterTrendChartPresets();
+        RegisterIoMatrixPresets();
+        RegisterTextLabelPresets();
+        RegisterDisplayBoxPresets();
+        RegisterPanelContainerPresets();
+        RegisterPipePresets();
     }
 
     public static IReadOnlyList<WidgetStylePreset> GetPresets(WidgetType type)
@@ -672,4 +678,372 @@ public static class WidgetStylePresetCatalog
         ));
     }
     #endregion
+
+    #region 实时趋势图预设 (TrendChart)
+    private static void RegisterTrendChartPresets()
+    {
+        Register(new WidgetStylePreset(
+            Id: "Trend_Reflow_Temp",
+            Type: WidgetType.TrendChart,
+            Name: "热工炉膛温区曲线 (0~300℃)",
+            Icon: "🔥",
+            Category: "趋势走势",
+            Description: "温区波形走势，橙红警示主线，深红渐变底衬，0~300℃",
+            Apply: vm =>
+            {
+                if (vm is TrendChartWidgetViewModel tc)
+                {
+                    tc.Title = "炉膛温区实时曲线";
+                    tc.Unit = "℃";
+                    tc.MinValue = 0;
+                    tc.MaxValue = 300;
+                    tc.LineColor = "#F97316"; // 橙红
+                    tc.FillColor = "#7C2D12"; // 渐变底衬
+                    tc.GridColor = "#1E293B";
+                    tc.TimeWindowSeconds = 60;
+                    tc.RebuildChartGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Trend_Motor_Current",
+            Type: WidgetType.TrendChart,
+            Name: "电机负荷电流曲线 (0~100A)",
+            Icon: "⚡",
+            Category: "趋势走势",
+            Description: "主电机实时负载电流波动，荧光绿主线与微深底衬，0~100A",
+            Apply: vm =>
+            {
+                if (vm is TrendChartWidgetViewModel tc)
+                {
+                    tc.Title = "主电机负载电流走势";
+                    tc.Unit = "A";
+                    tc.MinValue = 0;
+                    tc.MaxValue = 100;
+                    tc.LineColor = "#10B981"; // 翠绿
+                    tc.FillColor = "#064E3B";
+                    tc.GridColor = "#1E293B";
+                    tc.TimeWindowSeconds = 60;
+                    tc.RebuildChartGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Trend_Hydraulic_Pressure",
+            Type: WidgetType.TrendChart,
+            Name: "液压瞬态脉冲压力 (0~25MPa)",
+            Icon: "🌊",
+            Category: "趋势走势",
+            Description: "高压液压管路压力脉冲，科技蓝主线与深海蓝底衬，0~25MPa",
+            Apply: vm =>
+            {
+                if (vm is TrendChartWidgetViewModel tc)
+                {
+                    tc.Title = "系统油压脉冲波形";
+                    tc.Unit = "MPa";
+                    tc.MinValue = 0;
+                    tc.MaxValue = 25;
+                    tc.LineColor = "#38BDF8"; // 科技天蓝
+                    tc.FillColor = "#0C4A6E";
+                    tc.GridColor = "#1E293B";
+                    tc.TimeWindowSeconds = 30;
+                    tc.RebuildChartGeometry();
+                }
+            }
+        ));
+    }
+    #endregion
+
+    #region IO 点阵状态板预设 (IoMatrix)
+    private static void RegisterIoMatrixPresets()
+    {
+        Register(new WidgetStylePreset(
+            Id: "Io_DI_8Ch_Status",
+            Type: WidgetType.IoMatrix,
+            Name: "8路 PLC 数字量输入板 (DI)",
+            Icon: "🎛️",
+            Category: "数字IO",
+            Description: "8路光耦限位与就绪输入状态板（1组×8点，280×115），翠绿导通激活，HEX 格式",
+            Apply: vm =>
+            {
+                if (vm is IoMatrixWidgetViewModel io)
+                {
+                    io.Title = "工位 DI 信号状态板";
+                    io.IoChannels = 8;
+                    io.Width = 280;
+                    io.Height = 115;
+                    io.DisplayFormat = "HEX";
+                    io.ActiveColor = "#10B981";
+                    io.InactiveColor = "#334155";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Io_DO_16Ch_Relay",
+            Type: WidgetType.IoMatrix,
+            Name: "16路 继电器输出控制板 (DO)",
+            Icon: "⚡",
+            Category: "数字IO",
+            Description: "16路控制电磁阀/驱动输出点阵（2组×8点，280×160），琥珀金黄激活，BIN 二进制格式",
+            Apply: vm =>
+            {
+                if (vm is IoMatrixWidgetViewModel io)
+                {
+                    io.Title = "阀岛 DO 输出控制板";
+                    io.IoChannels = 16;
+                    io.Width = 280;
+                    io.Height = 160;
+                    io.DisplayFormat = "BIN";
+                    io.ActiveColor = "#F59E0B";
+                    io.InactiveColor = "#334155";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Io_32Ch_DWord_Bus",
+            Type: WidgetType.IoMatrix,
+            Name: "32路 总线分布式IO点阵 (DWord)",
+            Icon: "🌐",
+            Category: "数字IO",
+            Description: "32路现场总线扩展IO点阵（4组×8点，280×260），荧光青蓝激活，HEX 8位十六进制格式",
+            Apply: vm =>
+            {
+                if (vm is IoMatrixWidgetViewModel io)
+                {
+                    io.Title = "现场总线 IO 站状态";
+                    io.IoChannels = 32;
+                    io.Width = 280;
+                    io.Height = 260;
+                    io.DisplayFormat = "HEX";
+                    io.ActiveColor = "#38BDF8";
+                    io.InactiveColor = "#1E293B";
+                }
+            }
+        ));
+    }
+    #endregion
+
+    #region 文本标签预设 (TextLabel)
+    private static void RegisterTextLabelPresets()
+    {
+        Register(new WidgetStylePreset(
+            Id: "Label_Station_Header",
+            Type: WidgetType.TextLabel,
+            Name: "工位工艺高亮标题板",
+            Icon: "🏷️",
+            Category: "文字标识",
+            Description: "科技青蓝 18 号加粗标题，居中对齐，工位铭牌与区域标题",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "工位区域标题";
+                    lbl.Text = "ST-01 装配加工工作站";
+                    lbl.LabelFontSize = 18;
+                    lbl.IsBold = true;
+                    lbl.TextColor = "#38BDF8";
+                    lbl.TextAlignment = "Center";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_Warning_Note",
+            Type: WidgetType.TextLabel,
+            Name: "安全警示标注文本",
+            Icon: "⚠️",
+            Category: "文字标识",
+            Description: "醒目金黄 14 号加粗提示文本，操作安全须知与警戒标注",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "安全防范提示";
+                    lbl.Text = "注意：设备运行时严禁触碰安全光幕！";
+                    lbl.LabelFontSize = 14;
+                    lbl.IsBold = true;
+                    lbl.TextColor = "#FBBF24";
+                    lbl.TextAlignment = "Left";
+                }
+            }
+        ));
+    }
+    #endregion
+
+    #region 普通显示框预设 (DisplayBox)
+    private static void RegisterDisplayBoxPresets()
+    {
+        Register(new WidgetStylePreset(
+            Id: "Display_System_State",
+            Type: WidgetType.DisplayBox,
+            Name: "深色高亮状态指示框",
+            Icon: "🔲",
+            Category: "数显展示",
+            Description: "深色科技底座，天蓝前缀标签与大字状态数值",
+            Apply: vm =>
+            {
+                if (vm is DisplayBoxWidgetViewModel db)
+                {
+                    db.Title = "系统当前状态";
+                    db.Prefix = "工况模式:";
+                    db.Unit = "";
+                    db.Decimals = 0;
+                    db.TextColor = "#38BDF8";
+                    db.BorderColor = "#0284C7";
+                    db.BackgroundColor = "#0F172A";
+                    db.TextAlignment = "Right";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Display_Compact_Value",
+            Type: WidgetType.DisplayBox,
+            Name: "紧凑型测控参数显示框",
+            Icon: "📊",
+            Category: "数显展示",
+            Description: "石板灰微边框，翠绿高亮数显，保留 2 位小数",
+            Apply: vm =>
+            {
+                if (vm is DisplayBoxWidgetViewModel db)
+                {
+                    db.Title = "精细采样测量";
+                    db.Prefix = "当前值:";
+                    db.Unit = "mm";
+                    db.Decimals = 2;
+                    db.TextColor = "#10B981";
+                    db.BorderColor = "#334155";
+                    db.BackgroundColor = "#0B0F19";
+                    db.TextAlignment = "Right";
+                }
+            }
+        ));
+    }
+    #endregion
+
+    #region 容器分组框预设 (PanelContainer)
+    private static void RegisterPanelContainerPresets()
+    {
+        Register(new WidgetStylePreset(
+            Id: "Panel_Control_Zone",
+            Type: WidgetType.PanelContainer,
+            Name: "主控动力电气分区容器",
+            Icon: "📦",
+            Category: "容器分组",
+            Description: "深蓝半透明背景底板，天蓝微边框，带工位分区顶栏",
+            Apply: vm =>
+            {
+                if (vm is PanelContainerWidgetViewModel p)
+                {
+                    p.Title = "动力电气区";
+                    p.GroupTitle = "动力与变频驱动单元";
+                    p.HeaderBgColor = "#1E293B";
+                    p.BorderColor = "#0284C7";
+                    p.FillColor = "#0A0F1D";
+                    p.CornerRadius = 8;
+                    p.BorderThickness = 1.5;
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Panel_Alarm_Zone",
+            Type: WidgetType.PanelContainer,
+            Name: "安全警示联动分区容器",
+            Icon: "🚨",
+            Category: "容器分组",
+            Description: "警示暗红微底板，琥珀黄微发光边框，安全联锁与保护分区",
+            Apply: vm =>
+            {
+                if (vm is PanelContainerWidgetViewModel p)
+                {
+                    p.Title = "安全防护区";
+                    p.GroupTitle = "安全联锁与急停防护区";
+                    p.HeaderBgColor = "#3F1515";
+                    p.BorderColor = "#F59E0B";
+                    p.FillColor = "#1A0A0A";
+                    p.CornerRadius = 8;
+                    p.BorderThickness = 1.5;
+                }
+            }
+        ));
+    }
+    #endregion
+
+    #region 工艺管道预设 (Pipe)
+    private static void RegisterPipePresets()
+    {
+        Register(new WidgetStylePreset(
+            Id: "Pipe_Cooling_Water",
+            Type: WidgetType.Pipe,
+            Name: "循环冷却水管道 (横向水蓝流动)",
+            Icon: "🌊",
+            Category: "管道流体",
+            Description: "标准横向供水/循环水管，水蓝介质动态跑马灯流动，周期 1.5s",
+            Apply: vm =>
+            {
+                if (vm is PipeWidgetViewModel p)
+                {
+                    p.Title = "循环水管路";
+                    p.Orientation = "Horizontal";
+                    p.LiquidColor = "#0284C7";
+                    p.PipeColor = "#1E293B";
+                    p.FlowDirection = "Forward";
+                    p.FlowSpeed = 1.5;
+                    p.IsFlowing = true;
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Pipe_Fuel_Oil",
+            Type: WidgetType.Pipe,
+            Name: "重油/燃油管道 (横向琥珀金流动)",
+            Icon: "⛽",
+            Category: "管道流体",
+            Description: "润滑油/燃油管路，琥珀金黄介质跑马灯流动，周期 2.5s",
+            Apply: vm =>
+            {
+                if (vm is PipeWidgetViewModel p)
+                {
+                    p.Title = "燃油进油管路";
+                    p.Orientation = "Horizontal";
+                    p.LiquidColor = "#F59E0B";
+                    p.PipeColor = "#1E293B";
+                    p.FlowDirection = "Forward";
+                    p.FlowSpeed = 2.5;
+                    p.IsFlowing = true;
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Pipe_Vertical_Steam",
+            Type: WidgetType.Pipe,
+            Name: "立式蒸汽管道 (纵向气白流动)",
+            Icon: "💨",
+            Category: "管道流体",
+            Description: "立式气动/高温蒸汽输送管路，气白高速流动，周期 1.0s",
+            Apply: vm =>
+            {
+                if (vm is PipeWidgetViewModel p)
+                {
+                    p.Title = "立式蒸汽管路";
+                    p.Orientation = "Vertical";
+                    p.LiquidColor = "#E2E8F0";
+                    p.PipeColor = "#334155";
+                    p.FlowDirection = "Forward";
+                    p.FlowSpeed = 1.0;
+                    p.IsFlowing = true;
+                }
+            }
+        ));
+    }
+    #endregion
 }
+
+
