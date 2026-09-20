@@ -76,7 +76,11 @@ public partial class App : Application
 
             if (loginSuccess == true && authService.CurrentUser.Role > UserRole.Guest)
             {
-                // 步骤 2：验证通过，加载监控主界面，恢复主窗体关闭时自动退出
+                // 核心关键：登录成功后，在展示监控主界面之前，先异步初始化并获取该用户的可用可视化画面方案
+                var mainViewModel = AppHost.Services.GetRequiredService<MainViewModel>();
+                await mainViewModel.InitializeAsync();
+
+                // 步骤 2：验证通过且画面方案已加载就绪，显示监控主界面
                 var mainWindow = AppHost.Services.GetRequiredService<MainWindow>();
                 MainWindow = mainWindow;
                 ShutdownMode = ShutdownMode.OnMainWindowClose;
@@ -96,12 +100,22 @@ public partial class App : Application
         }
     }
 
-    protected override async void OnExit(ExitEventArgs e)
+    protected override void OnExit(ExitEventArgs e)
     {
         if (AppHost != null)
         {
-            await AppHost.StopAsync();
-            AppHost.Dispose();
+            try
+            {
+                // async void OnExit 无法被 CLR 可靠等待，必须用同步方式确保停止完成
+                // 设置 5 秒超时，防止网络通信卡住导致进程无法退出
+                AppHost.StopAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+            }
+            catch { }
+            finally
+            {
+                AppHost.Dispose();
+                AppHost = null;
+            }
         }
         base.OnExit(e);
     }

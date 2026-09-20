@@ -89,26 +89,6 @@
                             </Button>
                         </StackPanel>
                     </Border>
-
-                    <!-- 工艺配方管理 -->
-                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="10,4">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📜 配方:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <ComboBox ItemsSource="{Binding Recipes}" SelectedItem="{Binding SelectedRecipe}" DisplayMemberPath="Name"
-                                      Width="220" Height="30" FontSize="11" FontWeight="SemiBold"
-                                      Background="#1E293B" Foreground="#FBBF24" BorderBrush="#D97706" BorderThickness="1"
-                                      VerticalContentAlignment="Center" Cursor="Hand"/>
-                            <Button Content="⚡ 下发" Margin="8,0,0,0" Height="30" Padding="12,2" FontSize="11" FontWeight="Bold"
-                                    Background="#D97706" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand"
-                                    Command="{Binding ApplySelectedRecipeCommand}" ToolTip="一键将选中的工艺配方下发至 PLC">
-                                <Button.Resources>
-                                    <Style TargetType="Border">
-                                        <Setter Property="CornerRadius" Value="5"/>
-                                    </Style>
-                                </Button.Resources>
-                            </Button>
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
 
                 <!-- 右侧：引擎控制、缩放与时钟 -->
@@ -244,7 +224,7 @@
                         <Style TargetType="Border">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding CurrentView}" Value="{x:Null}">
+                                <DataTrigger Binding="{Binding HasNoViewPermissions}" Value="True">
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
                             </Style.Triggers>

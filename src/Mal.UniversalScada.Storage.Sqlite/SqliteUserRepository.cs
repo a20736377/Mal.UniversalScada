@@ -87,6 +87,27 @@ public class SqliteUserRepository : IUserRepository
                 }
             }
 
+            // 检查 UserViewPermissions 关联表，如果为空且存在 UiViews，自动为预置操作员和工程师分配初始可用画面
+            var permCount = await connection.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM UserViewPermissions;");
+            if (permCount == 0)
+            {
+                var tableExists = await connection.ExecuteScalarAsync<int>(
+                    "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='UiViews';");
+                if (tableExists > 0)
+                {
+                    var viewIds = (await connection.QueryAsync<string>("SELECT ViewId FROM UiViews;")).ToList();
+                    foreach (var vid in viewIds)
+                    {
+                        await connection.ExecuteAsync(
+                            "INSERT OR IGNORE INTO UserViewPermissions (Username, ViewId) VALUES ('operator', @ViewId);", 
+                            new { ViewId = vid });
+                        await connection.ExecuteAsync(
+                            "INSERT OR IGNORE INTO UserViewPermissions (Username, ViewId) VALUES ('engineer', @ViewId);", 
+                            new { ViewId = vid });
+                    }
+                }
+            }
+
             _isInitialized = true;
         }
         finally

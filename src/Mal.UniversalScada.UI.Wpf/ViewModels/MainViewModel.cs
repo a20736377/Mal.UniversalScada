@@ -24,7 +24,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly IPriorityScheduler _scheduler;
     private readonly IAlarmEngine _alarmEngine;
     private readonly IAuditService _auditService;
-    private readonly IRecipeService _recipeService;
     private readonly IScreenManager _screenManager;
     private readonly IUserAuthService _authService;
     private readonly IUserRepository _userRepository;
@@ -57,10 +56,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private PhysicalScreenInfo? _selectedScreen;
 
     [ObservableProperty]
-    private ObservableCollection<RecipeModel> _recipes = new();
+    private bool _isInitialized;
 
     [ObservableProperty]
-    private RecipeModel? _selectedRecipe;
+    private bool _hasNoViewPermissions;
 
     [ObservableProperty]
     private string _currentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -109,7 +108,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IPriorityScheduler scheduler,
         IAlarmEngine alarmEngine,
         IAuditService auditService,
-        IRecipeService recipeService,
         IScreenManager screenManager,
         IUserAuthService authService,
         IUserRepository userRepository,
@@ -121,7 +119,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
         _alarmEngine = alarmEngine ?? throw new ArgumentNullException(nameof(alarmEngine));
         _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
-        _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
         _screenManager = screenManager ?? throw new ArgumentNullException(nameof(screenManager));
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
@@ -147,20 +144,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public async Task InitializeAsync()
     {
-        // 1. 启动优先级写调度器
-        await _scheduler.StartAsync();
+        if (IsInitialized) return;
 
-        // 2. 加载可用物理屏幕列表
-        RefreshScreens();
-
-        // 3. 载入拓扑配置与监控画面
+        // 1. 优先载入拓扑配置与当前用户的可用监控画面 (确保在主窗口渲染前画面方案已全部就绪)
         await LoadTopologyAndViewsAsync();
 
-        // 4. 载入工艺配方列表
-        await LoadRecipesAsync();
+        // 2. 启动优先级写调度器
+        await _scheduler.StartAsync();
 
-        // 5. 启动实时轮询与仿真发布引擎
+        // 3. 加载可用物理屏幕列表
+        RefreshScreens();
+
+        // 4. 启动实时轮询与仿真发布引擎
         StartPollingEngine();
+
+        IsInitialized = true;
     }
 
     public void RefreshScreens()
@@ -172,47 +170,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
             Screens.Add(sc);
         }
         SelectedScreen = Screens.FirstOrDefault(s => !s.IsPrimary) ?? Screens.FirstOrDefault();
-    }
-
-    public async Task LoadRecipesAsync()
-    {
-        try
-        {
-            Recipes.Clear();
-            var targetDevice = _devices.FirstOrDefault()?.DeviceId ?? "DEV_01";
-            var list = await _recipeService.GetRecipesByDeviceAsync(targetDevice);
-
-            // 若无配方，自动预制经典工业配方以供体验
-            if (list.Count == 0)
-            {
-                var defaultRecipe = new RecipeModel
-                {
-                    RecipeId = "RECIPE_REFLOW_STD",
-                    Name = "回流焊无铅高温焊接标准配方",
-                    TargetDeviceId = targetDevice,
-                    Version = "2.1.0",
-                    Items = new List<RecipeItem>
-                    {
-                        new("DEV_01.Tag_01", 160.0, "预热区温度设定"),
-                        new("DEV_01.Tag_02", 210.0, "升温区温度设定"),
-                        new("DEV_01.Tag_03", 245.0, "焊接峰值温度设定"),
-                        new("DEV_01.Motor_Speed", 85.0, "链条传送速率设定")
-                    }
-                };
-                await _recipeService.SaveRecipeAsync(defaultRecipe);
-                list = await _recipeService.GetRecipesByDeviceAsync(targetDevice);
-            }
-
-            foreach (var r in list)
-            {
-                Recipes.Add(r);
-            }
-            SelectedRecipe = Recipes.FirstOrDefault();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"载入配方异常: {ex.Message}";
-        }
     }
 
     public async Task LoadTopologyAndViewsAsync()
@@ -252,12 +209,15 @@ public partial class MainViewModel : ObservableObject, IDisposable
             if (allowedViews.Count == 0)
             {
                 CurrentView = null;
+                HasNoViewPermissions = true;
                 StatusMessage = $"⚠️ 账户 [{_authService.CurrentUser.Username}] 暂未被分配任何画面方案权限，请联系管理员分配。";
             }
             else
             {
+                HasNoViewPermissions = false;
                 // 优先选择默认画面
                 CurrentView = Views.FirstOrDefault(v => v.IsDefault) ?? Views.FirstOrDefault();
+                StatusMessage = $"🟢 当前用户 [{_authService.CurrentUser.Username}] 已就绪 (共加载 {Views.Count} 个可用画面)";
             }
         }
         catch (Exception ex)
@@ -304,10 +264,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
             if (allowedViews.Count == 0)
             {
                 CurrentView = null;
+                HasNoViewPermissions = true;
                 StatusMessage = $"⚠️ 账户 [{_authService.CurrentUser.Username}] 暂无可用画面方案授权，请联系管理员分配。";
             }
             else
             {
+                HasNoViewPermissions = false;
                 CurrentView = Views.FirstOrDefault(v => v.ViewId == previousViewId)
                            ?? Views.FirstOrDefault(v => v.IsDefault)
                            ?? Views.FirstOrDefault();
@@ -659,63 +621,38 @@ public partial class MainViewModel : ObservableObject, IDisposable
         StatusMessage = "📽️ 已关闭所有投屏视窗";
     }
 
-    /// <summary>
-    /// 一键执行选中的工艺配方下发
-    /// </summary>
-    [RelayCommand]
-    public async Task ApplySelectedRecipeAsync()
-    {
-        if (!EnsurePermission(UserRole.Operator, "下发工艺配方"))
-        {
-            StatusMessage = "⚠️ 权限拦截: 访客无批量下发工艺配方权限";
-            return;
-        }
-
-        if (SelectedRecipe == null)
-        {
-            MessageBox.Show("请先选择要下发的工艺配方！", "配方提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        var confirm = MessageBox.Show(
-            $"确认将配方【{SelectedRecipe.Name}】(包含 {SelectedRecipe.Items.Count} 个设定项) 批量下发至产线设备？",
-            "工艺参数下发确认",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
-        if (confirm != MessageBoxResult.Yes) return;
-
-        StatusMessage = $"⏳ 正在下发配方【{SelectedRecipe.Name}】并校验回读...";
-        var res = await _recipeService.ApplyRecipeToDeviceAsync(SelectedRecipe.RecipeId);
-
-        if (res.IsSuccess)
-        {
-            // 通过总线同步刷新本地值
-            foreach (var item in SelectedRecipe.Items)
-            {
-                PublishToBus(item.TagId, item.TargetValue, QualityCode.Good);
-            }
-            StatusMessage = $"✅ 配方下发成功: {res.Message}";
-            MessageBox.Show($"配方【{SelectedRecipe.Name}】下发完成！\n{res.Message}", "配方下发成功", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        else
-        {
-            StatusMessage = $"⚠️ 配方下发警告: {res.Message}";
-            MessageBox.Show($"配方下发部分完成或异常:\n{res.Message}", "下发提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-    }
-
     public void Dispose()
     {
         ControlButtonControl.ExecuteRequested -= OnWidgetControlExecuted;
+
+        // 1. 先停止轮询引擎并等待轮询 Task 完全退出
+        StopPollingEngine();
+        try
+        {
+            // 给轮询任务最多 3 秒退出时间，防止进程关闭卡死
+            _pollingTask?.Wait(TimeSpan.FromSeconds(3));
+        }
+        catch (AggregateException) { }
+        catch (OperationCanceledException) { }
+
+        // 2. 同步停止优先级调度器（含所有通道 Worker Task）
+        try
+        {
+            _scheduler.StopAsync().GetAwaiter().GetResult();
+        }
+        catch { }
+
+        // 3. 清理总线订阅
         foreach (var sub in _busSubscriptions)
         {
             sub.Dispose();
         }
         _busSubscriptions.Clear();
+
+        // 4. 停止时钟定时器与投屏
         _clockTimer.Stop();
-        StopPollingEngine();
         _screenManager.CloseAllProjectedScreens();
+
         GC.SuppressFinalize(this);
     }
 
