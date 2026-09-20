@@ -208,6 +208,42 @@ public enum AlarmSeverity
 }
 
 /// <summary>
+/// 工业报警规则触发判定类型
+/// </summary>
+public enum AlarmRuleType
+{
+    /// <summary>
+    /// 高高限报警 (极高超限，通常用于紧急联动或致命关断)
+    /// </summary>
+    HighHigh = 0,
+
+    /// <summary>
+    /// 高限报警 (高于正常上限)
+    /// </summary>
+    High = 1,
+
+    /// <summary>
+    /// 低限报警 (低于正常下限)
+    /// </summary>
+    Low = 2,
+
+    /// <summary>
+    /// 低低限报警 (极低下限，通常用于干涸/欠压保护)
+    /// </summary>
+    LowLow = 3,
+
+    /// <summary>
+    /// 开关量布尔变位报警 (如故障干接点闭合置 1)
+    /// </summary>
+    BitEqual = 4,
+
+    /// <summary>
+    /// 通信故障或数据质量坏值报警
+    /// </summary>
+    BadQuality = 5
+}
+
+/// <summary>
 /// 下位机通信协议类型枚举
 /// </summary>
 public enum ProtocolType
