@@ -305,15 +305,19 @@ public partial class MainViewModel : ObservableObject, IDisposable
             var vm = WidgetViewModel.FromConfig(config, isDesignMode: false);
             Widgets.Add(vm);
 
-            // 将控件与实时数据总线订阅绑定
-            if (!string.IsNullOrWhiteSpace(vm.PrimaryTagId))
+            // 将控件与实时数据总线订阅绑定 (使用异步 BeginInvoke，避免阻塞总线线程或与 UI 关闭死锁)
+            if (vm.PrimaryTagId > 0)
             {
                 var sub = _dataBus.Subscribe(vm.PrimaryTagId, snapshot =>
                 {
-                    Application.Current?.Dispatcher.Invoke(() =>
+                    var dispatcher = Application.Current?.Dispatcher;
+                    if (dispatcher != null && !dispatcher.HasShutdownStarted)
                     {
-                        vm.UpdateRuntimeValue(snapshot.Value, snapshot.Quality.ToString());
-                    });
+                        _ = dispatcher.BeginInvoke(() =>
+                        {
+                            vm.UpdateRuntimeValue(snapshot.Value, snapshot.Quality.ToString());
+                        });
+                    }
                 });
                 _busSubscriptions.Add(sub);
             }
@@ -349,7 +353,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             try
             {
-                await Task.Delay(200, token); // 5Hz 采样刷新
+                await Task.Delay(200, token); // 5Hz 界面平滑刷新
                 if (!IsEngineRunning) continue;
 
                 step += 0.15;
@@ -358,38 +362,19 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
                 foreach (var widget in currentWidgets)
                 {
-                    if (string.IsNullOrWhiteSpace(widget.PrimaryTagId)) continue;
+                    if (widget.PrimaryTagId <= 0) continue;
 
-                    var tag = _tags.FirstOrDefault(t => t.TagId == widget.PrimaryTagId);
-                    var device = tag != null ? _devices.FirstOrDefault(d => d.DeviceId == tag.DeviceId) : null;
-                    var channel = device != null ? _channels.FirstOrDefault(c => c.ChannelId == device.ChannelId) : null;
-
-                    bool hardwareSuccess = false;
-
-                    // 1. 如果拓扑完整，尝试真实在线读取
-                    if (tag != null && device != null && channel != null)
+                    // 核心关键：真实硬件测点完全由 PriorityScheduler 专属负责通道采集与数据总线发布！
+                    // 严禁在 UI 轮询中重复打开物理通道，更严禁伪造仿真波形去覆盖真实硬件数据（会导致画面一直狂闪）
+                    bool isRealHardwareTag = _tags.Any(t => t.Id == widget.PrimaryTagId);
+                    if (isRealHardwareTag)
                     {
-                        try
-                        {
-                            var res = await _tagTester.TestReadTagAsync(tag, device, channel, token);
-                            if (res.IsSuccess && res.Value != null)
-                            {
-                                hardwareSuccess = true;
-                                PublishToBus(tag.TagId, res.Value, QualityCode.Good);
-                            }
-                        }
-                        catch
-                        {
-                            // 硬件通信失败，自动降级为平滑仿真
-                        }
+                        continue;
                     }
 
-                    // 2. 硬件未在线或未连通，自动以高拟真工业动态波形平滑驱动发布到总线
-                    if (!hardwareSuccess)
-                    {
-                        var simulated = GenerateSimulatedIndustrialValue(widget, step, random);
-                        PublishToBus(widget.PrimaryTagId, simulated, QualityCode.Good);
-                    }
+                    // 仅对未绑定真实物理硬件的纯演示/虚拟测点，执行高拟真平滑波形驱动
+                    var simulated = GenerateSimulatedIndustrialValue(widget, step, random);
+                    PublishToBus(widget.PrimaryTagId, simulated, QualityCode.Good);
                 }
             }
             catch (OperationCanceledException)
@@ -403,7 +388,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
-    private void PublishToBus(string tagId, object? val, QualityCode quality = QualityCode.Good)
+    private void PublishToBus(long tagId, object? val, QualityCode quality = QualityCode.Good)
     {
         _dataBus.PublishSnapshot(new TagValueSnapshot
         {
@@ -516,14 +501,14 @@ public partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(widget.PrimaryTagId))
+        if (widget.PrimaryTagId <= 0)
         {
-            MessageBox.Show($"组件【{widget.Title}】未配置绑定的点位 (PrimaryTagId)！", "操作提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show($"组件【{widget.Title}】未配置绑定的点位！", "操作提示", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         var writeVal = widget.WriteValue;
-        var tag = _tags.FirstOrDefault(t => t.TagId == widget.PrimaryTagId);
+        var tag = _tags.FirstOrDefault(t => t.Id == widget.PrimaryTagId);
         var device = tag != null ? _devices.FirstOrDefault(d => d.DeviceId == tag.DeviceId) : null;
         var channel = device != null ? _channels.FirstOrDefault(c => c.ChannelId == device.ChannelId) : null;
         var operatorName = _authService.CurrentUser.Username;
@@ -535,27 +520,31 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             if (tag != null && device != null && channel != null)
             {
-                var res = await _tagTester.TestWriteTagAsync(tag, writeVal, device, channel);
-                Application.Current?.Dispatcher.Invoke(() =>
+                // 使用 PriorityScheduler 高优写通道执行指令插队下发（保持单一长连接，避免端口冲突）
+                var res = await _scheduler.EnqueueWriteAsync(widget.PrimaryTagId, writeVal);
+                var dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null && !dispatcher.HasShutdownStarted)
                 {
-                    StatusMessage = res.IsSuccess
-                        ? $"✅ 指令下发成功: 点位 [{widget.PrimaryTagId}] 写入值 [{writeVal}]"
-                        : $"⚠️ 硬件写入未响应 (已仿真置位): {res.Message}";
-                });
-
-                if (res.IsSuccess)
-                {
-                    PublishToBus(widget.PrimaryTagId, writeVal, QualityCode.Good);
+                    _ = dispatcher.BeginInvoke(() =>
+                    {
+                        StatusMessage = res.IsSuccess
+                            ? $"✅ 指令下发成功: 点位 [#{widget.PrimaryTagId}] 写入值 [{writeVal}]"
+                            : $"⚠️ 指令下发未响应: {res.ErrorMessage}";
+                    });
                 }
             }
             else
             {
-                // 仿真模式通过总线即时同步
+                // 虚拟仿真模式通过总线即时同步
                 PublishToBus(widget.PrimaryTagId, writeVal, QualityCode.Good);
-                Application.Current?.Dispatcher.Invoke(() =>
+                var dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null && !dispatcher.HasShutdownStarted)
                 {
-                    StatusMessage = $"✅ (仿真总线) 指令下发成功: 点位 [{widget.PrimaryTagId}] 写入值 [{writeVal}]";
-                });
+                    _ = dispatcher.BeginInvoke(() =>
+                    {
+                        StatusMessage = $"✅ (虚拟总线) 指令下发成功: 点位 [#{widget.PrimaryTagId}] 写入值 [{writeVal}]";
+                    });
+                }
             }
         });
     }
@@ -625,22 +614,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         ControlButtonControl.ExecuteRequested -= OnWidgetControlExecuted;
 
-        // 1. 先停止轮询引擎并等待轮询 Task 完全退出
+        // 1. 发送停止信号（非阻塞，立即返回）
         StopPollingEngine();
-        try
-        {
-            // 给轮询任务最多 3 秒退出时间，防止进程关闭卡死
-            _pollingTask?.Wait(TimeSpan.FromSeconds(3));
-        }
-        catch (AggregateException) { }
-        catch (OperationCanceledException) { }
 
-        // 2. 同步停止优先级调度器（含所有通道 Worker Task）
-        try
-        {
-            _scheduler.StopAsync().GetAwaiter().GetResult();
-        }
-        catch { }
+        // 2. 异步停止底层通道调度器，不阻塞 UI 线程（避免窗体关闭假死）
+        _ = _scheduler.StopAsync();
 
         // 3. 清理总线订阅
         foreach (var sub in _busSubscriptions)
@@ -649,7 +627,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
         _busSubscriptions.Clear();
 
-        // 4. 停止时钟定时器与投屏
+        // 4. 停止时钟定时器与关闭投屏视窗
         _clockTimer.Stop();
         _screenManager.CloseAllProjectedScreens();
 
@@ -667,12 +645,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
             IsDefault = true,
             Widgets = new List<WidgetConfig>
             {
-                new() { WidgetId = "W_OVEN_ZONE1", Type = WidgetType.GaugeCircular, Title = "温区1-预热区", PrimaryTagId = "DEV_01.Tag_01", X = 50, Y = 50, Width = 180, Height = 180, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "300", ["Unit"] = "℃" } },
-                new() { WidgetId = "W_OVEN_ZONE2", Type = WidgetType.GaugeCircular, Title = "温区2-升温区", PrimaryTagId = "DEV_01.Tag_02", X = 260, Y = 50, Width = 180, Height = 180, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "300", ["Unit"] = "℃" } },
-                new() { WidgetId = "W_OVEN_ZONE3", Type = WidgetType.GaugeCircular, Title = "温区3-焊接区", PrimaryTagId = "DEV_01.Tag_03", X = 470, Y = 50, Width = 180, Height = 180, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "300", ["Unit"] = "℃" } },
-                new() { WidgetId = "W_OVEN_SPEED", Type = WidgetType.NumericCard, Title = "传送带链速", PrimaryTagId = "DEV_01.Motor_Speed", X = 680, Y = 50, Width = 200, Height = 140, Properties = new() { ["Unit"] = "mm/s" } },
-                new() { WidgetId = "W_OVEN_STATUS", Type = WidgetType.StatusLed, Title = "加热管就绪", PrimaryTagId = "DEV_01.System_Start", X = 900, Y = 50, Width = 140, Height = 120 },
-                new() { WidgetId = "W_OVEN_BTN", Type = WidgetType.ControlButton, Title = "主电源启停", PrimaryTagId = "DEV_01.System_Start", X = 900, Y = 190, Width = 160, Height = 90, Properties = new() { ["ButtonText"] = "启动加热", ["WriteValue"] = "1" } }
+                new() { WidgetId = "W_OVEN_ZONE1", Type = WidgetType.GaugeCircular, Title = "温区1-预热区", PrimaryTagId = 0, X = 50, Y = 50, Width = 180, Height = 180, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "300", ["Unit"] = "℃" } },
+                new() { WidgetId = "W_OVEN_ZONE2", Type = WidgetType.GaugeCircular, Title = "温区2-升温区", PrimaryTagId = 0, X = 260, Y = 50, Width = 180, Height = 180, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "300", ["Unit"] = "℃" } },
+                new() { WidgetId = "W_OVEN_ZONE3", Type = WidgetType.GaugeCircular, Title = "温区3-焊接区", PrimaryTagId = 0, X = 470, Y = 50, Width = 180, Height = 180, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "300", ["Unit"] = "℃" } },
+                new() { WidgetId = "W_OVEN_SPEED", Type = WidgetType.NumericCard, Title = "传送带链速", PrimaryTagId = 0, X = 680, Y = 50, Width = 200, Height = 140, Properties = new() { ["Unit"] = "mm/s" } },
+                new() { WidgetId = "W_OVEN_STATUS", Type = WidgetType.StatusLed, Title = "加热管就绪", PrimaryTagId = 0, X = 900, Y = 50, Width = 140, Height = 120 },
+                new() { WidgetId = "W_OVEN_BTN", Type = WidgetType.ControlButton, Title = "主电源启停", PrimaryTagId = 0, X = 900, Y = 190, Width = 160, Height = 90, Properties = new() { ["ButtonText"] = "启动加热", ["WriteValue"] = "1" } }
             }
         };
     }
@@ -688,10 +666,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
             IsDefault = false,
             Widgets = new List<WidgetConfig>
             {
-                new() { WidgetId = "W_TANK_A", Type = WidgetType.LevelTank, Title = "原料储罐 A", PrimaryTagId = "TankA_Level", X = 60, Y = 50, Width = 160, Height = 240, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "100", ["Unit"] = "%" } },
-                new() { WidgetId = "W_TANK_B", Type = WidgetType.LevelTank, Title = "缓冲储罐 B", PrimaryTagId = "TankB_Level", X = 250, Y = 50, Width = 160, Height = 240, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "100", ["Unit"] = "%" } },
-                new() { WidgetId = "W_IO_STATUS", Type = WidgetType.IoMatrix, Title = "灌装阀门到位矩阵", PrimaryTagId = "Valve_Status_Word", X = 440, Y = 50, Width = 280, Height = 150 },
-                new() { WidgetId = "W_PUMP_BTN", Type = WidgetType.ControlButton, Title = "主循环泵控制", PrimaryTagId = "Pump_RunCmd", X = 440, Y = 220, Width = 160, Height = 90, Properties = new() { ["ButtonText"] = "开启循环泵", ["WriteValue"] = "1" } }
+                new() { WidgetId = "W_TANK_A", Type = WidgetType.LevelTank, Title = "原料储罐 A", PrimaryTagId = 0, X = 60, Y = 50, Width = 160, Height = 240, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "100", ["Unit"] = "%" } },
+                new() { WidgetId = "W_TANK_B", Type = WidgetType.LevelTank, Title = "缓冲储罐 B", PrimaryTagId = 0, X = 250, Y = 50, Width = 160, Height = 240, Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "100", ["Unit"] = "%" } },
+                new() { WidgetId = "W_IO_STATUS", Type = WidgetType.IoMatrix, Title = "灌装阀门到位矩阵", PrimaryTagId = 0, X = 440, Y = 50, Width = 280, Height = 150 },
+                new() { WidgetId = "W_PUMP_BTN", Type = WidgetType.ControlButton, Title = "主循环泵控制", PrimaryTagId = 0, X = 440, Y = 220, Width = 160, Height = 90, Properties = new() { ["ButtonText"] = "开启循环泵", ["WriteValue"] = "1" } }
             }
         };
     }

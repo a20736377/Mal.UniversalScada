@@ -115,6 +115,20 @@ public class AuditService : IAuditService
     /// <inheritdoc />
     public Task RecordTagWriteAsync(
         string operatorName, 
+        long tagId, 
+        object? oldValue, 
+        object? newValue, 
+        bool isSuccess, 
+        long elapsedMs, 
+        string? error = null, 
+        CancellationToken ct = default)
+    {
+        return RecordTagWriteAsync(operatorName, tagId.ToString(), oldValue, newValue, isSuccess, elapsedMs, error, ct);
+    }
+
+    /// <inheritdoc />
+    public Task RecordTagWriteAsync(
+        string operatorName, 
         string tagId, 
         object? oldValue, 
         object? newValue, 

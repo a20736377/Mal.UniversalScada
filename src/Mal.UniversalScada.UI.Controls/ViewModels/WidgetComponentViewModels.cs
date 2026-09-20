@@ -169,11 +169,61 @@ public partial class CircularGaugeWidgetViewModel : WidgetViewModel
 
         const double cx = 60.0;
         const double cy = 60.0;
-        const double r = 48.0;
+        const double r = 44.0;
 
         Props.LowArcData = CreateArcString(cx, cy, r, angleStart, angleLow);
         Props.MidArcData = CreateArcString(cx, cy, r, angleLow, angleHigh);
         Props.HighArcData = CreateArcString(cx, cy, r, angleHigh, angleStart + angleTotal);
+
+        // 生成 270° 主刻度线 (11 条主刻度，每 10% 也就是 27° 一条)
+        var majorTicksSb = new System.Text.StringBuilder();
+        const double rMajorOut = 53.0;
+        const double rMajorIn = 46.5;
+
+        for (int i = 0; i <= 10; i++)
+        {
+            var deg = angleStart + i * (angleTotal / 10.0);
+            var rad = deg * Math.PI / 180.0;
+            var x1 = cx + rMajorOut * Math.Sin(rad);
+            var y1 = cy - rMajorOut * Math.Cos(rad);
+            var x2 = cx + rMajorIn * Math.Sin(rad);
+            var y2 = cy - rMajorIn * Math.Cos(rad);
+            majorTicksSb.Append(FormattableString.Invariant($"M {x1:F2} {y1:F2} L {x2:F2} {y2:F2} "));
+        }
+        Props.MajorTicksPathData = majorTicksSb.ToString();
+
+        // 生成 270° 次刻度线 (10 条次刻度，每 5% 一条，居中插空)
+        var minorTicksSb = new System.Text.StringBuilder();
+        const double rMinorOut = 51.0;
+        const double rMinorIn = 47.0;
+
+        for (int i = 0; i < 10; i++)
+        {
+            var deg = angleStart + (i + 0.5) * (angleTotal / 10.0);
+            var rad = deg * Math.PI / 180.0;
+            var x1 = cx + rMinorOut * Math.Sin(rad);
+            var y1 = cy - rMinorOut * Math.Cos(rad);
+            var x2 = cx + rMinorIn * Math.Sin(rad);
+            var y2 = cy - rMinorIn * Math.Cos(rad);
+            minorTicksSb.Append(FormattableString.Invariant($"M {x1:F2} {y1:F2} L {x2:F2} {y2:F2} "));
+        }
+        Props.MinorTicksPathData = minorTicksSb.ToString();
+
+        // 计算 5 处关键刻度数值文本 (0%, 25%, 50%, 75%, 100%)
+        Props.ScaleText0 = FormatScaleNumber(min);
+        Props.ScaleText25 = FormatScaleNumber(min + range * 0.25);
+        Props.ScaleText50 = FormatScaleNumber(min + range * 0.5);
+        Props.ScaleText75 = FormatScaleNumber(min + range * 0.75);
+        Props.ScaleText100 = FormatScaleNumber(max);
+    }
+
+    private static string FormatScaleNumber(double val)
+    {
+        if (Math.Abs(val - Math.Round(val)) < 0.05)
+        {
+            return Math.Round(val).ToString(CultureInfo.InvariantCulture);
+        }
+        return val.ToString("F1", CultureInfo.InvariantCulture);
     }
 
     private static string CreateArcString(double cx, double cy, double r, double startAngleDeg, double endAngleDeg)
@@ -871,7 +921,7 @@ public partial class ControlButtonWidgetViewModel : WidgetViewModel
         config.Action = new WidgetActionConfig
         {
             ActionType = Props.ButtonMode,
-            TargetTagId = PrimaryTagId,
+            TargetTagId = PrimaryTagId > 0 ? PrimaryTagId : null,
             Value = Props.WriteValue,
             ConfirmPrompt = Props.RequireConfirm ? Props.ConfirmMessage : null
         };
@@ -931,7 +981,7 @@ public partial class TextLabelWidgetViewModel : WidgetViewModel
         CurrentRawValue = rawValue;
         Quality = quality;
 
-        if (string.IsNullOrWhiteSpace(PrimaryTagId))
+        if (PrimaryTagId <= 0)
         {
             FormattedValue = Props.Text;
         }

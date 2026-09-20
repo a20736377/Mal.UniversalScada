@@ -15,9 +15,9 @@ public class AlarmRule
     public string RuleId { get; set; } = Guid.NewGuid().ToString("N");
 
     /// <summary>
-    /// 关联的目标点位 ID
+    /// 关联的目标点位自增 ID
     /// </summary>
-    public string TagId { get; set; } = string.Empty;
+    public long TagId { get; set; }
 
     /// <summary>
     /// 报警规则类型 (高高限、高限、低限、低低限、变位、坏值)
@@ -62,7 +62,7 @@ public class AlarmRule
     public string FormatMessage(double currentValue, string unit = "")
     {
         return MessageTemplate
-            .Replace("{TagId}", TagId)
+            .Replace("{TagId}", TagId.ToString())
             .Replace("{Value}", currentValue.ToString("F2"))
             .Replace("{Threshold}", Threshold.ToString("F2"))
             .Replace("{Unit}", unit)

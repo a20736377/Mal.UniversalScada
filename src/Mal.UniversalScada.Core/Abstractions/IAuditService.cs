@@ -21,6 +21,19 @@ public interface IAuditService
     /// </summary>
     Task RecordTagWriteAsync(
         string operatorName, 
+        long tagId, 
+        object? oldValue, 
+        object? newValue, 
+        bool isSuccess, 
+        long elapsedMs, 
+        string? error = null, 
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// 便捷记录点位写入操作审计
+    /// </summary>
+    Task RecordTagWriteAsync(
+        string operatorName, 
         string tagId, 
         object? oldValue, 
         object? newValue, 

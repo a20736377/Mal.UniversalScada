@@ -34,7 +34,7 @@ public partial class UiDesignerViewModel : ObservableObject
     private WidgetViewModel? _selectedWidget;
 
     [ObservableProperty]
-    private ObservableCollection<string> _availableTagIds = new();
+    private ObservableCollection<long> _availableTagIds = new();
 
     [ObservableProperty]
     private ObservableCollection<TagOptionItem> _filteredAvailableTags = new();
@@ -200,24 +200,24 @@ public partial class UiDesignerViewModel : ObservableObject
         {
             var tags = await _configService.GetAllTagsAsync();
             _allRawTags.Clear();
-            _allRawTags.AddRange(tags.OrderBy(t => t.TagId));
+            _allRawTags.AddRange(tags.OrderBy(t => t.Id));
 
             // 针对已经删除的点位，在组件里彻底清除对应的选择
             foreach (var w in Widgets)
             {
-                if (!string.IsNullOrWhiteSpace(w.PrimaryTagId) &&
-                    !_allRawTags.Any(t => t.TagId == w.PrimaryTagId))
+                if (w.PrimaryTagId > 0 &&
+                    !_allRawTags.Any(t => t.Id == w.PrimaryTagId))
                 {
-                    w.PrimaryTagId = string.Empty;
+                    w.PrimaryTagId = 0;
                     w.UpdateRuntimeValue(null);
                 }
             }
 
             AvailableTagIds.Clear();
-            AvailableTagIds.Add(string.Empty); // 支持不绑定
+            AvailableTagIds.Add(0); // 支持不绑定
             foreach (var tag in _allRawTags)
             {
-                AvailableTagIds.Add(tag.TagId);
+                AvailableTagIds.Add(tag.Id);
             }
 
             UpdateFilteredTagsForSelectedWidget();
@@ -805,10 +805,10 @@ public partial class UiDesignerViewModel : ObservableObject
         }
 
         // 针对已经删除的点位，在组件里清除对应的选择
-        if (!string.IsNullOrWhiteSpace(SelectedWidget.PrimaryTagId) &&
-            !_allRawTags.Any(t => t.TagId == SelectedWidget.PrimaryTagId))
+        if (SelectedWidget.PrimaryTagId > 0 &&
+            !_allRawTags.Any(t => t.Id == SelectedWidget.PrimaryTagId))
         {
-            SelectedWidget.PrimaryTagId = string.Empty;
+            SelectedWidget.PrimaryTagId = 0;
             SelectedWidget.UpdateRuntimeValue(null);
         }
 
@@ -831,18 +831,18 @@ public partial class UiDesignerViewModel : ObservableObject
     /// </summary>
     private void OnPrimaryTagIdChanged()
     {
-        if (SelectedWidget == null || string.IsNullOrWhiteSpace(SelectedWidget.PrimaryTagId))
+        if (SelectedWidget == null || SelectedWidget.PrimaryTagId <= 0)
         {
             SelectedTagInfo = null;
             return;
         }
 
-        var matched = FilteredAvailableTags.FirstOrDefault(t => t.TagId == SelectedWidget.PrimaryTagId)
-                   ?? _allRawTags.Where(t => t.TagId == SelectedWidget.PrimaryTagId).Select(TagOptionItem.FromTagNode).FirstOrDefault();
+        var matched = FilteredAvailableTags.FirstOrDefault(t => t.Id == SelectedWidget.PrimaryTagId)
+                   ?? _allRawTags.Where(t => t.Id == SelectedWidget.PrimaryTagId).Select(TagOptionItem.FromTagNode).FirstOrDefault();
 
         if (matched == null)
         {
-            SelectedWidget.PrimaryTagId = string.Empty;
+            SelectedWidget.PrimaryTagId = 0;
             SelectedTagInfo = null;
             return;
         }
@@ -991,11 +991,11 @@ public partial class UiDesignerViewModel : ObservableObject
 
         if (type == WidgetType.PanelContainer)
         {
-            wConfig.PrimaryTagId = string.Empty;
+            wConfig.PrimaryTagId = 0;
         }
         else if (type == WidgetType.DeviceStatus)
         {
-            wConfig.PrimaryTagId = string.Empty;
+            wConfig.PrimaryTagId = 0;
             if (AvailableDevices.Count > 1)
             {
                 var dev = AvailableDevices[1];
@@ -1011,7 +1011,7 @@ public partial class UiDesignerViewModel : ObservableObject
         }
         else if (FilteredAvailableTags.Count > 1)
         {
-            wConfig.PrimaryTagId = FilteredAvailableTags[1].TagId;
+            wConfig.PrimaryTagId = FilteredAvailableTags[1].Id;
         }
         else if (AvailableTagIds.Count > 1)
         {
@@ -1102,7 +1102,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_OVEN_ZONE1",
                     Type = WidgetType.GaugeCircular,
                     Title = "温区1-预热区温度",
-                    PrimaryTagId = "Oven_Zone1_Temp",
+                    PrimaryTagId = 0,
                     X = 40,
                     Y = 40,
                     Width = 180,
@@ -1114,7 +1114,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_OVEN_ZONE2",
                     Type = WidgetType.GaugeCircular,
                     Title = "温区2-升温区温度",
-                    PrimaryTagId = "Oven_Zone2_Temp",
+                    PrimaryTagId = 0,
                     X = 240,
                     Y = 40,
                     Width = 180,
@@ -1126,7 +1126,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_OVEN_ZONE3",
                     Type = WidgetType.GaugeCircular,
                     Title = "温区3-焊接区温度",
-                    PrimaryTagId = "Oven_Zone3_Temp",
+                    PrimaryTagId = 0,
                     X = 440,
                     Y = 40,
                     Width = 180,
@@ -1138,7 +1138,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_OVEN_SPEED",
                     Type = WidgetType.NumericCard,
                     Title = "传送带链速",
-                    PrimaryTagId = "Conveyor_Speed",
+                    PrimaryTagId = 0,
                     X = 640,
                     Y = 40,
                     Width = 200,
@@ -1150,7 +1150,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_OVEN_STATUS",
                     Type = WidgetType.StatusLed,
                     Title = "加热管工作状态",
-                    PrimaryTagId = "Heater_Status",
+                    PrimaryTagId = 0,
                     X = 860,
                     Y = 40,
                     Width = 140,
@@ -1161,7 +1161,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_OVEN_START_BTN",
                     Type = WidgetType.ControlButton,
                     Title = "传送带启停控制",
-                    PrimaryTagId = "Conveyor_RunCmd",
+                    PrimaryTagId = 0,
                     X = 860,
                     Y = 180,
                     Width = 160,
@@ -1188,7 +1188,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_TANK_A",
                     Type = WidgetType.LevelTank,
                     Title = "原料储罐 A 液位",
-                    PrimaryTagId = "TankA_Level",
+                    PrimaryTagId = 0,
                     X = 60,
                     Y = 40,
                     Width = 160,
@@ -1200,7 +1200,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_TANK_B",
                     Type = WidgetType.LevelTank,
                     Title = "缓冲储罐 B 液位",
-                    PrimaryTagId = "TankB_Level",
+                    PrimaryTagId = 0,
                     X = 250,
                     Y = 40,
                     Width = 160,
@@ -1212,7 +1212,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_IO_STATUS",
                     Type = WidgetType.IoMatrix,
                     Title = "灌装阀门到位信号矩阵",
-                    PrimaryTagId = "Valve_Status_Word",
+                    PrimaryTagId = 0,
                     X = 440,
                     Y = 40,
                     Width = 280,
@@ -1223,7 +1223,7 @@ public partial class UiDesignerViewModel : ObservableObject
                     WidgetId = "W_PUMP_BTN",
                     Type = WidgetType.ControlButton,
                     Title = "主循环泵控制",
-                    PrimaryTagId = "Pump_RunCmd",
+                    PrimaryTagId = 0,
                     X = 440,
                     Y = 210,
                     Width = 160,

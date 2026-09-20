@@ -32,7 +32,12 @@ public enum UserRole
 public class UserInfo
 {
     /// <summary>
-    /// 登录用户名 (主键，唯一)
+    /// 用户自增数字主键 ID (系统自动递增)
+    /// </summary>
+    public long Id { get; set; }
+
+    /// <summary>
+    /// 登录用户名 (唯一账户名)
     /// </summary>
     public string Username { get; set; } = string.Empty;
 

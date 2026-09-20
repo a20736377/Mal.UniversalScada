@@ -8,7 +8,7 @@ namespace Mal.UniversalScada.Core.Models;
 /// </summary>
 public class TagOptionItem
 {
-    public string TagId { get; set; } = string.Empty;
+    public long Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public TagDataType? DataType { get; set; }
     public string DataTypeLabel { get; set; } = "未绑定";
@@ -90,11 +90,11 @@ public class TagOptionItem
 
         string unitText = string.IsNullOrWhiteSpace(tag.Unit) ? string.Empty : $" ({tag.Unit})";
         string descText = string.IsNullOrWhiteSpace(tag.Name) ? string.Empty : $" - {tag.Name}";
-        string display = $"[{typeLabel}] {tag.TagId}{descText}{unitText}";
+        string display = $"[#{tag.Id}] [{typeLabel}]{descText}{unitText}";
 
         return new TagOptionItem
         {
-            TagId = tag.TagId,
+            Id = tag.Id,
             Name = tag.Name,
             DataType = tag.DataType,
             DataTypeLabel = typeLabel,
@@ -107,7 +107,7 @@ public class TagOptionItem
 
     public static TagOptionItem CreateUnbound() => new()
     {
-        TagId = string.Empty,
+        Id = 0,
         Name = "未绑定点位",
         DataType = null,
         DataTypeLabel = "未绑定",
@@ -116,27 +116,15 @@ public class TagOptionItem
         DisplayText = "-- (未绑定点位 / 静态演示) --"
     };
 
-    public static TagOptionItem CreateFallback(string tagId)
+    public static TagOptionItem CreateFallback(long tagId)
     {
-        bool isBool = tagId.Contains("Status", StringComparison.OrdinalIgnoreCase) ||
-                      tagId.Contains("Cmd", StringComparison.OrdinalIgnoreCase) ||
-                      tagId.Contains("Start", StringComparison.OrdinalIgnoreCase) ||
-                      tagId.Contains("Stop", StringComparison.OrdinalIgnoreCase);
-
-        bool isWord = tagId.Contains("Word", StringComparison.OrdinalIgnoreCase) ||
-                      tagId.Contains("Matrix", StringComparison.OrdinalIgnoreCase) ||
-                      tagId.Contains("IO", StringComparison.OrdinalIgnoreCase);
-
-        TagDataType type = isBool ? TagDataType.Bool : (isWord ? TagDataType.UInt16 : TagDataType.Float);
-        string label = isBool ? "Bool 开关量" : (isWord ? "UInt16 状态字" : "Float 浮点数");
-
         return new TagOptionItem
         {
-            TagId = tagId,
-            Name = tagId,
-            DataType = type,
-            DataTypeLabel = label,
-            DisplayText = $"[⚠️已失效/未入库] {tagId} ({label})"
+            Id = tagId,
+            Name = $"点位 #{tagId}",
+            DataType = TagDataType.Float,
+            DataTypeLabel = "Float 浮点数",
+            DisplayText = $"[⚠️已失效/未入库] 点位 #{tagId}"
         };
     }
 }

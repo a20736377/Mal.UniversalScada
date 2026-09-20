@@ -70,7 +70,7 @@ public interface IConfigurationService
     /// <summary>
     /// 删除指定点位
     /// </summary>
-    Task DeleteTagAsync(string tagId);
+    Task DeleteTagAsync(long id);
 
     /// <summary>
     /// 清理不属于当前传输介质的冗余参数，保存成空

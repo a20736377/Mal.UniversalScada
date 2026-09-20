@@ -98,12 +98,12 @@ public class CustomSerialDriver : IDriver
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, TagValueSnapshot>> ReadBatchAsync(
+    public async Task<IReadOnlyDictionary<long, TagValueSnapshot>> ReadBatchAsync(
         IEnumerable<TagNode> tags, 
         CancellationToken ct = default)
     {
         var tagList = tags.ToList();
-        var results = new Dictionary<string, TagValueSnapshot>(tagList.Count);
+        var results = new Dictionary<long, TagValueSnapshot>(tagList.Count);
         if (tagList.Count == 0) return results;
 
         if (!_isInitialized || _channel == null || !_channel.IsOpen || _device == null)
@@ -111,9 +111,9 @@ public class CustomSerialDriver : IDriver
             var now = DateTime.Now;
             foreach (var t in tagList)
             {
-                results[t.TagId] = new TagValueSnapshot
+                results[t.Id] = new TagValueSnapshot
                 {
-                    TagId = t.TagId,
+                    TagId = t.Id,
                     Quality = QualityCode.CommFailure,
                     Timestamp = now
                 };
@@ -132,9 +132,9 @@ public class CustomSerialDriver : IDriver
             }
             catch
             {
-                results[t.TagId] = new TagValueSnapshot
+                results[t.Id] = new TagValueSnapshot
                 {
-                    TagId = t.TagId,
+                    TagId = t.Id,
                     Quality = QualityCode.Bad,
                     Timestamp = DateTime.Now
                 };
@@ -167,9 +167,9 @@ public class CustomSerialDriver : IDriver
                         foreach (var (tag, addr) in group)
                         {
                             var (val, raw) = CustomSerialCodec.DecodeAsciiLine(line, addr, tag);
-                            results[tag.TagId] = new TagValueSnapshot
+                            results[tag.Id] = new TagValueSnapshot
                             {
-                                TagId = tag.TagId,
+                                TagId = tag.Id,
                                 Value = val,
                                 RawValue = raw,
                                 Quality = val != null ? QualityCode.Good : QualityCode.Bad,
@@ -193,9 +193,9 @@ public class CustomSerialDriver : IDriver
                         foreach (var (tag, addr) in group)
                         {
                             var (val, raw) = CustomSerialCodec.DecodePayload(payload, addr, tag, _config.IsBigEndian);
-                            results[tag.TagId] = new TagValueSnapshot
+                            results[tag.Id] = new TagValueSnapshot
                             {
-                                TagId = tag.TagId,
+                                TagId = tag.Id,
                                 Value = val,
                                 RawValue = raw,
                                 Quality = val != null ? QualityCode.Good : QualityCode.Bad,
@@ -209,9 +209,9 @@ public class CustomSerialDriver : IDriver
                     var failTime = DateTime.Now;
                     foreach (var (tag, _) in group)
                     {
-                        results[tag.TagId] = new TagValueSnapshot
+                        results[tag.Id] = new TagValueSnapshot
                         {
-                            TagId = tag.TagId,
+                            TagId = tag.Id,
                             Quality = QualityCode.CommFailure,
                             Timestamp = failTime
                         };
@@ -235,12 +235,12 @@ public class CustomSerialDriver : IDriver
 
         if (tag.AccessMode == TagAccessMode.ReadOnly)
         {
-            return WriteResult.Failed(tag.TagId, value, "该点位配置为只读 (ReadOnly)，禁止写入");
+            return WriteResult.Failed(tag.Id, value, "该点位配置为只读 (ReadOnly)，禁止写入");
         }
 
         if (!_isInitialized || _channel == null || !_channel.IsOpen || _device == null)
         {
-            return WriteResult.Failed(tag.TagId, value, "串口驱动未初始化或通道未连接就绪");
+            return WriteResult.Failed(tag.Id, value, "串口驱动未初始化或通道未连接就绪");
         }
 
         CustomSerialAddress addr;
@@ -250,7 +250,7 @@ public class CustomSerialDriver : IDriver
         }
         catch (Exception ex)
         {
-            return WriteResult.Failed(tag.TagId, value, $"点位地址解析错误: {ex.Message}");
+            return WriteResult.Failed(tag.Id, value, $"点位地址解析错误: {ex.Message}");
         }
 
         var sw = Stopwatch.StartNew();
@@ -267,7 +267,7 @@ public class CustomSerialDriver : IDriver
 
                 var respLine = await ReceiveAsciiLineAsync(_channel, _config.TimeoutMs, ct);
                 sw.Stop();
-                return WriteResult.Success(tag.TagId, value, sw.ElapsedMilliseconds);
+                return WriteResult.Success(tag.Id, value, sw.ElapsedMilliseconds);
             }
 
             // 二进制写入模式:
@@ -287,16 +287,16 @@ public class CustomSerialDriver : IDriver
             if (!CustomSerialCodec.TryUnpackBinaryResponse(respFrame, _config, out var respCmd, out var respPayload, out var err))
             {
                 sw.Stop();
-                return WriteResult.Failed(tag.TagId, value, $"写入应答校验失败: {err}", sw.ElapsedMilliseconds);
+                return WriteResult.Failed(tag.Id, value, $"写入应答校验失败: {err}", sw.ElapsedMilliseconds);
             }
 
             sw.Stop();
-            return WriteResult.Success(tag.TagId, value, sw.ElapsedMilliseconds);
+            return WriteResult.Success(tag.Id, value, sw.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {
             sw.Stop();
-            return WriteResult.Failed(tag.TagId, value, $"串口写入通信失败: {ex.Message}", sw.ElapsedMilliseconds);
+            return WriteResult.Failed(tag.Id, value, $"串口写入通信失败: {ex.Message}", sw.ElapsedMilliseconds);
         }
         finally
         {
@@ -305,14 +305,14 @@ public class CustomSerialDriver : IDriver
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, WriteResult>> WriteBatchAsync(
+    public async Task<IReadOnlyDictionary<long, WriteResult>> WriteBatchAsync(
         IEnumerable<KeyValuePair<TagNode, object>> writes, 
         CancellationToken ct = default)
     {
-        var results = new Dictionary<string, WriteResult>();
+        var results = new Dictionary<long, WriteResult>();
         foreach (var kv in writes)
         {
-            results[kv.Key.TagId] = await WriteTagAsync(kv.Key, kv.Value, ct);
+            results[kv.Key.Id] = await WriteTagAsync(kv.Key, kv.Value, ct);
         }
         return results;
     }

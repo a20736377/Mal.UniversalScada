@@ -9,6 +9,8 @@ public partial class CreateDeviceDialog : Window
 {
     private readonly IEnumerable<ChannelConfig> _channels;
 
+    private readonly string _autoDeviceId;
+
     public DeviceNode? CreatedDevice { get; private set; }
 
     public CreateDeviceDialog(
@@ -19,8 +21,9 @@ public partial class CreateDeviceDialog : Window
     {
         InitializeComponent();
         _channels = channels;
+        _autoDeviceId = $"DEV_{nextDeviceIndex:D2}";
 
-        TxtDeviceId.Text = $"DEV_{nextDeviceIndex:D2}";
+        TxtDeviceId.Text = $"#系统自增 ({_autoDeviceId})";
         TxtDeviceName.Text = $"新建设备 {nextDeviceIndex}";
 
         CboChannels.ItemsSource = _channels;
@@ -66,15 +69,7 @@ public partial class CreateDeviceDialog : Window
     {
         TxtError.Text = string.Empty;
 
-        string devId = TxtDeviceId.Text.Trim();
         string devName = TxtDeviceName.Text.Trim();
-
-        if (string.IsNullOrEmpty(devId))
-        {
-            TxtError.Text = "请输入设备 ID";
-            TxtDeviceId.Focus();
-            return;
-        }
 
         if (string.IsNullOrEmpty(devName))
         {
@@ -109,7 +104,7 @@ public partial class CreateDeviceDialog : Window
 
         CreatedDevice = new DeviceNode
         {
-            DeviceId = devId,
+            DeviceId = _autoDeviceId,
             Name = devName,
             ChannelId = channelId,
             ProtocolType = protocolType,

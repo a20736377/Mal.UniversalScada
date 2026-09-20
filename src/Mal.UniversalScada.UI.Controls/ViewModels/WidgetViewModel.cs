@@ -27,7 +27,7 @@ public partial class WidgetViewModel : ObservableObject
     private string _title = "监控组件";
 
     [ObservableProperty]
-    private string? _primaryTagId;
+    private long _primaryTagId;
 
     [ObservableProperty]
     private double _x = 20;
@@ -565,7 +565,7 @@ public partial class WidgetViewModel : ObservableObject
             GroupId = GroupId,
             Type = Type,
             Title = Title,
-            PrimaryTagId = PrimaryTagId ?? string.Empty,
+            PrimaryTagId = PrimaryTagId,
             X = Math.Round(X, 1),
             Y = Math.Round(Y, 1),
             Width = Math.Round(Width, 1),
@@ -578,7 +578,7 @@ public partial class WidgetViewModel : ObservableObject
             config.Action = new WidgetActionConfig
             {
                 ActionType = ButtonMode,
-                TargetTagId = PrimaryTagId,
+                TargetTagId = PrimaryTagId > 0 ? PrimaryTagId : null,
                 Value = WriteValue,
                 ConfirmPrompt = RequireConfirm ? ConfirmMessage : null
             };

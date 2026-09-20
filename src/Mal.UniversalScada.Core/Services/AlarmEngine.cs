@@ -20,7 +20,7 @@ public class AlarmEngine : IAlarmEngine, IDisposable
     private readonly IDisposable _busSubscription;
 
     // 规则索引 (Key: TagId)
-    private readonly ConcurrentDictionary<string, List<AlarmRule>> _rulesByTag = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<long, List<AlarmRule>> _rulesByTag = new();
 
     // 当前处于活跃状态的报警 (Key: RuleId)
     private readonly ConcurrentDictionary<string, AlarmEvent> _activeAlarms = new(StringComparer.OrdinalIgnoreCase);
@@ -44,7 +44,7 @@ public class AlarmEngine : IAlarmEngine, IDisposable
     /// </summary>
     public void RegisterRule(AlarmRule rule)
     {
-        if (rule == null || string.IsNullOrWhiteSpace(rule.TagId)) return;
+        if (rule == null || rule.TagId <= 0) return;
         var list = _rulesByTag.GetOrAdd(rule.TagId, _ => new List<AlarmRule>());
         lock (list)
         {
@@ -143,14 +143,14 @@ public class AlarmEngine : IAlarmEngine, IDisposable
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<AlarmEvent>> QueryAlarmHistoryAsync(DateTime startTime, DateTime endTime, string? tagId = null)
+    public Task<IReadOnlyList<AlarmEvent>> QueryAlarmHistoryAsync(DateTime startTime, DateTime endTime, long? tagId = null)
     {
         lock (_historyLock)
         {
             var query = _alarmHistory.Where(a => a.TriggerTime >= startTime && a.TriggerTime <= endTime);
-            if (!string.IsNullOrWhiteSpace(tagId))
+            if (tagId.HasValue && tagId.Value > 0)
             {
-                query = query.Where(a => string.Equals(a.TagId, tagId, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(a => a.TagId == tagId.Value);
             }
             return Task.FromResult<IReadOnlyList<AlarmEvent>>(query.OrderByDescending(a => a.TriggerTime).ToList());
         }
@@ -161,7 +161,7 @@ public class AlarmEngine : IAlarmEngine, IDisposable
     /// </summary>
     private void OnSnapshotReceived(TagValueSnapshot snapshot)
     {
-        if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.TagId)) return;
+        if (snapshot == null || snapshot.TagId <= 0) return;
         if (!_rulesByTag.TryGetValue(snapshot.TagId, out var rules) || rules.Count == 0) return;
 
         List<AlarmRule> ruleCopies;

@@ -44,7 +44,7 @@ public class CustomSerialCodecTests
         var addr = new CustomSerialAddress { ByteOffset = 2, DataType = TagDataType.Int16 };
         var tag = new TagNode
         {
-            TagId = "T1",
+            Id = 1,
             DataType = TagDataType.Int16,
             ScaleFactor = 0.5,
             Offset = 5.0
@@ -64,7 +64,7 @@ public class CustomSerialCodecTests
     public void DecodeAsciiLine_CsvIndex_ExtractsValue()
     {
         var addr = new CustomSerialAddress { FieldIndex = 1, DataType = TagDataType.Float };
-        var tag = new TagNode { TagId = "T_Ascii", DataType = TagDataType.Float };
+        var tag = new TagNode { Id = 2, DataType = TagDataType.Float };
 
         string line = "DATA,123.45,67.89\r\n";
         var (val, raw) = CustomSerialCodec.DecodeAsciiLine(line, addr, tag);

@@ -104,9 +104,9 @@ public class ModbusDriverIntegrationTests
         // 组态 3 个连续的保持寄存器点位 (40001, 40002, 40003)
         var tags = new List<TagNode>
         {
-            new() { TagId = "T1", Address = "40001", DataType = TagDataType.Int16 },
-            new() { TagId = "T2", Address = "40002", DataType = TagDataType.Int16 },
-            new() { TagId = "T3", Address = "40003", DataType = TagDataType.Int16 }
+            new() { Id = 1, Address = "40001", DataType = TagDataType.Int16 },
+            new() { Id = 2, Address = "40002", DataType = TagDataType.Int16 },
+            new() { Id = 3, Address = "40003", DataType = TagDataType.Int16 }
         };
 
         // 准备下位机响应: TxId=1, Proto=0, Len=9, UnitId=1, FC=3, ByteCount=6, Data=[100, 200, 300]
@@ -135,10 +135,10 @@ public class ModbusDriverIntegrationTests
         Assert.Equal(3, BinaryPrimitives.ReadUInt16BigEndian(sentPdu.AsSpan(10, 2))); // Quantity 3
 
         Assert.Equal(3, batchResults.Count);
-        Assert.Equal(QualityCode.Good, batchResults["T1"].Quality);
-        Assert.Equal((short)100, batchResults["T1"].Value);
-        Assert.Equal((short)200, batchResults["T2"].Value);
-        Assert.Equal((short)300, batchResults["T3"].Value);
+        Assert.Equal(QualityCode.Good, batchResults[1].Quality);
+        Assert.Equal((short)100, batchResults[1].Value);
+        Assert.Equal((short)200, batchResults[2].Value);
+        Assert.Equal((short)300, batchResults[3].Value);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class ModbusDriverIntegrationTests
 
         var tag = new TagNode
         {
-            TagId = "T_Write",
+            Id = 10,
             Address = "40005", // 偏移 4
             DataType = TagDataType.Int16,
             AccessMode = TagAccessMode.ReadWrite
@@ -202,7 +202,7 @@ public class ModbusDriverIntegrationTests
 
         var tag = new TagNode
         {
-            TagId = "Coil_1",
+            Id = 20,
             Address = "00001", // 线圈 0
             DataType = TagDataType.Bool,
             AccessMode = TagAccessMode.ReadWrite
@@ -217,8 +217,8 @@ public class ModbusDriverIntegrationTests
         mockChannel.EnqueueResponse(readRespFull);
 
         var readResults = await driver.ReadBatchAsync([tag]);
-        Assert.Equal(true, readResults["Coil_1"].Value);
-        Assert.Equal(QualityCode.Good, readResults["Coil_1"].Quality);
+        Assert.Equal(true, readResults[20].Value);
+        Assert.Equal(QualityCode.Good, readResults[20].Quality);
 
         // 2. 测试写线圈 (FC05)
         // 期望响应: [Slave 1, FC 5, Addr_Hi 0, Addr_Lo 0, Val_Hi 0xFF, Val_Lo 0x00, CRC_LO, CRC_HI]
@@ -250,7 +250,7 @@ public class ModbusDriverIntegrationTests
 
         var tag = new TagNode
         {
-            TagId = "HR_Tag",
+            Id = 30,
             Address = "40001",
             DataType = TagDataType.Int16
         };
@@ -261,7 +261,7 @@ public class ModbusDriverIntegrationTests
         mockChannel.EnqueueResponse(asciiFrame);
 
         var results = await driver.ReadBatchAsync([tag]);
-        Assert.Equal((short)123, results["HR_Tag"].Value);
-        Assert.Equal(QualityCode.Good, results["HR_Tag"].Quality);
+        Assert.Equal((short)123, results[30].Value);
+        Assert.Equal(QualityCode.Good, results[30].Quality);
     }
 }

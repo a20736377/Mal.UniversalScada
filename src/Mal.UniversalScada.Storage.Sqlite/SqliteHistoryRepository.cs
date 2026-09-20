@@ -48,7 +48,7 @@ public class SqliteHistoryRepository : IHistoryRepository
             // 创建历史时序记录表
             const string createSql = @"
                 CREATE TABLE IF NOT EXISTS HistoryRecords (
-                    TagId TEXT NOT NULL,
+                    TagId INTEGER NOT NULL,
                     Timestamp TEXT NOT NULL,
                     Value REAL NOT NULL,
                     Quality INTEGER NOT NULL
@@ -99,13 +99,13 @@ public class SqliteHistoryRepository : IHistoryRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<TagHistoryRecord>> QueryRawHistoryAsync(
-        string tagId, 
+        long tagId, 
         DateTime startTime, 
         DateTime endTime, 
         int maxRecords = 50000, 
         CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(tagId)) return Array.Empty<TagHistoryRecord>();
+        if (tagId <= 0) return Array.Empty<TagHistoryRecord>();
 
         await EnsureInitializedAsync(ct);
 
@@ -148,13 +148,13 @@ public class SqliteHistoryRepository : IHistoryRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<TimeSeriesPoint>> QueryDownsampledAsync(
-        string tagId, 
+        long tagId, 
         DateTime startTime, 
         DateTime endTime, 
         int targetPointCount = 1000, 
         CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(tagId) || startTime >= endTime)
+        if (tagId <= 0 || startTime >= endTime)
             return Array.Empty<TimeSeriesPoint>();
 
         targetPointCount = Math.Max(10, Math.Min(targetPointCount, 5000));
@@ -226,7 +226,7 @@ public class SqliteHistoryRepository : IHistoryRepository
 
     private sealed class HistoryRow
     {
-        public string TagId { get; set; } = string.Empty;
+        public long TagId { get; set; }
         public string Timestamp { get; set; } = string.Empty;
         public double Value { get; set; }
         public int Quality { get; set; }

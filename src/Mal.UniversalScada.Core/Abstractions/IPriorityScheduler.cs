@@ -28,20 +28,20 @@ public interface IPriorityScheduler : IAsyncDisposable
     /// 提交高优先级控制写操作（供 UI 操作员点击按钮、下发设定值时调用）。
     /// 该方法将指令直接插入目标设备通道的高优队列头部，暂停下一批次读取，优先下发写报文并等待下位机响应。
     /// </summary>
-    /// <param name="tagId">目标点位 ID</param>
+    /// <param name="tagId">目标点位自增 ID</param>
     /// <param name="value">目标写入值</param>
     /// <param name="ct">取消令牌</param>
     /// <returns>写入结果（成功/失败状态、错误描述、耗时）</returns>
-    Task<WriteResult> EnqueueWriteAsync(string tagId, object value, CancellationToken ct = default);
+    Task<WriteResult> EnqueueWriteAsync(long tagId, object value, CancellationToken ct = default);
 
     /// <summary>
     /// 批量提交控制写操作（如执行配方参数同步下发）
     /// </summary>
-    /// <param name="writes">点位 ID 与待写入值的键值集合</param>
+    /// <param name="writes">点位自增 ID 与待写入值的键值集合</param>
     /// <param name="ct">取消令牌</param>
     /// <returns>各点位的写入结果字典</returns>
-    Task<IReadOnlyDictionary<string, WriteResult>> EnqueueBatchWriteAsync(
-        IEnumerable<KeyValuePair<string, object>> writes, 
+    Task<IReadOnlyDictionary<long, WriteResult>> EnqueueBatchWriteAsync(
+        IEnumerable<KeyValuePair<long, object>> writes, 
         CancellationToken ct = default);
 
     /// <summary>

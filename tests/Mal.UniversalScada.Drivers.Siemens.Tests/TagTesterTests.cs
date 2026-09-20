@@ -52,7 +52,7 @@ public class TagTesterTests
 
         var tag = new TagNode
         {
-            TagId = "T1",
+            Id = 1,
             DeviceId = "DEV1",
             Address = "DB1.DBD0",
             DataType = TagDataType.Float
@@ -110,7 +110,7 @@ public class TagTesterTests
         var device = new DeviceNode { DeviceId = "DEV1", ProtocolType = ProtocolType.SiemensS7 };
         var tag = new TagNode
         {
-            TagId = "T1",
+            Id = 1,
             DeviceId = "DEV1",
             Address = "DB1.DBD0",
             DataType = TagDataType.Float,

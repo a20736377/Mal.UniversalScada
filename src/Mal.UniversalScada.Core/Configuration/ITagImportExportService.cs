@@ -27,7 +27,7 @@ public interface ITagImportExportService
 /// </summary>
 public class CsvTagImportExportService : ITagImportExportService
 {
-    private const string Header = "TagId,DeviceId,Name,Address,DataType,AccessMode,ScaleFactor,Offset,Unit,Deadband,ScanIntervalMs,IsHistorical";
+    private const string Header = "Id,DeviceId,Name,Address,DataType,AccessMode,ScaleFactor,Offset,Unit,Deadband,ScanIntervalMs,IsHistorical";
 
     public async Task ExportToCsvAsync(IEnumerable<TagNode> tags, string filePath)
     {
@@ -36,7 +36,7 @@ public class CsvTagImportExportService : ITagImportExportService
 
         foreach (var tag in tags)
         {
-            var line = $"{Escape(tag.TagId)},{Escape(tag.DeviceId)},{Escape(tag.Name)},{Escape(tag.Address)}," +
+            var line = $"{tag.Id},{Escape(tag.DeviceId)},{Escape(tag.Name)},{Escape(tag.Address)}," +
                        $"{tag.DataType},{tag.AccessMode},{tag.ScaleFactor.ToString(CultureInfo.InvariantCulture)}," +
                        $"{tag.Offset.ToString(CultureInfo.InvariantCulture)},{Escape(tag.Unit)}," +
                        $"{tag.Deadband.ToString(CultureInfo.InvariantCulture)},{tag.ScanIntervalMs},{tag.IsHistorical}";
@@ -61,14 +61,14 @@ public class CsvTagImportExportService : ITagImportExportService
             var parts = ParseCsvLine(line);
             if (parts.Count < 4) continue;
 
-            string tagId = parts[0];
+            long id = long.TryParse(parts[0], out var parsedId) ? parsedId : 0;
             string deviceId = !string.IsNullOrWhiteSpace(parts[1]) ? parts[1] : (defaultDeviceId ?? "DEV_DEFAULT");
             string name = parts[2];
             string address = parts[3];
 
             var tag = new TagNode
             {
-                TagId = tagId,
+                Id = id,
                 DeviceId = deviceId,
                 Name = name,
                 Address = address,

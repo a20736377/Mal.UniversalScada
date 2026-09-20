@@ -40,7 +40,8 @@ public class SqliteUserRepository : IUserRepository
 
             const string createUsersTableSql = @"
                 CREATE TABLE IF NOT EXISTS Users (
-                    Username TEXT PRIMARY KEY,
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Username TEXT NOT NULL UNIQUE,
                     DisplayName TEXT NOT NULL,
                     PasswordHash TEXT NOT NULL,
                     PasswordSalt TEXT NOT NULL,
@@ -54,7 +55,31 @@ public class SqliteUserRepository : IUserRepository
                     ViewId TEXT NOT NULL,
                     PRIMARY KEY (Username, ViewId)
                 );";
-            await connection.ExecuteAsync(createUsersTableSql);
+
+            var usersTableExists = await connection.ExecuteScalarAsync<int>(
+                "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='Users';");
+            if (usersTableExists == 0)
+            {
+                await connection.ExecuteAsync(createUsersTableSql);
+            }
+            else
+            {
+                var existingCols = (await connection.QueryAsync<string>(
+                    "SELECT name FROM pragma_table_info('Users');")).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                if (!existingCols.Contains("Id"))
+                {
+                    string tempOld = $"Users_old_{Guid.NewGuid():N}"[..20];
+                    await connection.ExecuteAsync($"ALTER TABLE Users RENAME TO {tempOld};");
+                    await connection.ExecuteAsync(createUsersTableSql);
+                    const string cols = "Username, DisplayName, PasswordHash, PasswordSalt, Role, IsEnabled, LastLoginTime, CreatedAt";
+                    await connection.ExecuteAsync($"INSERT INTO Users ({cols}) SELECT {cols} FROM {tempOld};");
+                    await connection.ExecuteAsync($"DROP TABLE {tempOld};");
+                }
+                else
+                {
+                    await connection.ExecuteAsync(createUsersTableSql);
+                }
+            }
 
             // 检查是否存在初始管理员与预置账户
             var count = await connection.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM Users;");
@@ -156,17 +181,42 @@ public class SqliteUserRepository : IUserRepository
             user.PasswordSalt = salt;
         }
 
-        const string sql = @"
-            INSERT INTO Users (Username, DisplayName, PasswordHash, PasswordSalt, Role, IsEnabled, CreatedAt)
-            VALUES (@Username, @DisplayName, @PasswordHash, @PasswordSalt, @Role, @IsEnabled, @CreatedAt)
-            ON CONFLICT(Username) DO UPDATE SET
-                DisplayName = excluded.DisplayName,
-                Role = excluded.Role,
-                IsEnabled = excluded.IsEnabled,
-                PasswordHash = CASE WHEN excluded.PasswordHash != '' THEN excluded.PasswordHash ELSE Users.PasswordHash END,
-                PasswordSalt = CASE WHEN excluded.PasswordSalt != '' THEN excluded.PasswordSalt ELSE Users.PasswordSalt END;";
+        if (user.Id <= 0)
+        {
+            var existingCount = await connection.ExecuteScalarAsync<int>(
+                "SELECT COUNT(1) FROM Users WHERE Username = @Username;",
+                new { user.Username });
+            if (existingCount > 0)
+            {
+                throw new InvalidOperationException($"用户账号 [{user.Username}] 已存在，无法重复创建！");
+            }
 
-        await connection.ExecuteAsync(sql, user);
+            const string sql = @"
+                INSERT INTO Users (Username, DisplayName, PasswordHash, PasswordSalt, Role, IsEnabled, CreatedAt)
+                VALUES (@Username, @DisplayName, @PasswordHash, @PasswordSalt, @Role, @IsEnabled, @CreatedAt);
+                SELECT last_insert_rowid();";
+
+            var newId = await connection.ExecuteScalarAsync<long>(sql, user);
+            if (newId > 0)
+            {
+                user.Id = newId;
+            }
+        }
+        else
+        {
+            // 更新用户：严格依据自增主键 WHERE Id = @Id
+            const string sql = @"
+                UPDATE Users SET
+                    Username = @Username,
+                    DisplayName = @DisplayName,
+                    Role = @Role,
+                    IsEnabled = @IsEnabled,
+                    PasswordHash = CASE WHEN @PasswordHash != '' THEN @PasswordHash ELSE PasswordHash END,
+                    PasswordSalt = CASE WHEN @PasswordSalt != '' THEN @PasswordSalt ELSE PasswordSalt END
+                WHERE Id = @Id;";
+
+            await connection.ExecuteAsync(sql, user);
+        }
     }
 
     public async Task<bool> ChangePasswordAsync(string username, string newPlainPassword)
@@ -201,7 +251,7 @@ public class SqliteUserRepository : IUserRepository
     {
         await EnsureInitializedAsync();
         await using var connection = CreateConnection();
-        const string sql = "SELECT * FROM Users ORDER BY Username;";
+        const string sql = "SELECT * FROM Users ORDER BY Id;";
         var list = await connection.QueryAsync<UserInfo>(sql);
         return list.AsList();
     }

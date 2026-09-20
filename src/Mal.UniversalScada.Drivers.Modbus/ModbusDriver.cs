@@ -116,12 +116,12 @@ public class ModbusDriver : IDriver
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, TagValueSnapshot>> ReadBatchAsync(
+    public async Task<IReadOnlyDictionary<long, TagValueSnapshot>> ReadBatchAsync(
         IEnumerable<TagNode> tags, 
         CancellationToken ct = default)
     {
         var tagList = tags.ToList();
-        var results = new Dictionary<string, TagValueSnapshot>(tagList.Count);
+        var results = new Dictionary<long, TagValueSnapshot>(tagList.Count);
         if (tagList.Count == 0) return results;
 
         if (!_isInitialized || _channel == null || !_channel.IsOpen || _framer == null || _device == null)
@@ -129,9 +129,9 @@ public class ModbusDriver : IDriver
             var now = DateTime.Now;
             foreach (var t in tagList)
             {
-                results[t.TagId] = new TagValueSnapshot
+                results[t.Id] = new TagValueSnapshot
                 {
-                    TagId = t.TagId,
+                    TagId = t.Id,
                     Quality = QualityCode.CommFailure,
                     Timestamp = now
                 };
@@ -150,9 +150,9 @@ public class ModbusDriver : IDriver
             }
             catch
             {
-                results[t.TagId] = new TagValueSnapshot
+                results[t.Id] = new TagValueSnapshot
                 {
-                    TagId = t.TagId,
+                    TagId = t.Id,
                     Quality = QualityCode.Bad,
                     Timestamp = DateTime.Now
                 };
@@ -206,9 +206,9 @@ public class ModbusDriver : IDriver
                         var failTime = DateTime.Now;
                         foreach (var (tag, _) in block.Items)
                         {
-                            results[tag.TagId] = new TagValueSnapshot
+                            results[tag.Id] = new TagValueSnapshot
                             {
-                                TagId = tag.TagId,
+                                TagId = tag.Id,
                                 Quality = QualityCode.CommFailure,
                                 Timestamp = failTime
                             };
@@ -233,12 +233,12 @@ public class ModbusDriver : IDriver
 
         if (tag.AccessMode == TagAccessMode.ReadOnly)
         {
-            return WriteResult.Failed(tag.TagId, value, "该点位配置为只读 (ReadOnly)，禁止写入");
+            return WriteResult.Failed(tag.Id, value, "该点位配置为只读 (ReadOnly)，禁止写入");
         }
 
         if (!_isInitialized || _channel == null || !_channel.IsOpen || _framer == null || _device == null)
         {
-            return WriteResult.Failed(tag.TagId, value, "Modbus 驱动未初始化或链路通道未连接就绪");
+            return WriteResult.Failed(tag.Id, value, "Modbus 驱动未初始化或链路通道未连接就绪");
         }
 
         ModbusAddress addr;
@@ -248,12 +248,12 @@ public class ModbusDriver : IDriver
         }
         catch (Exception ex)
         {
-            return WriteResult.Failed(tag.TagId, value, $"点位地址解析错误: {ex.Message}");
+            return WriteResult.Failed(tag.Id, value, $"点位地址解析错误: {ex.Message}");
         }
 
         if (addr.RegisterType is ModbusRegisterType.DiscreteInput or ModbusRegisterType.InputRegister)
         {
-            return WriteResult.Failed(tag.TagId, value, $"目标寄存器区 [{addr.RegisterType}] 为只读区域，不支持下发写入");
+            return WriteResult.Failed(tag.Id, value, $"目标寄存器区 [{addr.RegisterType}] 为只读区域，不支持下发写入");
         }
 
         var sw = Stopwatch.StartNew();
@@ -275,7 +275,7 @@ public class ModbusDriver : IDriver
 
                 ModbusPduCodec.ValidateWriteSingleResponse(respPdu, ModbusPduCodec.FcWriteSingleCoil, addr.StartAddress);
                 sw.Stop();
-                return WriteResult.Success(tag.TagId, value, sw.ElapsedMilliseconds);
+                return WriteResult.Success(tag.Id, value, sw.ElapsedMilliseconds);
             }
 
             if (addr.RegisterType == ModbusRegisterType.HoldingRegister)
@@ -309,7 +309,7 @@ public class ModbusDriver : IDriver
 
                     ModbusPduCodec.ValidateWriteSingleResponse(writeResp, ModbusPduCodec.FcWriteSingleRegister, addr.StartAddress);
                     sw.Stop();
-                    return WriteResult.Success(tag.TagId, value, sw.ElapsedMilliseconds);
+                    return WriteResult.Success(tag.Id, value, sw.ElapsedMilliseconds);
                 }
 
                 // 单寄存器写入 (FC 06)
@@ -328,7 +328,7 @@ public class ModbusDriver : IDriver
 
                     ModbusPduCodec.ValidateWriteSingleResponse(respPdu, ModbusPduCodec.FcWriteSingleRegister, addr.StartAddress);
                     sw.Stop();
-                    return WriteResult.Success(tag.TagId, value, sw.ElapsedMilliseconds);
+                    return WriteResult.Success(tag.Id, value, sw.ElapsedMilliseconds);
                 }
                 else
                 {
@@ -349,16 +349,16 @@ public class ModbusDriver : IDriver
                         addr.RegisterCount);
 
                     sw.Stop();
-                    return WriteResult.Success(tag.TagId, value, sw.ElapsedMilliseconds);
+                    return WriteResult.Success(tag.Id, value, sw.ElapsedMilliseconds);
                 }
             }
 
-            return WriteResult.Failed(tag.TagId, value, $"未支持的寄存器写入类型: {addr.RegisterType}");
+            return WriteResult.Failed(tag.Id, value, $"未支持的寄存器写入类型: {addr.RegisterType}");
         }
         catch (Exception ex)
         {
             sw.Stop();
-            return WriteResult.Failed(tag.TagId, value, $"写入通信失败: {ex.Message}", sw.ElapsedMilliseconds);
+            return WriteResult.Failed(tag.Id, value, $"写入通信失败: {ex.Message}", sw.ElapsedMilliseconds);
         }
         finally
         {
@@ -367,15 +367,15 @@ public class ModbusDriver : IDriver
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, WriteResult>> WriteBatchAsync(
+    public async Task<IReadOnlyDictionary<long, WriteResult>> WriteBatchAsync(
         IEnumerable<KeyValuePair<TagNode, object>> writes, 
         CancellationToken ct = default)
     {
-        var results = new Dictionary<string, WriteResult>();
+        var results = new Dictionary<long, WriteResult>();
         foreach (var kv in writes)
         {
             var res = await WriteTagAsync(kv.Key, kv.Value, ct);
-            results[kv.Key.TagId] = res;
+            results[kv.Key.Id] = res;
         }
         return results;
     }
@@ -446,7 +446,7 @@ public class ModbusDriver : IDriver
         ReadOnlyMemory<byte> dataMemory,
         bool isBitArea,
         ModbusEndian endian,
-        Dictionary<string, TagValueSnapshot> results,
+        Dictionary<long, TagValueSnapshot> results,
         DateTime sampleTime)
     {
         var dataSpan = dataMemory.Span;
@@ -461,9 +461,9 @@ public class ModbusDriver : IDriver
                 if (byteIdx < dataSpan.Length)
                 {
                     var bitVal = ((dataSpan[byteIdx] >> bitInByte) & 1) == 1;
-                    results[tag.TagId] = new TagValueSnapshot
+                    results[tag.Id] = new TagValueSnapshot
                     {
-                        TagId = tag.TagId,
+                        TagId = tag.Id,
                         Value = bitVal,
                         RawValue = bitVal,
                         Quality = QualityCode.Good,
@@ -472,9 +472,9 @@ public class ModbusDriver : IDriver
                 }
                 else
                 {
-                    results[tag.TagId] = new TagValueSnapshot
+                    results[tag.Id] = new TagValueSnapshot
                     {
-                        TagId = tag.TagId,
+                        TagId = tag.Id,
                         Quality = QualityCode.Bad,
                         Timestamp = sampleTime
                     };
@@ -495,9 +495,9 @@ public class ModbusDriver : IDriver
                         endian, 
                         addr.BitIndex);
 
-                    results[tag.TagId] = new TagValueSnapshot
+                    results[tag.Id] = new TagValueSnapshot
                     {
-                        TagId = tag.TagId,
+                        TagId = tag.Id,
                         Value = val,
                         RawValue = raw,
                         Quality = QualityCode.Good,
@@ -506,9 +506,9 @@ public class ModbusDriver : IDriver
                 }
                 else
                 {
-                    results[tag.TagId] = new TagValueSnapshot
+                    results[tag.Id] = new TagValueSnapshot
                     {
-                        TagId = tag.TagId,
+                        TagId = tag.Id,
                         Quality = QualityCode.Bad,
                         Timestamp = sampleTime
                     };

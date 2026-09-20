@@ -45,10 +45,19 @@
                     <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8" Padding="10,4" Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="🖥️ 画面:" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <ComboBox ItemsSource="{Binding Views}" SelectedItem="{Binding CurrentView}" DisplayMemberPath="Name"
-                                      Width="230" Height="30" FontSize="12" FontWeight="Bold"
+                            <ComboBox ItemsSource="{Binding Views}" SelectedItem="{Binding CurrentView}"
+                                      Width="250" Height="30" FontSize="12" FontWeight="Bold"
                                       Background="#1E293B" Foreground="#38BDF8" BorderBrush="#0284C7" BorderThickness="1"
-                                      VerticalContentAlignment="Center" Cursor="Hand"/>
+                                      VerticalContentAlignment="Center" Cursor="Hand">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Id, StringFormat='[#{0}] '}" FontWeight="Bold" Foreground="#38BDF8"/>
+                                            <TextBlock Text="{Binding Name}" Foreground="#F8FAFC"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                             <Button Content="🔄 刷新" Margin="8,0,0,0" Height="30" Padding="10,2" FontSize="11" FontWeight="Bold"
                                     Background="#1E293B" Foreground="#38BDF8" BorderBrush="#0284C7" BorderThickness="1" Cursor="Hand"
                                     Command="{Binding ReloadViewsCommand}" ToolTip="热重载最新的画面方案列表 (同步设计器配置)">

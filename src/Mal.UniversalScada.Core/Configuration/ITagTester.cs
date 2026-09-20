@@ -98,7 +98,7 @@ public class DefaultTagTester : ITagTester
             var snapshots = await driverInst.ReadBatchAsync([tag], cts.Token);
             sw.Stop();
 
-            if (snapshots.TryGetValue(tag.TagId, out var snapshot))
+            if (snapshots.TryGetValue(tag.Id, out var snapshot))
             {
                 if (snapshot.Quality == QualityCode.Good)
                 {

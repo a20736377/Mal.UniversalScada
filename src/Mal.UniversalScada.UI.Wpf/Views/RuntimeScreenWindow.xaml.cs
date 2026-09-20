@@ -34,7 +34,7 @@ public partial class RuntimeScreenWindow : Window
             _widgets.Add(vm);
 
             // 订阅总线
-            if (dataBus != null && !string.IsNullOrWhiteSpace(vm.PrimaryTagId))
+            if (dataBus != null && vm.PrimaryTagId > 0)
             {
                 var sub = dataBus.Subscribe(vm.PrimaryTagId, snapshot =>
                 {

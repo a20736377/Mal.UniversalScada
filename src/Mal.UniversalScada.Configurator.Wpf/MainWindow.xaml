@@ -282,8 +282,21 @@
                                         Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.TestChannelConnectivityCommand}"/>
                             </DockPanel>
 
-                            <TextBlock Text="通道唯一标识 ID (ChannelId):" Foreground="#475569" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding ChannelId}" Height="32" Margin="0,0,0,12"/>
+                            <DockPanel Margin="0,0,0,4">
+                                <TextBlock Text="通道自增 ID / 标识代码 (ChannelId):" Foreground="#475569" VerticalAlignment="Center"/>
+                                <Border Background="#E0F2FE" BorderBrush="#BAE6FD" BorderThickness="1" CornerRadius="3" Padding="6,1" HorizontalAlignment="Right">
+                                    <TextBlock Text="⚡ 自增主键 (只读)" FontSize="10" Foreground="#0369A1" FontWeight="SemiBold"/>
+                                </Border>
+                            </DockPanel>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding Id, StringFormat='#{0}'}" Height="32" IsReadOnly="True" Background="#F1F5F9" Foreground="#0369A1" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                                <TextBox Grid.Column="2" Text="{Binding ChannelId}" Height="32" IsReadOnly="True" Background="#F1F5F9" Foreground="#64748B" ToolTip="系统自动维护的通道逻辑代码"/>
+                            </Grid>
 
                             <TextBlock Text="通道友好名称 (Name):" Foreground="#475569" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding Name}" Height="32" Margin="0,0,0,12"/>
@@ -430,8 +443,21 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="设备 ID (DeviceId):" Foreground="#475569" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding DeviceId}" Height="30" Margin="0,0,0,10"/>
+                                    <DockPanel Margin="0,0,0,4">
+                                        <TextBlock Text="设备自增 ID / 标识 (DeviceId):" Foreground="#475569" VerticalAlignment="Center"/>
+                                        <Border Background="#E0F2FE" BorderBrush="#BAE6FD" BorderThickness="1" CornerRadius="3" Padding="5,1" HorizontalAlignment="Right">
+                                            <TextBlock Text="⚡ 自增" FontSize="9" Foreground="#0369A1" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </DockPanel>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="70"/>
+                                            <ColumnDefinition Width="6"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" Text="{Binding Id, StringFormat='#{0}'}" Height="30" IsReadOnly="True" Background="#F1F5F9" Foreground="#0369A1" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                                        <TextBox Grid.Column="2" Text="{Binding DeviceId}" Height="30" IsReadOnly="True" Background="#F1F5F9" Foreground="#64748B" ToolTip="系统自动分配的设备逻辑代号"/>
+                                    </Grid>
 
                                     <TextBlock Text="设备友好名称 (Name):" Foreground="#475569" Margin="0,0,0,4"/>
                                     <TextBox Text="{Binding Name}" Height="30"/>
@@ -502,9 +528,9 @@
                                     </Style>
                                 </DataGrid.RowStyle>
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="点位 ID" Binding="{Binding TagId}" Width="160" FontWeight="Bold"/>
-                                    <DataGridTextColumn Header="点位名称 / 描述" Binding="{Binding Name}" Width="180"/>
-                                    <DataGridTextColumn Header="物理地址" Binding="{Binding Address}" Width="110"/>
+                                    <DataGridTextColumn Header="点位 ID" Binding="{Binding Id}" Width="80" FontWeight="Bold"/>
+                                    <DataGridTextColumn Header="点位名称 / 描述" Binding="{Binding Name}" Width="200"/>
+                                    <DataGridTextColumn Header="物理地址" Binding="{Binding Address}" Width="120"/>
                                     <DataGridTemplateColumn Header="数据类型" Width="110">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -552,11 +578,21 @@
                                         CommandParameter="{Binding}"/>
                             </DockPanel>
 
-                            <TextBlock Text="点位全局唯一 ID (TagId):" Foreground="#475569" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding TagId}" Height="32" Margin="0,0,0,12"/>
+                            <DockPanel Margin="0,0,0,4">
+                                <TextBlock Text="点位自增 ID (Id):" Foreground="#475569" VerticalAlignment="Center"/>
+                                <Border Background="#E0F2FE" BorderBrush="#BAE6FD" BorderThickness="1" CornerRadius="3" Padding="6,1" HorizontalAlignment="Right">
+                                    <TextBlock Text="⚡ 自增主键 (只读)" FontSize="10" Foreground="#0369A1" FontWeight="SemiBold"/>
+                                </Border>
+                            </DockPanel>
+                            <TextBox Text="{Binding Id, StringFormat='#{0}'}" Height="32" Margin="0,0,0,12" IsReadOnly="True" Background="#F1F5F9" Foreground="#0369A1" FontWeight="Bold"/>
 
-                            <TextBlock Text="所属设备 (DeviceId):" Foreground="#475569" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding DeviceId}" Height="32" Margin="0,0,0,12"/>
+                            <DockPanel Margin="0,0,0,4">
+                                <TextBlock Text="所属设备代号 (DeviceId):" Foreground="#475569" VerticalAlignment="Center"/>
+                                <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="3" Padding="6,1" HorizontalAlignment="Right">
+                                    <TextBlock Text="🔒 固定关联 (只读)" FontSize="10" Foreground="#64748B"/>
+                                </Border>
+                            </DockPanel>
+                            <TextBox Text="{Binding DeviceId}" Height="32" Margin="0,0,0,12" IsReadOnly="True" Background="#F1F5F9" Foreground="#64748B"/>
 
                             <TextBlock Text="点位名称 / 中文描述 (Name):" Foreground="#475569" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding Name}" Height="32" Margin="0,0,0,12"/>
@@ -750,7 +786,8 @@
                                 </Style>
                             </DataGrid.RowStyle>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="通道唯一 ID" Binding="{Binding ChannelId}" Width="140" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="自增 ID" Binding="{Binding Id}" Width="70" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="通道标识 ID" Binding="{Binding ChannelId}" Width="140"/>
                                 <DataGridTextColumn Header="通道名称" Binding="{Binding Name}" Width="200"/>
                                 <DataGridTextColumn Header="传输类型" Binding="{Binding ChannelType}" Width="120"/>
                                 <DataGridTextColumn Header="网络主机 (Host)" Binding="{Binding Host}" Width="150"/>
@@ -792,7 +829,8 @@
                                 </Style>
                             </DataGrid.RowStyle>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="设备唯一 ID" Binding="{Binding DeviceId}" Width="140" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="自增 ID" Binding="{Binding Id}" Width="70" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="设备标识 ID" Binding="{Binding DeviceId}" Width="140"/>
                                 <DataGridTextColumn Header="设备友好名称" Binding="{Binding Name}" Width="200"/>
                                 <DataGridTextColumn Header="所属通道 (ChannelId)" Binding="{Binding ChannelId}" Width="140"/>
                                 <DataGridTextColumn Header="协议类型 (ProtocolType)" Binding="{Binding ProtocolType}" Width="150"/>

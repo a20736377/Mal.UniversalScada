@@ -40,8 +40,8 @@ public interface IDriver : IDisposable
     /// </summary>
     /// <param name="tags">待读取的点位列表</param>
     /// <param name="ct">取消令牌</param>
-    /// <returns>以 TagId 为键的点位实时数据快照字典</returns>
-    Task<IReadOnlyDictionary<string, TagValueSnapshot>> ReadBatchAsync(
+    /// <returns>以 Tag 自增 ID 为键的点位实时数据快照字典</returns>
+    Task<IReadOnlyDictionary<long, TagValueSnapshot>> ReadBatchAsync(
         IEnumerable<TagNode> tags, 
         CancellationToken ct = default);
 
@@ -64,7 +64,7 @@ public interface IDriver : IDisposable
     /// <param name="writes">点位与待写入目标值的键值对集合</param>
     /// <param name="ct">取消令牌</param>
     /// <returns>每个点位的写入执行结果集合</returns>
-    Task<IReadOnlyDictionary<string, WriteResult>> WriteBatchAsync(
+    Task<IReadOnlyDictionary<long, WriteResult>> WriteBatchAsync(
         IEnumerable<KeyValuePair<TagNode, object>> writes, 
         CancellationToken ct = default);
 }

@@ -118,7 +118,7 @@ public partial class MainViewModel : ObservableObject
                 TestResultInfo = string.Empty;
                 LastTestSuccess = null;
                 TestWriteInput = tag.DataType == TagDataType.Bool ? "1" : "0";
-                StatusMessage = $"正在配置点位: {tag.Name} ({tag.TagId})";
+                StatusMessage = $"正在配置点位: {tag.Name} [#{tag.Id}]";
                 break;
         }
     }
@@ -176,14 +176,14 @@ public partial class MainViewModel : ObservableObject
         TestResultInfo = string.Empty;
         LastTestSuccess = null;
         TestWriteInput = tag.DataType == TagDataType.Bool ? "1" : "0";
-        StatusMessage = $"正在配置点位: {tag.Name} ({tag.TagId})";
+        StatusMessage = $"正在配置点位: {tag.Name} [#{tag.Id}]";
 
         var devRoot = TreeRoots.FirstOrDefault(r => r.NodeType == TreeNodeType.DeviceRoot);
         if (devRoot != null)
         {
             foreach (var devNode in devRoot.Children)
             {
-                var tagNode = devNode.Children.FirstOrDefault(t => t.Id == tag.TagId);
+                var tagNode = devNode.Children.FirstOrDefault(t => t.DataPayload is TagNode tn && tn.Id == tag.Id);
                 if (tagNode != null)
                 {
                     devNode.IsExpanded = true;
@@ -318,13 +318,13 @@ public partial class MainViewModel : ObservableObject
         var deviceRootNode = new TopologyTreeNode("ROOT_DEVICE", "🖥️ 设备管理", TreeNodeType.DeviceRoot, null, "🖥️");
         foreach (var dev in Devices)
         {
-            var devNode = new TopologyTreeNode(dev.DeviceId, $"📟 {dev.Name} ({dev.ProtocolType})", TreeNodeType.DeviceItem, dev, "📟");
+            var devNode = new TopologyTreeNode(dev.DeviceId, $"📟 [#{dev.Id}] {dev.Name} ({dev.ProtocolType})", TreeNodeType.DeviceItem, dev, "📟");
 
             // 三级：具体设备下的点位列表
             var devTags = AllTags.Where(t => t.DeviceId == dev.DeviceId).ToList();
             foreach (var tag in devTags)
             {
-                var tagNode = new TopologyTreeNode(tag.TagId, $"🏷️ {tag.Name} [{tag.Address}]", TreeNodeType.TagItem, tag, "🏷️");
+                var tagNode = new TopologyTreeNode(tag.Id.ToString(), $"🏷️ [#{tag.Id}] {tag.Name} [{tag.Address}]", TreeNodeType.TagItem, tag, "🏷️");
                 devNode.AddChild(tagNode);
             }
 
@@ -336,7 +336,7 @@ public partial class MainViewModel : ObservableObject
         foreach (var ch in Channels)
         {
             string icon = ch.ChannelType == ChannelType.SerialPort ? "🔌" : "🌐";
-            var chNode = new TopologyTreeNode(ch.ChannelId, $"{icon} {ch.Name} ({ch.ChannelType})", TreeNodeType.ChannelItem, ch, icon);
+            var chNode = new TopologyTreeNode(ch.ChannelId, $"{icon} [#{ch.Id}] {ch.Name} ({ch.ChannelType})", TreeNodeType.ChannelItem, ch, icon);
             channelRootNode.AddChild(chNode);
         }
 
@@ -397,7 +397,8 @@ public partial class MainViewModel : ObservableObject
         bool isSerial = string.Equals(mediumType, "SerialPort", StringComparison.OrdinalIgnoreCase);
         var type = isSerial ? ChannelType.SerialPort : ChannelType.TcpClient;
 
-        var newCh = _configService.CreateChannel(type, Channels.Count, AvailableSerialPorts.FirstOrDefault());
+        int nextIndex = Channels.Count > 0 ? (int)Channels.Max(c => c.Id) + 1 : 1;
+        var newCh = _configService.CreateChannel(type, nextIndex - 1, AvailableSerialPorts.FirstOrDefault());
         Channels.Add(newCh);
         SelectedChannel = newCh;
         CurrentViewMode = ViewMode.ChannelDetail;
@@ -448,7 +449,8 @@ public partial class MainViewModel : ObservableObject
         }
 
         string defaultChannelId = SelectedChannel?.ChannelId ?? Channels.FirstOrDefault()?.ChannelId ?? string.Empty;
-        var dialog = new CreateDeviceDialog(Channels, ProtocolTypes, defaultChannelId, Devices.Count + 1)
+        int nextDeviceIndex = Devices.Count > 0 ? (int)Devices.Max(d => d.Id) + 1 : 1;
+        var dialog = new CreateDeviceDialog(Channels, ProtocolTypes, defaultChannelId, nextDeviceIndex)
         {
             Owner = Application.Current.MainWindow
         };
@@ -516,8 +518,8 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        int devTagCount = AllTags.Count(t => t.DeviceId == dev.DeviceId);
-        var newTag = _configService.CreateTag(dev.DeviceId, devTagCount);
+        int nextTagIndex = AllTags.Count > 0 ? (int)AllTags.Max(t => t.Id) + 1 : 1;
+        var newTag = _configService.CreateTag(dev.DeviceId, nextTagIndex - 1);
 
         AllTags.Add(newTag);
         SelectedDevice = dev;
@@ -527,7 +529,7 @@ public partial class MainViewModel : ObservableObject
         RebuildHierarchyTree();
         RefreshCurrentDeviceTags();
         _ = DesignerVm.ReloadAvailableTagsAsync();
-        StatusMessage = $"已在设备【{dev.Name}】下新建点位: {newTag.TagId}";
+        StatusMessage = $"已在设备【{dev.Name}】下新建点位: [#{newTag.Id}] {newTag.Name}";
     }
 
     /// <summary>
@@ -539,14 +541,13 @@ public partial class MainViewModel : ObservableObject
         var tag = targetTag ?? SelectedTag;
         if (tag == null) return;
 
-        if (MessageBox.Show($"确定要删除点位【{tag.Name} ({tag.TagId})】吗？", 
+        if (MessageBox.Show($"确定要删除点位【[#{tag.Id}] {tag.Name}】吗？", 
             "删除确认", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
         {
             return;
         }
 
-        string id = tag.TagId;
-        await _configService.DeleteTagAsync(id);
+        await _configService.DeleteTagAsync(tag.Id);
         AllTags.Remove(tag);
         CurrentDeviceTags.Remove(tag);
 
@@ -561,7 +562,7 @@ public partial class MainViewModel : ObservableObject
         {
             CurrentViewMode = ViewMode.DeviceDetail;
         }
-        StatusMessage = $"已删除点位: {id}";
+        StatusMessage = $"已删除点位: [#{tag.Id}] {tag.Name}";
     }
 
     /// <summary>
@@ -602,7 +603,7 @@ public partial class MainViewModel : ObservableObject
             var res = await _tagTester.TestReadTagAsync(SelectedTag, device, channel);
             LastTestSuccess = res.IsSuccess;
             TestResultInfo = res.Message;
-            StatusMessage = $"点位 [{SelectedTag.TagId}] 在线读取测试: {(res.IsSuccess ? "成功" : "失败")}";
+            StatusMessage = $"点位 [#{SelectedTag.Id}] 在线读取测试: {(res.IsSuccess ? "成功" : "失败")}";
         }
         catch (Exception ex)
         {
@@ -667,7 +668,7 @@ public partial class MainViewModel : ObservableObject
             var res = await _tagTester.TestWriteTagAsync(SelectedTag, TestWriteInput, device, channel);
             LastTestSuccess = res.IsSuccess;
             TestResultInfo = res.Message;
-            StatusMessage = $"点位 [{SelectedTag.TagId}] 在线写入测试: {(res.IsSuccess ? "成功" : "失败")}";
+            StatusMessage = $"点位 [#{SelectedTag.Id}] 在线写入测试: {(res.IsSuccess ? "成功" : "失败")}";
         }
         catch (Exception ex)
         {
@@ -772,7 +773,7 @@ public partial class MainViewModel : ObservableObject
 
                 foreach (var tag in importedTags)
                 {
-                    var existing = AllTags.FirstOrDefault(t => t.TagId == tag.TagId);
+                    var existing = AllTags.FirstOrDefault(t => (tag.Id > 0 && t.Id == tag.Id) || (t.DeviceId == tag.DeviceId && t.Address == tag.Address));
                     if (existing != null)
                     {
                         existing.Name = tag.Name;

@@ -25,7 +25,7 @@ public class CoreEnginesTests
 
         var snap1 = new TagValueSnapshot
         {
-            TagId = "Oven.Temp_Zone1",
+            TagId = 1,
             Value = 185.5,
             RawValue = 1855,
             Quality = QualityCode.Good,
@@ -34,14 +34,14 @@ public class CoreEnginesTests
 
         bus.PublishSnapshot(snap1);
 
-        var retrieved = bus.GetSnapshot("Oven.Temp_Zone1");
+        var retrieved = bus.GetSnapshot(1);
         Assert.NotNull(retrieved);
         Assert.Equal(185.5, retrieved!.Value);
         Assert.Equal(QualityCode.Good, retrieved.Quality);
         Assert.Equal(1, bus.RegisteredTagCount);
 
         var all = bus.GetAllSnapshots();
-        Assert.True(all.ContainsKey("Oven.Temp_Zone1"));
+        Assert.True(all.ContainsKey(1));
     }
 
     [Fact]
@@ -52,31 +52,31 @@ public class CoreEnginesTests
         // 注册带死区 1.0 的点位
         bus.RegisterTag(new TagNode
         {
-            TagId = "Tank1.Pressure",
+            Id = 2,
             Deadband = 1.0
         });
 
         int notifyCount = 0;
-        using var sub = bus.Subscribe("Tank1.Pressure", s => notifyCount++);
+        using var sub = bus.Subscribe(2, s => notifyCount++);
 
         // 初始值 (首次写入触发通知)
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Tank1.Pressure", Value = 10.0, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 2, Value = 10.0, Quality = QualityCode.Good });
         Assert.Equal(1, notifyCount);
 
         // 变动 0.4 (< 1.0 Deadband) -> 不触发通知
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Tank1.Pressure", Value = 10.4, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 2, Value = 10.4, Quality = QualityCode.Good });
         Assert.Equal(1, notifyCount);
 
         // 变动 0.8 (< 1.0 Deadband 相对上一次有效通知 10.0) -> 不触发通知
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Tank1.Pressure", Value = 10.8, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 2, Value = 10.8, Quality = QualityCode.Good });
         Assert.Equal(1, notifyCount);
 
         // 变动至 11.5 (与上次通知差 1.5 >= 1.0) -> 触发通知
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Tank1.Pressure", Value = 11.5, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 2, Value = 11.5, Quality = QualityCode.Good });
         Assert.Equal(2, notifyCount);
 
         // 数值虽然相同，但品质突变为 Bad -> 必须触发通知
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Tank1.Pressure", Value = 11.5, Quality = QualityCode.Bad });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 2, Value = 11.5, Quality = QualityCode.Bad });
         Assert.Equal(3, notifyCount);
     }
 
@@ -88,13 +88,13 @@ public class CoreEnginesTests
 
         var token = bus.SubscribeAll(s => received.Add(s));
 
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "TagA", Value = 1, Quality = QualityCode.Good });
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "TagB", Value = 2, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 10, Value = 1, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 11, Value = 2, Quality = QualityCode.Good });
         Assert.Equal(2, received.Count);
 
         // 取消订阅
         token.Dispose();
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "TagC", Value = 3, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 12, Value = 3, Quality = QualityCode.Good });
 
         // 不应再收到新推送
         Assert.Equal(2, received.Count);
@@ -126,14 +126,14 @@ public class CoreEnginesTests
         };
         var ctrlTag = new TagNode
         {
-            TagId = "Motor.Run_Cmd",
+            Id = 1,
             DeviceId = "DEV_TEST_PLC",
             AccessMode = TagAccessMode.ReadWrite,
             Address = "00001"
         };
         var speedTag = new TagNode
         {
-            TagId = "Motor.Current_Speed",
+            Id = 2,
             DeviceId = "DEV_TEST_PLC",
             AccessMode = TagAccessMode.ReadOnly,
             Address = "40001"
@@ -151,17 +151,17 @@ public class CoreEnginesTests
 
         // 等待轮询周期运行，检查测点是否已被读取推入总线
         await Task.Delay(120);
-        var speedSnap = bus.GetSnapshot("Motor.Current_Speed");
+        var speedSnap = bus.GetSnapshot(2);
         Assert.NotNull(speedSnap);
         Assert.Equal(QualityCode.Good, speedSnap!.Quality);
 
         // 提交高优写控制指令 (启停置 1)
-        var writeRes = await scheduler.EnqueueWriteAsync("Motor.Run_Cmd", 1);
+        var writeRes = await scheduler.EnqueueWriteAsync(1, 1);
         Assert.True(writeRes.IsSuccess);
-        Assert.Equal("Motor.Run_Cmd", writeRes.TagId);
+        Assert.Equal(1, writeRes.TagId);
 
         // 验证总线中的写结果快照已同步
-        var ctrlSnap = bus.GetSnapshot("Motor.Run_Cmd");
+        var ctrlSnap = bus.GetSnapshot(1);
         Assert.NotNull(ctrlSnap);
         Assert.Equal(1, ctrlSnap!.Value);
 
@@ -183,7 +183,7 @@ public class CoreEnginesTests
         var rule = new AlarmRule
         {
             RuleId = "RULE_HI_TEMP",
-            TagId = "Furnace.Temp",
+            TagId = 100,
             RuleType = AlarmRuleType.High,
             Threshold = 100.0,
             Deadband = 2.0,
@@ -197,25 +197,25 @@ public class CoreEnginesTests
         engine.AlarmCleared += (s, e) => clearedAlarm = e;
 
         // 1. 正常工况 95.0
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Furnace.Temp", Value = 95.0, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 100, Value = 95.0, Quality = QualityCode.Good });
         Assert.Null(raisedAlarm);
         Assert.Empty(engine.GetActiveAlarms());
 
         // 2. 升温至 101.5 -> 越限触发报警
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Furnace.Temp", Value = 101.5, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 100, Value = 101.5, Quality = QualityCode.Good });
         Assert.NotNull(raisedAlarm);
-        Assert.Equal("Furnace.Temp", raisedAlarm!.TagId);
+        Assert.Equal(100, raisedAlarm!.TagId);
         Assert.Equal(AlarmSeverity.Critical, raisedAlarm.Severity);
         Assert.False(raisedAlarm.IsAcknowledged);
         Assert.Single(engine.GetActiveAlarms());
 
         // 3. 温度回落到 99.0 (虽 < 100，但未低于 100 - 2 = 98 迟滞) -> 报警依然维持
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Furnace.Temp", Value = 99.0, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 100, Value = 99.0, Quality = QualityCode.Good });
         Assert.Null(clearedAlarm);
         Assert.Single(engine.GetActiveAlarms());
 
         // 4. 温度降至 97.5 (< 98.0) -> 触发消除
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Furnace.Temp", Value = 97.5, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 100, Value = 97.5, Quality = QualityCode.Good });
         Assert.NotNull(clearedAlarm);
         Assert.NotNull(clearedAlarm!.ClearedTime);
     }
@@ -226,13 +226,13 @@ public class CoreEnginesTests
         var bus = new RealtimeDataBus();
         using var engine = new AlarmEngine(bus);
 
-        var ruleA = new AlarmRule { RuleId = "R1", TagId = "Tag1", RuleType = AlarmRuleType.High, Threshold = 50.0 };
-        var ruleB = new AlarmRule { RuleId = "R2", TagId = "Tag2", RuleType = AlarmRuleType.High, Threshold = 50.0 };
+        var ruleA = new AlarmRule { RuleId = "R1", TagId = 1, RuleType = AlarmRuleType.High, Threshold = 50.0 };
+        var ruleB = new AlarmRule { RuleId = "R2", TagId = 2, RuleType = AlarmRuleType.High, Threshold = 50.0 };
         engine.RegisterRules(new[] { ruleA, ruleB });
 
         // 触发两条报警
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Tag1", Value = 60.0, Quality = QualityCode.Good });
-        bus.PublishSnapshot(new TagValueSnapshot { TagId = "Tag2", Value = 70.0, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 1, Value = 60.0, Quality = QualityCode.Good });
+        bus.PublishSnapshot(new TagValueSnapshot { TagId = 2, Value = 70.0, Quality = QualityCode.Good });
 
         var active = engine.GetActiveAlarms();
         Assert.Equal(2, active.Count);
@@ -270,7 +270,7 @@ public class CoreEnginesTests
             {
                 records.Add(new TagHistoryRecord
                 {
-                    TagId = "Mixer.Power",
+                    TagId = 1,
                     Timestamp = startTime.AddSeconds(i),
                     Value = 50.0 + Math.Sin(i * 0.1) * 20.0,
                     Quality = QualityCode.Good
@@ -282,11 +282,11 @@ public class CoreEnginesTests
             Assert.Equal(1000, inserted);
 
             // 原始查询验证
-            var raw = await repo.QueryRawHistoryAsync("Mixer.Power", startTime, startTime.AddSeconds(999), 2000);
+            var raw = await repo.QueryRawHistoryAsync(1, startTime, startTime.AddSeconds(999), 2000);
             Assert.Equal(1000, raw.Count);
 
             // 降采样查询 (将 1000 点压缩至 50 点用于极速图表绘制)
-            var downsampled = await repo.QueryDownsampledAsync("Mixer.Power", startTime, startTime.AddSeconds(999), targetPointCount: 50);
+            var downsampled = await repo.QueryDownsampledAsync(1, startTime, startTime.AddSeconds(999), targetPointCount: 50);
             Assert.True(downsampled.Count <= 50);
             Assert.True(downsampled.Count >= 40);
 
@@ -328,7 +328,7 @@ public class CoreEnginesTests
             {
                 bus.PublishSnapshot(new TagValueSnapshot
                 {
-                    TagId = "Pump.Flow_Rate",
+                    TagId = 2,
                     Value = 120.0 + i,
                     Quality = QualityCode.Good,
                     Timestamp = DateTime.Now
@@ -339,7 +339,7 @@ public class CoreEnginesTests
             await worker.FlushAsync();
 
             // 验证 SQLite 中已成功落盘
-            var history = await repo.QueryRawHistoryAsync("Pump.Flow_Rate", DateTime.Now.AddMinutes(-5), DateTime.Now.AddMinutes(5));
+            var history = await repo.QueryRawHistoryAsync(2, DateTime.Now.AddMinutes(-5), DateTime.Now.AddMinutes(5));
             Assert.Equal(5, history.Count);
         }
         finally
@@ -378,9 +378,9 @@ public class CoreEnginesTests
         public Task<IReadOnlyList<DeviceNode>> GetDevicesAsync() => Task.FromResult<IReadOnlyList<DeviceNode>>(_devices);
         public Task DeleteDeviceAsync(string deviceId) => Task.CompletedTask;
         public Task<int> DeleteDeviceAsync(string deviceId, IEnumerable<TagNode> allTags) => Task.FromResult(0);
-        public TagNode CreateTag(string tagId, string deviceId, string name, string address, TagDataType dataType, TagAccessMode accessMode = TagAccessMode.ReadOnly) => new();
+        //public TagNode CreateTag(string tagId, string deviceId, string name, string address, TagDataType dataType, TagAccessMode accessMode = TagAccessMode.ReadOnly) => new();
         public TagNode CreateTag(string deviceId, int currentTagCountInDevice) => new();
-        public Task DeleteTagAsync(string tagId) => Task.CompletedTask;
+        public Task DeleteTagAsync(long tagId) => Task.CompletedTask;
         public void CleanUnusedMediaParameters(ChannelConfig channel) { }
         public Task<IReadOnlyList<TagNode>> GetAllTagsAsync() => Task.FromResult<IReadOnlyList<TagNode>>(_tags);
 
@@ -427,49 +427,49 @@ public class CoreEnginesTests
     private class MockDriver : IDriver
     {
         public ProtocolType ProtocolType => ProtocolType.ModbusTcp;
-        private readonly Dictionary<string, object> _currentValues = new();
+        private readonly Dictionary<long, object> _currentValues = new();
 
         public string ProtocolName => "MockDriver";
 
         public Task<bool> InitializeAsync(IChannel channel, DeviceNode device, CancellationToken ct = default) => Task.FromResult(true);
         public Task DisconnectAsync() => Task.CompletedTask;
 
-        public Task<IReadOnlyDictionary<string, TagValueSnapshot>> ReadBatchAsync(IEnumerable<TagNode> tags, CancellationToken ct = default)
+        public Task<IReadOnlyDictionary<long, TagValueSnapshot>> ReadBatchAsync(IEnumerable<TagNode> tags, CancellationToken ct = default)
         {
-            var dict = new Dictionary<string, TagValueSnapshot>();
+            var dict = new Dictionary<long, TagValueSnapshot>();
             foreach (var t in tags)
             {
-                var val = _currentValues.TryGetValue(t.TagId, out var v) ? v : 100.0;
-                dict[t.TagId] = new TagValueSnapshot
+                var val = _currentValues.TryGetValue(t.Id, out var v) ? v : 100.0;
+                dict[t.Id] = new TagValueSnapshot
                 {
-                    TagId = t.TagId,
+                    TagId = t.Id,
                     Value = val,
                     RawValue = val,
                     Quality = QualityCode.Good,
                     Timestamp = DateTime.Now
                 };
             }
-            return Task.FromResult<IReadOnlyDictionary<string, TagValueSnapshot>>(dict);
+            return Task.FromResult<IReadOnlyDictionary<long, TagValueSnapshot>>(dict);
         }
 
         public Task<WriteResult> WriteTagAsync(TagNode tag, object value, CancellationToken ct = default)
         {
-            _currentValues[tag.TagId] = value;
-            return Task.FromResult(WriteResult.Success(tag.TagId, value, 10));
+            _currentValues[tag.Id] = value;
+            return Task.FromResult(WriteResult.Success(tag.Id, value, 10));
         }
 
-        public Task<IReadOnlyDictionary<string, WriteResult>> WriteBatchAsync(IEnumerable<KeyValuePair<TagNode, object>> writes, CancellationToken ct = default)
+        public Task<IReadOnlyDictionary<long, WriteResult>> WriteBatchAsync(IEnumerable<KeyValuePair<TagNode, object>> writes, CancellationToken ct = default)
         {
-            var dict = new Dictionary<string, WriteResult>();
+            var dict = new Dictionary<long, WriteResult>();
             if (writes != null)
             {
                 foreach (var w in writes)
                 {
-                    _currentValues[w.Key.TagId] = w.Value;
-                    dict[w.Key.TagId] = WriteResult.Success(w.Key.TagId, w.Value, 10);
+                    _currentValues[w.Key.Id] = w.Value;
+                    dict[w.Key.Id] = WriteResult.Success(w.Key.Id, w.Value, 10);
                 }
             }
-            return Task.FromResult<IReadOnlyDictionary<string, WriteResult>>(dict);
+            return Task.FromResult<IReadOnlyDictionary<long, WriteResult>>(dict);
         }
 
         public void Dispose() { }

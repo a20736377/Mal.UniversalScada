@@ -38,7 +38,7 @@ public partial class AlarmBannerViewModel : ObservableObject
         // 设计期静态模拟示范数据
         var dummy = new AlarmEvent
         {
-            TagId = "Line1.Reactor_Pressure",
+            TagId = 101,
             Message = "1号反应釜进料压力过高，当前值 28.5 MPa (阈值: 25.0 MPa)",
             Severity = AlarmSeverity.Critical,
             TriggerValue = 28.5,

@@ -69,7 +69,7 @@ public class ModbusDataConverterTests
     {
         var tag = new TagNode
         {
-            TagId = "T1",
+            Id = 1,
             DataType = TagDataType.Int16,
             ScaleFactor = 0.1,
             Offset = 10.0
@@ -89,7 +89,7 @@ public class ModbusDataConverterTests
     {
         var tag = new TagNode
         {
-            TagId = "BitTag",
+            Id = 2,
             DataType = TagDataType.Bool
         };
 
@@ -108,7 +108,7 @@ public class ModbusDataConverterTests
     {
         var tag = new TagNode
         {
-            TagId = "T1",
+            Id = 1,
             DataType = TagDataType.Int16,
             ScaleFactor = 0.1,
             Offset = 10.0

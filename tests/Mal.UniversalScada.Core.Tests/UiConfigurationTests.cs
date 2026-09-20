@@ -39,7 +39,7 @@ public class UiConfigurationTests
                         WidgetId = "W_GAUGE_1",
                         Type = WidgetType.GaugeCircular,
                         Title = "预热区温度表",
-                        PrimaryTagId = "DEV_01.Temp1",
+                        PrimaryTagId = 1,
                         X = 100,
                         Y = 150,
                         Width = 200,
@@ -51,7 +51,7 @@ public class UiConfigurationTests
                         WidgetId = "W_TANK_1",
                         Type = WidgetType.LevelTank,
                         Title = "冷却液罐",
-                        PrimaryTagId = "DEV_01.CoolantLevel",
+                        PrimaryTagId = 2,
                         X = 350,
                         Y = 150,
                         Width = 160,
@@ -63,7 +63,7 @@ public class UiConfigurationTests
                         WidgetId = "W_BTN_1",
                         Type = WidgetType.ControlButton,
                         Title = "急停复位",
-                        PrimaryTagId = "DEV_01.ResetCmd",
+                        PrimaryTagId = 3,
                         X = 550,
                         Y = 200,
                         Width = 140,
@@ -71,7 +71,7 @@ public class UiConfigurationTests
                         Action = new WidgetActionConfig
                         {
                             ActionType = "DirectWrite",
-                            TargetTagId = "DEV_01.ResetCmd",
+                            TargetTagId = 3,
                             Value = "1"
                         }
                     }
@@ -132,7 +132,7 @@ public class UiConfigurationTests
             WidgetId = "W_TEST_99",
             Type = WidgetType.NumericCard,
             Title = "主轴转速",
-            PrimaryTagId = "DEV_01.Speed",
+            PrimaryTagId = 10,
             X = 50,
             Y = 70,
             Width = 200,
@@ -373,7 +373,7 @@ public class UiConfigurationTests
     {
         var tag = new TagNode
         {
-            TagId = "Oven_Zone1_Temp",
+            Id = 1001,
             Name = "1号预热区温度",
             DataType = TagDataType.Float,
             Unit = "℃",
@@ -383,7 +383,7 @@ public class UiConfigurationTests
 
         var option = TagOptionItem.FromTagNode(tag);
 
-        Assert.Equal("Oven_Zone1_Temp", option.TagId);
+        Assert.Equal(1001, option.Id);
         Assert.Equal("1号预热区温度", option.Name);
         Assert.Equal(TagDataType.Float, option.DataType);
         Assert.True(option.IsNumeric);
@@ -391,7 +391,7 @@ public class UiConfigurationTests
         Assert.False(option.IsInteger);
         Assert.False(option.IsBool);
         Assert.Contains("[Float 浮点数]", option.DisplayText);
-        Assert.Contains("Oven_Zone1_Temp", option.DisplayText);
+        Assert.Contains("[#1001]", option.DisplayText);
         Assert.Contains("(℃)", option.DisplayText);
         Assert.Contains("D1000", option.DetailSummary);
     }
@@ -456,7 +456,7 @@ public class UiConfigurationTests
                         WidgetId = "W_DISP_1",
                         Type = WidgetType.DisplayBox,
                         Title = "炉温实时显示",
-                        PrimaryTagId = "DEV_01.Temp",
+                        PrimaryTagId = 5,
                         X = 240, Y = 20, Width = 160, Height = 60,
                         Properties = new() { ["Prefix"] = "炉温", ["Unit"] = "℃", ["Decimals"] = "1" }
                     },
@@ -465,7 +465,7 @@ public class UiConfigurationTests
                         WidgetId = "W_CHART_1",
                         Type = WidgetType.TrendChart,
                         Title = "炉温曲线",
-                        PrimaryTagId = "DEV_01.Temp",
+                        PrimaryTagId = 5,
                         X = 20, Y = 100, Width = 380, Height = 200,
                         Properties = new() { ["MinValue"] = "0", ["MaxValue"] = "300", ["Unit"] = "℃" }
                     },
@@ -511,27 +511,27 @@ public class UiConfigurationTests
     {
         // 模拟已配置点位的组件
         var widget = WidgetViewModel.Create(WidgetType.DisplayBox);
-        widget.PrimaryTagId = "Deleted_Tag_01";
+        widget.PrimaryTagId = 999;
         widget.UpdateRuntimeValue(123.45);
-        Assert.Equal("Deleted_Tag_01", widget.PrimaryTagId);
+        Assert.Equal(999, widget.PrimaryTagId);
         Assert.Equal(123.45, widget.CurrentRawValue);
 
         // 模拟点位表中该点位已被彻底删除
         var existingTags = new List<TagNode>
         {
-            new() { TagId = "Valid_Tag_01", Name = "有效点位" }
+            new() { Id = 1, Name = "有效点位" }
         };
 
         // 模拟 UiDesignerViewModel 中的自动清理扫描
-        if (!string.IsNullOrWhiteSpace(widget.PrimaryTagId) &&
-            !existingTags.Any(t => t.TagId == widget.PrimaryTagId))
+        if (widget.PrimaryTagId > 0 &&
+            !existingTags.Any(t => t.Id == widget.PrimaryTagId))
         {
-            widget.PrimaryTagId = string.Empty;
+            widget.PrimaryTagId = 0;
             widget.UpdateRuntimeValue(null);
         }
 
         // 断言：点位已被置空，运行时值已被复位，避免幽灵点位
-        Assert.Equal(string.Empty, widget.PrimaryTagId);
+        Assert.Equal(0, widget.PrimaryTagId);
         Assert.Null(widget.CurrentRawValue);
         Assert.Equal("--", widget.FormattedValue);
     }

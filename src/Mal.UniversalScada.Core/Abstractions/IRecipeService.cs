@@ -5,7 +5,7 @@ namespace Mal.UniversalScada.Core.Abstractions;
 /// <summary>
 /// 工艺配方单项条目模型
 /// </summary>
-public record RecipeItem(string TagId, object TargetValue, string Description);
+public record RecipeItem(long TagId, object TargetValue, string Description);
 
 /// <summary>
 /// 工艺配方模型（包含产品型号对应的一组参数设定集）
@@ -46,7 +46,7 @@ public class RecipeModel
 /// <summary>
 /// 配方下发执行与校验结果模型
 /// </summary>
-public record RecipeApplyResult(bool IsSuccess, string Message, IReadOnlyDictionary<string, WriteResult> DetailResults);
+public record RecipeApplyResult(bool IsSuccess, string Message, IReadOnlyDictionary<long, WriteResult> DetailResults);
 
 /// <summary>
 /// 工艺配方管理服务接口。

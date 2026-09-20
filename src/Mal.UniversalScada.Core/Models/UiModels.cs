@@ -94,9 +94,9 @@ public class WidgetActionConfig
     public string ActionType { get; set; } = "DirectWrite";
 
     /// <summary>
-    /// 目标写入点位 ID (若为空则默认使用 PrimaryTagId)
+    /// 目标写入点位自增 ID (若为 0 或 null 则默认使用 PrimaryTagId)
     /// </summary>
-    public string? TargetTagId { get; set; }
+    public long? TargetTagId { get; set; }
 
     /// <summary>
     /// 写入的目标值
@@ -155,9 +155,9 @@ public class WidgetConfig
     public double Height { get; set; } = 180;
 
     /// <summary>
-    /// 绑定的主采集点位 ID (对应 TagNode.TagId)
+    /// 绑定的主采集点位自增 ID (对应 TagNode.Id，0 表示未绑定)
     /// </summary>
-    public string PrimaryTagId { get; set; } = string.Empty;
+    public long PrimaryTagId { get; set; } = 0;
 
     /// <summary>
     /// 辅助绑定点位字典 (支持复合控件，如温控卡片包含 PV、SV、加热状态)
@@ -202,6 +202,11 @@ public class WidgetConfig
 /// </summary>
 public class UiViewConfig
 {
+    /// <summary>
+    /// 画布自增数字主键 ID (系统自动递增)
+    /// </summary>
+    public long Id { get; set; }
+
     /// <summary>
     /// 画面唯一标识 ID (如 "View_Oven_1", "View_Filling_Station")
     /// </summary>

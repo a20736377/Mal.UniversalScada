@@ -258,9 +258,9 @@ public class Stage3CommercialTests : IDisposable
             Version = "1.0.0",
             Items = new List<RecipeItem>
             {
-                new("ZONE1_SETPOINT", 185.5, "温区1目标温度"),
-                new("ZONE2_SETPOINT", 215.0, "温区2目标温度"),
-                new("FAN_SPEED_RPM", 3600, "循环风机目标转速")
+                new(101, 185.5, "温区1目标温度"),
+                new(102, 215.0, "温区2目标温度"),
+                new(103, 3600, "循环风机目标转速")
             }
         };
 
@@ -274,7 +274,7 @@ public class Stage3CommercialTests : IDisposable
         Assert.NotNull(loaded);
         Assert.Equal("SMT 高速贴片温控工艺配方", loaded.Name);
         Assert.Equal(3, loaded.Items.Count);
-        Assert.Equal("ZONE1_SETPOINT", loaded.Items[0].TagId);
+        Assert.Equal(101, loaded.Items[0].TagId);
 
         // 3. 删除配方
         await service.DeleteRecipeAsync("REC_TEST_001");
@@ -340,13 +340,13 @@ public class Stage3CommercialTests : IDisposable
         public bool IsRunning => true;
         public Task StartAsync(CancellationToken ct = default) => Task.CompletedTask;
         public Task StopAsync() => Task.CompletedTask;
-        public Task<WriteResult> EnqueueWriteAsync(string tagId, object value, CancellationToken ct = default) =>
+        public Task<WriteResult> EnqueueWriteAsync(long tagId, object value, CancellationToken ct = default) =>
             Task.FromResult(WriteResult.Success(tagId, value, 5));
-        public Task<IReadOnlyDictionary<string, WriteResult>> EnqueueBatchWriteAsync(
-            IEnumerable<KeyValuePair<string, object>> writes, CancellationToken ct = default)
+        public Task<IReadOnlyDictionary<long, WriteResult>> EnqueueBatchWriteAsync(
+            IEnumerable<KeyValuePair<long, object>> writes, CancellationToken ct = default)
         {
             var res = writes.ToDictionary(k => k.Key, v => WriteResult.Success(v.Key, v.Value, 5));
-            return Task.FromResult<IReadOnlyDictionary<string, WriteResult>>(res);
+            return Task.FromResult<IReadOnlyDictionary<long, WriteResult>>(res);
         }
         public Task TriggerImmediatePollAsync(string deviceId) => Task.CompletedTask;
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;

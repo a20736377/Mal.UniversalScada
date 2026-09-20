@@ -46,8 +46,13 @@
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <TextBlock Text="设备唯一标识 ID (DeviceId):" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4"/>
-                        <TextBox x:Name="TxtDeviceId" Height="32" Margin="0,0,0,10"/>
+                        <DockPanel Margin="0,0,0,4">
+                            <TextBlock Text="设备编号 (ID):" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center"/>
+                            <Border Background="#E0F2FE" BorderBrush="#BAE6FD" BorderThickness="1" CornerRadius="3" Padding="6,1" HorizontalAlignment="Right">
+                                <TextBlock Text="⚡ 自增分配 (只读)" FontSize="10" Foreground="#0369A1" FontWeight="SemiBold"/>
+                            </Border>
+                        </DockPanel>
+                        <TextBox x:Name="TxtDeviceId" Height="32" Margin="0,0,0,10" IsReadOnly="True" Background="#F1F5F9" Foreground="#64748B" ToolTip="系统自增自动分配，无需手动输入"/>
 
                         <TextBlock Text="设备友好名称 (Name):" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4"/>
                         <TextBox x:Name="TxtDeviceName" Height="32" Margin="0,0,0,10"/>

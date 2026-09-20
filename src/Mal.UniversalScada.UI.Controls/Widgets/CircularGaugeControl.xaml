@@ -24,41 +24,66 @@
                 </Border>
             </DockPanel>
 
-            <!-- 表盘核心区域 -->
+            <!-- 表盘核心区域 (270° 工业测控仪表盘，包含精密主/次刻度线与分度数值) -->
             <Grid Grid.Row="1" Width="120" Height="120" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <!-- 仪表外圈装饰环 -->
-                <Ellipse Stroke="#1E293B" StrokeThickness="8" Width="116" Height="116"/>
-                <Ellipse Stroke="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
-                         StrokeThickness="2" Width="104" Height="104" Opacity="0.4"
-                         StrokeDashArray="2,3"/>
+                <!-- 仪表外圈金属外壳装饰环 -->
+                <Ellipse Stroke="#1E293B" StrokeThickness="4" Width="116" Height="116"/>
+                <Ellipse Fill="#080D1A" Width="110" Height="110"/>
 
-                <!-- 1. 刻度轨道底环槽 (暗色背景槽) -->
-                <Path Stroke="#1E293B" StrokeThickness="7" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
-                      Data="M 24.64 95.36 A 48 48 0 1 1 95.36 95.36"/>
+                <!-- 1. 270° 次刻度线 (细分刻度: 每 5% 一条，长 4px) -->
+                <Path Stroke="#475569" StrokeThickness="1.0" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      Data="{Binding GaugeProps.MinorTicksPathData}"/>
 
-                <!-- 2. 分段式温湿度表盘圆弧 (类似于湿度计的低段/中段/高段三色标度) -->
-                <!-- 低段圆弧 (如干燥/低限: LowColor) -->
+                <!-- 2. 270° 主刻度线 (主分度线: 每 10% 即 27° 一条，长 6.5px，醒目高亮) -->
+                <Path Stroke="#CBD5E1" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      Data="{Binding GaugeProps.MajorTicksPathData}"/>
+
+                <!-- 3. 270° 刻度轨道底环槽 (暗色背景槽) -->
+                <Path Stroke="#1E293B" StrokeThickness="4.5" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                      Data="M 28.89 91.11 A 44 44 0 1 1 91.11 91.11"/>
+
+                <!-- 4. 270° 分段式温湿度/工况阈值圆弧 (低段/中段/高段三色标度) -->
+                <!-- 低段圆弧 (LowColor) -->
                 <Path Stroke="{Binding GaugeProps.LowColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
-                      StrokeThickness="6" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
-                      Data="{Binding GaugeProps.LowArcData}" Opacity="0.9"/>
+                      StrokeThickness="4" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                      Data="{Binding GaugeProps.LowArcData}" Opacity="0.95"/>
 
-                <!-- 中段圆弧 (如舒适/正常: MidColor) -->
+                <!-- 中段圆弧 (MidColor) -->
                 <Path Stroke="{Binding GaugeProps.MidColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
-                      StrokeThickness="6" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
-                      Data="{Binding GaugeProps.MidArcData}" Opacity="0.9"/>
+                      StrokeThickness="4" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                      Data="{Binding GaugeProps.MidArcData}" Opacity="0.95"/>
 
-                <!-- 高段圆弧 (如潮湿/超限: HighColor) -->
+                <!-- 高段圆弧 (HighColor) -->
                 <Path Stroke="{Binding GaugeProps.HighColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
-                      StrokeThickness="6" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
-                      Data="{Binding GaugeProps.HighArcData}" Opacity="0.9"/>
+                      StrokeThickness="4" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                      Data="{Binding GaugeProps.HighArcData}" Opacity="0.95"/>
 
-                <!-- 中心指针 (依 GaugeAngle 旋转) -->
-                <Grid Width="110" Height="110">
+                <!-- 5. 刻度数值标签 (沿 270° 弧面均匀分布: 0%, 25%, 50%, 75%, 100%) -->
+                <Canvas Width="120" Height="120" IsHitTestVisible="False">
+                    <!-- 0% 刻度标值 (-135°) -->
+                    <TextBlock Canvas.Left="23" Canvas.Top="73" Width="26" TextAlignment="Center"
+                               Text="{Binding GaugeProps.ScaleText0}" Foreground="#94A3B8" FontSize="7.5" FontWeight="SemiBold"/>
+                    <!-- 25% 刻度标值 (-67.5°) -->
+                    <TextBlock Canvas.Left="15" Canvas.Top="43" Width="26" TextAlignment="Center"
+                               Text="{Binding GaugeProps.ScaleText25}" Foreground="#94A3B8" FontSize="7.5" FontWeight="SemiBold"/>
+                    <!-- 50% 刻度标值 (0° 顶部) -->
+                    <TextBlock Canvas.Left="47" Canvas.Top="20" Width="26" TextAlignment="Center"
+                               Text="{Binding GaugeProps.ScaleText50}" Foreground="#94A3B8" FontSize="7.5" FontWeight="SemiBold"/>
+                    <!-- 75% 刻度标值 (+67.5°) -->
+                    <TextBlock Canvas.Left="79" Canvas.Top="43" Width="26" TextAlignment="Center"
+                               Text="{Binding GaugeProps.ScaleText75}" Foreground="#94A3B8" FontSize="7.5" FontWeight="SemiBold"/>
+                    <!-- 100% 刻度标值 (+135°) -->
+                    <TextBlock Canvas.Left="71" Canvas.Top="73" Width="26" TextAlignment="Center"
+                               Text="{Binding GaugeProps.ScaleText100}" Foreground="#94A3B8" FontSize="7.5" FontWeight="SemiBold"/>
+                </Canvas>
+
+                <!-- 6. 中心指针 (依 GaugeAngle -135° ~ +135° 旋转，带发光投影) -->
+                <Grid Width="120" Height="120">
                     <Grid.RenderTransform>
-                        <RotateTransform Angle="{Binding GaugeAngle}" CenterX="55" CenterY="55"/>
+                        <RotateTransform Angle="{Binding GaugeAngle}" CenterX="60" CenterY="60"/>
                     </Grid.RenderTransform>
                     <!-- 指针主体 -->
-                    <Path Data="M 54 55 L 55 12 L 56 55 Z"
+                    <Path Data="M 58.5 60 L 60 17 L 61.5 60 Z"
                           Fill="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}">
                         <Path.Effect>
                             <DropShadowEffect BlurRadius="6" Color="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToColor}}" ShadowDepth="0" Opacity="0.85"/>
@@ -66,15 +91,15 @@
                     </Path>
                 </Grid>
 
-                <!-- 表盘中心轴圆心与数值 -->
-                <Ellipse Width="44" Height="44" Fill="#090D16"
+                <!-- 7. 表盘中心轴圆心与数值 -->
+                <Ellipse Width="38" Height="38" Fill="#090D16"
                          Stroke="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}" StrokeThickness="1.5"/>
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding FormattedValue}" Foreground="#F8FAFC" FontSize="13" FontWeight="Bold"
+                    <TextBlock Text="{Binding FormattedValue}" Foreground="#F8FAFC" FontSize="12" FontWeight="Bold"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="{Binding Unit}"
                                Foreground="{Binding ColorHex, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"
-                               FontSize="9" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                               FontSize="8.5" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Grid>
 

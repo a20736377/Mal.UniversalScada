@@ -32,9 +32,9 @@ public interface IAlarmEngine
     /// </summary>
     /// <param name="startTime">开始时间</param>
     /// <param name="endTime">结束时间</param>
-    /// <param name="tagId">可选过滤特定点位</param>
+    /// <param name="tagId">可选过滤特定点位自增 ID</param>
     /// <returns>历史报警事件集合</returns>
-    Task<IReadOnlyList<AlarmEvent>> QueryAlarmHistoryAsync(DateTime startTime, DateTime endTime, string? tagId = null);
+    Task<IReadOnlyList<AlarmEvent>> QueryAlarmHistoryAsync(DateTime startTime, DateTime endTime, long? tagId = null);
 
     /// <summary>
     /// 当有新报警触发时触发的事件

@@ -104,8 +104,8 @@ public class CustomSerialDriverIntegrationTests
 
         var tags = new List<TagNode>
         {
-            new() { TagId = "Temp", Address = "CMD01.0", DataType = TagDataType.Int16 },
-            new() { TagId = "Pressure", Address = "CMD01.2", DataType = TagDataType.Int16 }
+            new() { Id = 1, Address = "CMD01.0", DataType = TagDataType.Int16 },
+            new() { Id = 2, Address = "CMD01.2", DataType = TagDataType.Int16 }
         };
 
         // 构造单片机返回数据: Temp=250 (0x00FA), Pressure=1013 (0x03F5)
@@ -115,14 +115,14 @@ public class CustomSerialDriverIntegrationTests
 
         var readResults = await driver.ReadBatchAsync(tags);
 
-        Assert.Equal(QualityCode.Good, readResults["Temp"].Quality);
-        Assert.Equal((short)250, readResults["Temp"].Value);
-        Assert.Equal((short)1013, readResults["Pressure"].Value);
+        Assert.Equal(QualityCode.Good, readResults[1].Quality);
+        Assert.Equal((short)250, readResults[1].Value);
+        Assert.Equal((short)1013, readResults[2].Value);
 
         // 测试写入: 写 CMD01.0
         var writeTag = new TagNode
         {
-            TagId = "SetVal",
+            Id = 3,
             Address = "CMD01.0",
             DataType = TagDataType.Int16,
             AccessMode = TagAccessMode.ReadWrite
@@ -154,7 +154,7 @@ public class CustomSerialDriverIntegrationTests
 
         var tag = new TagNode
         {
-            TagId = "Weight",
+            Id = 4,
             Address = "INDEX1",
             DataType = TagDataType.Float
         };
@@ -165,7 +165,7 @@ public class CustomSerialDriverIntegrationTests
 
         var results = await driver.ReadBatchAsync([tag]);
 
-        Assert.Equal(QualityCode.Good, results["Weight"].Quality);
-        Assert.Equal(45.67, Convert.ToDouble(results["Weight"].Value), 2);
+        Assert.Equal(QualityCode.Good, results[4].Quality);
+        Assert.Equal(45.67, Convert.ToDouble(results[4].Value), 2);
     }
 }

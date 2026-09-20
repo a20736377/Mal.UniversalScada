@@ -186,7 +186,7 @@ public class RecipeService : IRecipeService
     public async Task<RecipeApplyResult> ApplyRecipeToDeviceAsync(string recipeId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(recipeId))
-            return new RecipeApplyResult(false, "配方 ID 不能为空。", new Dictionary<string, WriteResult>());
+            return new RecipeApplyResult(false, "配方 ID 不能为空。", new Dictionary<long, WriteResult>());
 
         RecipeModel? recipe = null;
         if (!_memoryRecipes.TryGetValue(recipeId, out recipe))
@@ -218,15 +218,15 @@ public class RecipeService : IRecipeService
         }
 
         if (recipe == null)
-            return new RecipeApplyResult(false, $"未找到 ID 为 [{recipeId}] 的配方数据。", new Dictionary<string, WriteResult>());
+            return new RecipeApplyResult(false, $"未找到 ID 为 [{recipeId}] 的配方数据。", new Dictionary<long, WriteResult>());
 
         if (recipe.Items.Count == 0)
-            return new RecipeApplyResult(true, $"配方【{recipe.Name}】参数列表为空，无需下发。", new Dictionary<string, WriteResult>());
+            return new RecipeApplyResult(true, $"配方【{recipe.Name}】参数列表为空，无需下发。", new Dictionary<long, WriteResult>());
 
         var sw = Stopwatch.StartNew();
 
         // 组织待写入集合并提交调度器批量高优插队执行
-        var writePairs = recipe.Items.Select(item => new KeyValuePair<string, object>(item.TagId, item.TargetValue));
+        var writePairs = recipe.Items.Select(item => new KeyValuePair<long, object>(item.TagId, item.TargetValue));
         var writeResults = await _scheduler.EnqueueBatchWriteAsync(writePairs, ct);
 
         sw.Stop();

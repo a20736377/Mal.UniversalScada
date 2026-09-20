@@ -102,21 +102,16 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        if (AppHost != null)
+        try
         {
-            try
-            {
-                // async void OnExit 无法被 CLR 可靠等待，必须用同步方式确保停止完成
-                // 设置 5 秒超时，防止网络通信卡住导致进程无法退出
-                AppHost.StopAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
-            }
-            catch { }
-            finally
-            {
-                AppHost.Dispose();
-                AppHost = null;
-            }
+            AppHost?.Dispose();
+            AppHost = null;
         }
+        catch { }
+
         base.OnExit(e);
+
+        // 核心保障：工控监控系统涉及物理底层驱动及后台通信总线，主窗体关闭后立即终结进程，杜绝任何假死与僵尸进程残留
+        Environment.Exit(0);
     }
 }

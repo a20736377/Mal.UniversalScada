@@ -90,8 +90,8 @@ public interface IConfigRepository
     /// <summary>
     /// 删除指定点位
     /// </summary>
-    /// <param name="tagId">点位 ID</param>
-    Task DeleteTagAsync(string tagId);
+    /// <param name="id">点位自增数字主键 ID</param>
+    Task DeleteTagAsync(long id);
 
     #endregion
 

@@ -21,8 +21,17 @@
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="🖥️ 当前可视化画面方案:" Foreground="#475569" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox ItemsSource="{Binding Views}" SelectedItem="{Binding SelectedView}" DisplayMemberPath="Name"
-                              Width="220" Height="32" VerticalContentAlignment="Center" Margin="0,0,10,0"/>
+                    <ComboBox ItemsSource="{Binding Views}" SelectedItem="{Binding SelectedView}"
+                              Width="260" Height="32" VerticalContentAlignment="Center" Margin="0,0,10,0">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Id, StringFormat='[#{0}] '}" FontWeight="Bold" Foreground="#0284C7"/>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
 
                     <Button Content="➕ 新建画面" Padding="10,4" Height="30" Margin="0,0,6,0"
                             Background="#F1F5F9" Foreground="#0F172A" BorderBrush="#CBD5E1" BorderThickness="1"
@@ -417,12 +426,12 @@
 
                             <!-- 绑定主点位 (带数据类型精准过滤) -->
                             <DockPanel Margin="0,0,0,4">
-                                <TextBlock Text="绑定采集点位 (PrimaryTagId):" FontSize="11" Foreground="#475569" VerticalAlignment="Center"/>
+                                <TextBlock Text="绑定采集点位 (Tag):" FontSize="11" Foreground="#475569" VerticalAlignment="Center"/>
                                 <TextBlock Text="🎯 仅显示兼容数据类型" FontSize="9" Foreground="#0284C7" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </DockPanel>
                             <ComboBox ItemsSource="{Binding FilteredAvailableTags}"
                                       SelectedValue="{Binding SelectedWidget.PrimaryTagId, Mode=TwoWay}"
-                                      SelectedValuePath="TagId"
+                                      SelectedValuePath="Id"
                                       DisplayMemberPath="DisplayText"
                                       Height="30" Margin="0,0,0,4"/>
 
@@ -1284,8 +1293,21 @@
                         <StackPanel Visibility="{Binding SelectedWidget, Converter={x:Static vm:DesignerUiConverters.NullToVisible}}">
                             <TextBlock Text="📄 画面全局参数" FontSize="14" FontWeight="Bold" Foreground="#0284C7" Margin="0,0,0,12"/>
 
-                            <TextBlock Text="画面 ID:" FontSize="11" Foreground="#64748B" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedView.ViewId}" IsReadOnly="True" Background="#F1F5F9" Height="28" Margin="0,0,0,10"/>
+                            <DockPanel Margin="0,0,0,4">
+                                <TextBlock Text="画布自增 ID / 标识代码 (ViewId):" FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                <Border Background="#E0F2FE" BorderBrush="#BAE6FD" BorderThickness="1" CornerRadius="3" Padding="4,1" HorizontalAlignment="Right">
+                                    <TextBlock Text="⚡ 自增" FontSize="9" Foreground="#0369A1" FontWeight="SemiBold"/>
+                                </Border>
+                            </DockPanel>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="65"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding SelectedView.Id, StringFormat='#{0}'}" Height="28" IsReadOnly="True" Background="#F1F5F9" Foreground="#0369A1" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                                <TextBox Grid.Column="2" Text="{Binding SelectedView.ViewId}" IsReadOnly="True" Background="#F1F5F9" Height="28" Foreground="#64748B" ToolTip="系统自动分配的画面唯一标识代码"/>
+                            </Grid>
 
                             <TextBlock Text="画面名称 (Name):" FontSize="11" Foreground="#64748B" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding SelectedView.Name}" Height="28" Margin="0,0,0,10"/>

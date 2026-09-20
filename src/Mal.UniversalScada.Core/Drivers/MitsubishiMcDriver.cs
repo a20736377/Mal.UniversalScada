@@ -105,19 +105,19 @@ public class MitsubishiMcDriver : IDriver
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, TagValueSnapshot>> ReadBatchAsync(IEnumerable<TagNode> tags, CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<long, TagValueSnapshot>> ReadBatchAsync(IEnumerable<TagNode> tags, CancellationToken ct = default)
     {
         var tagList = tags.ToList();
-        var results = new Dictionary<string, TagValueSnapshot>(tagList.Count);
+        var results = new Dictionary<long, TagValueSnapshot>(tagList.Count);
         if (tagList.Count == 0) return results;
 
         if (!_isInitialized || _channel == null || !_channel.IsOpen)
         {
             foreach (var t in tagList)
             {
-                results[t.TagId] = new TagValueSnapshot
+                results[t.Id] = new TagValueSnapshot
                 {
-                    TagId = t.TagId,
+                    TagId = t.Id,
                     Quality = QualityCode.CommFailure,
                     Timestamp = DateTime.Now
                 };
@@ -132,9 +132,9 @@ public class MitsubishiMcDriver : IDriver
             {
                 if (!TryParseAddress(tag.Address, out var mcAddr))
                 {
-                    results[tag.TagId] = new TagValueSnapshot
+                    results[tag.Id] = new TagValueSnapshot
                     {
-                        TagId = tag.TagId,
+                        TagId = tag.Id,
                         Quality = QualityCode.Bad,
                         Timestamp = DateTime.Now
                     };
@@ -153,9 +153,9 @@ public class MitsubishiMcDriver : IDriver
                     if (ParseResponse(resp, out var endCode, out var data) && endCode == 0)
                     {
                         var (val, raw) = DecodeValue(data, tag.DataType, mcAddr.IsBit);
-                        results[tag.TagId] = new TagValueSnapshot
+                        results[tag.Id] = new TagValueSnapshot
                         {
-                            TagId = tag.TagId,
+                            TagId = tag.Id,
                             Value = val,
                             RawValue = raw,
                             Quality = QualityCode.Good,
@@ -164,9 +164,9 @@ public class MitsubishiMcDriver : IDriver
                     }
                     else
                     {
-                        results[tag.TagId] = new TagValueSnapshot
+                        results[tag.Id] = new TagValueSnapshot
                         {
-                            TagId = tag.TagId,
+                            TagId = tag.Id,
                             Quality = QualityCode.Bad,
                             Timestamp = DateTime.Now
                         };
@@ -174,9 +174,9 @@ public class MitsubishiMcDriver : IDriver
                 }
                 catch
                 {
-                    results[tag.TagId] = new TagValueSnapshot
+                    results[tag.Id] = new TagValueSnapshot
                     {
-                        TagId = tag.TagId,
+                        TagId = tag.Id,
                         Quality = QualityCode.CommFailure,
                         Timestamp = DateTime.Now
                     };
@@ -197,12 +197,12 @@ public class MitsubishiMcDriver : IDriver
         var sw = Stopwatch.StartNew();
         if (!_isInitialized || _channel == null || !_channel.IsOpen)
         {
-            return WriteResult.Failed(tag.TagId, value, "通信链路未就绪或未连接", sw.ElapsedMilliseconds);
+            return WriteResult.Failed(tag.Id, value, "通信链路未就绪或未连接", sw.ElapsedMilliseconds);
         }
 
         if (!TryParseAddress(tag.Address, out var mcAddr))
         {
-            return WriteResult.Failed(tag.TagId, value, $"无效的三菱寄存器地址: {tag.Address}", sw.ElapsedMilliseconds);
+            return WriteResult.Failed(tag.Id, value, $"无效的三菱寄存器地址: {tag.Address}", sw.ElapsedMilliseconds);
         }
 
         await _commLock.WaitAsync(ct);
@@ -219,15 +219,15 @@ public class MitsubishiMcDriver : IDriver
 
             if (ParseResponse(resp, out var endCode, out _) && endCode == 0)
             {
-                return WriteResult.Success(tag.TagId, value, sw.ElapsedMilliseconds);
+                return WriteResult.Success(tag.Id, value, sw.ElapsedMilliseconds);
             }
 
-            return WriteResult.Failed(tag.TagId, value, $"三菱 MC 响应异常 EndCode: 0x{endCode:X4}", sw.ElapsedMilliseconds);
+            return WriteResult.Failed(tag.Id, value, $"三菱 MC 响应异常 EndCode: 0x{endCode:X4}", sw.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {
             sw.Stop();
-            return WriteResult.Failed(tag.TagId, value, ex.Message, sw.ElapsedMilliseconds);
+            return WriteResult.Failed(tag.Id, value, ex.Message, sw.ElapsedMilliseconds);
         }
         finally
         {
@@ -236,15 +236,15 @@ public class MitsubishiMcDriver : IDriver
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, WriteResult>> WriteBatchAsync(
+    public async Task<IReadOnlyDictionary<long, WriteResult>> WriteBatchAsync(
         IEnumerable<KeyValuePair<TagNode, object>> writes, 
         CancellationToken ct = default)
     {
-        var dict = new Dictionary<string, WriteResult>();
+        var dict = new Dictionary<long, WriteResult>();
         foreach (var kvp in writes)
         {
             var res = await WriteTagAsync(kvp.Key, kvp.Value, ct);
-            dict[kvp.Key.TagId] = res;
+            dict[kvp.Key.Id] = res;
         }
         return dict;
     }

@@ -12,14 +12,14 @@ public interface IRealtimeDataBus
     /// <summary>
     /// 获取指定点位的最新内存快照
     /// </summary>
-    /// <param name="tagId">点位唯一 ID</param>
+    /// <param name="tagId">点位自增 ID</param>
     /// <returns>若存在返回快照，不存在返回 null</returns>
-    TagValueSnapshot? GetSnapshot(string tagId);
+    TagValueSnapshot? GetSnapshot(long tagId);
 
     /// <summary>
     /// 获取全量点位当前内存快照的只读字典 (用于 UI 页面初始装载或大屏全景轮询)
     /// </summary>
-    IReadOnlyDictionary<string, TagValueSnapshot> GetAllSnapshots();
+    IReadOnlyDictionary<long, TagValueSnapshot> GetAllSnapshots();
 
     /// <summary>
     /// 批量更新点位数据（由调度引擎采集完成后调用）。
@@ -37,10 +37,10 @@ public interface IRealtimeDataBus
     /// <summary>
     /// 订阅指定点位的数据变化事件（经死区过滤后）
     /// </summary>
-    /// <param name="tagId">关心的点位 ID</param>
+    /// <param name="tagId">关心的点位自增 ID</param>
     /// <param name="handler">变化回调委托</param>
     /// <returns>订阅凭证 (调用 Dispose 取消订阅)</returns>
-    IDisposable Subscribe(string tagId, Action<TagValueSnapshot> handler);
+    IDisposable Subscribe(long tagId, Action<TagValueSnapshot> handler);
 
     /// <summary>
     /// 订阅全局所有点位的数据变化流（用于报警引擎、历史归档后台服务等）

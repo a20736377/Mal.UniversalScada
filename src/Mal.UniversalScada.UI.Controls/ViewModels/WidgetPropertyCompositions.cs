@@ -59,6 +59,27 @@ public partial class CircularGaugeProps : ObservableObject
     private string _highArcData = string.Empty;
 
     [ObservableProperty]
+    private string _majorTicksPathData = string.Empty;
+
+    [ObservableProperty]
+    private string _minorTicksPathData = string.Empty;
+
+    [ObservableProperty]
+    private string _scaleText0 = "0";
+
+    [ObservableProperty]
+    private string _scaleText25 = "25";
+
+    [ObservableProperty]
+    private string _scaleText50 = "50";
+
+    [ObservableProperty]
+    private string _scaleText75 = "75";
+
+    [ObservableProperty]
+    private string _scaleText100 = "100";
+
+    [ObservableProperty]
     private double _normalizedProgress = 0.0;
 
     [ObservableProperty]

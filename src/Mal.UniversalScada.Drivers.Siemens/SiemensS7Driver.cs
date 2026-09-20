@@ -116,21 +116,21 @@ public class SiemensS7Driver : IDriver
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, TagValueSnapshot>> ReadBatchAsync(
+    public async Task<IReadOnlyDictionary<long, TagValueSnapshot>> ReadBatchAsync(
         IEnumerable<TagNode> tags, 
         CancellationToken ct = default)
     {
         var tagList = tags.ToList();
-        var results = new Dictionary<string, TagValueSnapshot>(tagList.Count);
+        var results = new Dictionary<long, TagValueSnapshot>(tagList.Count);
         if (tagList.Count == 0) return results;
 
         if (!_isInitialized || _channel == null || !_channel.IsOpen)
         {
             foreach (var t in tagList)
             {
-                results[t.TagId] = new TagValueSnapshot
+                results[t.Id] = new TagValueSnapshot
                 {
-                    TagId = t.TagId,
+                    TagId = t.Id,
                     Quality = QualityCode.CommFailure,
                     Timestamp = DateTime.Now
                 };
@@ -149,9 +149,9 @@ public class SiemensS7Driver : IDriver
             }
             catch
             {
-                results[t.TagId] = new TagValueSnapshot
+                results[t.Id] = new TagValueSnapshot
                 {
-                    TagId = t.TagId,
+                    TagId = t.Id,
                     Quality = QualityCode.Bad,
                     Timestamp = DateTime.Now
                 };
@@ -198,9 +198,9 @@ public class SiemensS7Driver : IDriver
                                 itemRes.IsBit, 
                                 addr!.BitIndex);
 
-                            results[tag.TagId] = new TagValueSnapshot
+                            results[tag.Id] = new TagValueSnapshot
                             {
-                                TagId = tag.TagId,
+                                TagId = tag.Id,
                                 Value = val,
                                 RawValue = raw,
                                 Quality = QualityCode.Good,
@@ -209,9 +209,9 @@ public class SiemensS7Driver : IDriver
                         }
                         else
                         {
-                            results[tag.TagId] = new TagValueSnapshot
+                            results[tag.Id] = new TagValueSnapshot
                             {
-                                TagId = tag.TagId,
+                                TagId = tag.Id,
                                 Quality = QualityCode.Bad,
                                 Timestamp = DateTime.Now
                             };
@@ -223,11 +223,11 @@ public class SiemensS7Driver : IDriver
                     // 本批次通信故障
                     foreach (var (tag, _) in chunk)
                     {
-                        if (!results.ContainsKey(tag.TagId))
+                        if (!results.ContainsKey(tag.Id))
                         {
-                            results[tag.TagId] = new TagValueSnapshot
+                            results[tag.Id] = new TagValueSnapshot
                             {
-                                TagId = tag.TagId,
+                                TagId = tag.Id,
                                 Quality = QualityCode.CommFailure,
                                 Timestamp = DateTime.Now
                             };
@@ -253,7 +253,7 @@ public class SiemensS7Driver : IDriver
 
         if (!_isInitialized || _channel == null || !_channel.IsOpen)
         {
-            return WriteResult.Failed(tag.TagId, value, "S7 驱动未初始化或链路未就绪", 0);
+            return WriteResult.Failed(tag.Id, value, "S7 驱动未初始化或链路未就绪", 0);
         }
 
         S7Address address;
@@ -265,7 +265,7 @@ public class SiemensS7Driver : IDriver
         }
         catch (Exception ex)
         {
-            return WriteResult.Failed(tag.TagId, value, $"参数解析或转换失败: {ex.Message}", 0);
+            return WriteResult.Failed(tag.Id, value, $"参数解析或转换失败: {ex.Message}", 0);
         }
 
         await _commLock.WaitAsync(ct);
@@ -285,16 +285,16 @@ public class SiemensS7Driver : IDriver
 
             if (writeAcks.Count > 0 && writeAcks[0] == S7ReturnCode.Success)
             {
-                return WriteResult.Success(tag.TagId, value, sw.ElapsedMilliseconds);
+                return WriteResult.Success(tag.Id, value, sw.ElapsedMilliseconds);
             }
 
             var err = writeAcks.Count > 0 ? writeAcks[0].ToString() : "未知错误";
-            return WriteResult.Failed(tag.TagId, value, $"西门子 PLC 应答写入错误: {err}", sw.ElapsedMilliseconds);
+            return WriteResult.Failed(tag.Id, value, $"西门子 PLC 应答写入错误: {err}", sw.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {
             sw.Stop();
-            return WriteResult.Failed(tag.TagId, value, $"写入异常: {ex.Message}", sw.ElapsedMilliseconds);
+            return WriteResult.Failed(tag.Id, value, $"写入异常: {ex.Message}", sw.ElapsedMilliseconds);
         }
         finally
         {
@@ -303,19 +303,19 @@ public class SiemensS7Driver : IDriver
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, WriteResult>> WriteBatchAsync(
+    public async Task<IReadOnlyDictionary<long, WriteResult>> WriteBatchAsync(
         IEnumerable<KeyValuePair<TagNode, object>> writes, 
         CancellationToken ct = default)
     {
         var list = writes.ToList();
-        var results = new Dictionary<string, WriteResult>(list.Count);
+        var results = new Dictionary<long, WriteResult>(list.Count);
         if (list.Count == 0) return results;
 
         // 顺序或分块写入
         foreach (var kv in list)
         {
             var res = await WriteTagAsync(kv.Key, kv.Value, ct);
-            results[kv.Key.TagId] = res;
+            results[kv.Key.Id] = res;
         }
 
         return results;

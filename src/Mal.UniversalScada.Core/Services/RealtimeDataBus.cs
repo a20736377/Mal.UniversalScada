@@ -14,12 +14,12 @@ namespace Mal.UniversalScada.Core.Services;
 /// </summary>
 public class RealtimeDataBus : IRealtimeDataBus
 {
-    private readonly ConcurrentDictionary<string, TagValueSnapshot> _snapshots = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, TagValueSnapshot> _lastNotifiedSnapshots = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, TagNode> _tagMetadata = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<long, TagValueSnapshot> _snapshots = new();
+    private readonly ConcurrentDictionary<long, TagValueSnapshot> _lastNotifiedSnapshots = new();
+    private readonly ConcurrentDictionary<long, TagNode> _tagMetadata = new();
 
     // 点位单点订阅者集合 (Key: TagId)
-    private readonly ConcurrentDictionary<string, List<Action<TagValueSnapshot>>> _tagSubscribers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<long, List<Action<TagValueSnapshot>>> _tagSubscribers = new();
     private readonly object _subLock = new();
 
     // 全局数据流订阅者集合 (用于报警引擎、时序归档后台工作者)
@@ -33,8 +33,8 @@ public class RealtimeDataBus : IRealtimeDataBus
     /// </summary>
     public void RegisterTag(TagNode tag)
     {
-        if (tag == null || string.IsNullOrWhiteSpace(tag.TagId)) return;
-        _tagMetadata[tag.TagId] = tag;
+        if (tag == null || tag.Id <= 0) return;
+        _tagMetadata[tag.Id] = tag;
     }
 
     /// <summary>
@@ -50,14 +50,14 @@ public class RealtimeDataBus : IRealtimeDataBus
     }
 
     /// <inheritdoc />
-    public TagValueSnapshot? GetSnapshot(string tagId)
+    public TagValueSnapshot? GetSnapshot(long tagId)
     {
-        if (string.IsNullOrWhiteSpace(tagId)) return null;
+        if (tagId <= 0) return null;
         return _snapshots.TryGetValue(tagId, out var snapshot) ? snapshot : null;
     }
 
     /// <inheritdoc />
-    public IReadOnlyDictionary<string, TagValueSnapshot> GetAllSnapshots()
+    public IReadOnlyDictionary<long, TagValueSnapshot> GetAllSnapshots()
     {
         return _snapshots;
     }
@@ -65,7 +65,7 @@ public class RealtimeDataBus : IRealtimeDataBus
     /// <inheritdoc />
     public void PublishSnapshot(TagValueSnapshot snapshot)
     {
-        if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.TagId)) return;
+        if (snapshot == null || snapshot.TagId <= 0) return;
 
         bool isSignificantChange = true;
 
@@ -97,9 +97,9 @@ public class RealtimeDataBus : IRealtimeDataBus
     }
 
     /// <inheritdoc />
-    public IDisposable Subscribe(string tagId, Action<TagValueSnapshot> handler)
+    public IDisposable Subscribe(long tagId, Action<TagValueSnapshot> handler)
     {
-        if (string.IsNullOrWhiteSpace(tagId) || handler == null)
+        if (tagId <= 0 || handler == null)
             return EmptyDisposable.Instance;
 
         lock (_subLock)

@@ -148,17 +148,17 @@ public class SiemensS7DriverIntegrationTests
 
         mockChannel.EnqueueResponse(CotpHandler.WrapDataPdu(readAckPdu));
 
-        var tag1 = new TagNode { TagId = "T1", Address = "DB1.DBD0", DataType = TagDataType.Float };
-        var tag2 = new TagNode { TagId = "T2", Address = "M0.0", DataType = TagDataType.Bool };
+        var tag1 = new TagNode { Id = 1, Address = "DB1.DBD0", DataType = TagDataType.Float };
+        var tag2 = new TagNode { Id = 2, Address = "M0.0", DataType = TagDataType.Bool };
 
         var readResult = await driver.ReadBatchAsync([tag1, tag2]);
 
         Assert.Equal(2, readResult.Count);
-        Assert.Equal(QualityCode.Good, readResult["T1"].Quality);
-        Assert.InRange(Convert.ToSingle(readResult["T1"].Value), 123.455f, 123.457f);
+        Assert.Equal(QualityCode.Good, readResult[1].Quality);
+        Assert.InRange(Convert.ToSingle(readResult[1].Value), 123.455f, 123.457f);
 
-        Assert.Equal(QualityCode.Good, readResult["T2"].Quality);
-        Assert.Equal(true, readResult["T2"].Value);
+        Assert.Equal(QualityCode.Good, readResult[2].Quality);
+        Assert.Equal(true, readResult[2].Value);
 
         // 4. 预置 S7 写入应答帧 (Write Var 0x05)
         var writeAckPdu = new byte[12 + 2 + 1];
@@ -174,6 +174,6 @@ public class SiemensS7DriverIntegrationTests
 
         var writeRes = await driver.WriteTagAsync(tag1, 999.0f);
         Assert.True(writeRes.IsSuccess);
-        Assert.Equal("T1", writeRes.TagId);
+        Assert.Equal(1, writeRes.TagId);
     }
 }

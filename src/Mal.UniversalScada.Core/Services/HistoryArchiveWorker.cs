@@ -39,7 +39,7 @@ public class HistoryArchiveWorker : IAsyncDisposable
 
     private void OnSnapshotReceived(TagValueSnapshot snapshot)
     {
-        if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.TagId)) return;
+        if (snapshot == null || snapshot.TagId <= 0) return;
 
         // 仅浮点或能够换算为双精度浮点数的模拟量进行归档
         if (snapshot.Value != null)

@@ -10,7 +10,7 @@ public class S7DataConverterTests
     [Fact]
     public void DecodeValue_Bool_BitResult_ReturnsCorrectValue()
     {
-        var tag = new TagNode { TagId = "T1", DataType = TagDataType.Bool };
+        var tag = new TagNode { Id = 1, DataType = TagDataType.Bool };
         byte[] buffer = [0x01];
 
         var (val, raw) = S7DataConverter.DecodeValue(buffer, 0, tag, isBitResult: true);
@@ -22,7 +22,7 @@ public class S7DataConverterTests
     [Fact]
     public void DecodeValue_Bool_BitExtractionFromByte_ReturnsCorrectBit()
     {
-        var tag = new TagNode { TagId = "T1", DataType = TagDataType.Bool };
+        var tag = new TagNode { Id = 1, DataType = TagDataType.Bool };
         // 0b0010_0100 = bit 2 is 1, bit 5 is 1
         byte[] buffer = [0b0010_0100];
 
@@ -38,7 +38,7 @@ public class S7DataConverterTests
     [Fact]
     public void DecodeValue_Int16_BigEndian_DecodesCorrectly()
     {
-        var tag = new TagNode { TagId = "T1", DataType = TagDataType.Int16 };
+        var tag = new TagNode { Id = 1, DataType = TagDataType.Int16 };
         // 0x0100 = 256
         byte[] buffer = [0x01, 0x00];
 
@@ -51,7 +51,7 @@ public class S7DataConverterTests
     [Fact]
     public void DecodeValue_Float_BigEndian_DecodesCorrectly()
     {
-        var tag = new TagNode { TagId = "T1", DataType = TagDataType.Float };
+        var tag = new TagNode { Id = 1, DataType = TagDataType.Float };
         // 123.456f in IEEE 754 Big-Endian: 0x42, 0xF6, 0xE9, 0x79
         byte[] buffer = [0x42, 0xF6, 0xE9, 0x79];
 
@@ -67,7 +67,7 @@ public class S7DataConverterTests
         // y = 2.0 * x + 10.0
         var tag = new TagNode 
         { 
-            TagId = "T1", 
+            Id = 1, 
             DataType = TagDataType.Int16,
             ScaleFactor = 2.0,
             Offset = 10.0
@@ -84,7 +84,7 @@ public class S7DataConverterTests
     [Fact]
     public void EncodeValue_Int16_BigEndian_EncodesCorrectly()
     {
-        var tag = new TagNode { TagId = "T1", DataType = TagDataType.Int16 };
+        var tag = new TagNode { Id = 1, DataType = TagDataType.Int16 };
         short input = 256; // 0x0100
 
         var bytes = S7DataConverter.EncodeValue(input, tag);
@@ -100,7 +100,7 @@ public class S7DataConverterTests
         // y = 2.0 * x + 10.0. Input target y = 20 -> x should be (20 - 10) / 2 = 5
         var tag = new TagNode 
         { 
-            TagId = "T1", 
+            Id = 1, 
             DataType = TagDataType.Int16,
             ScaleFactor = 2.0,
             Offset = 10.0
@@ -116,7 +116,7 @@ public class S7DataConverterTests
     [Fact]
     public void EncodeValue_Bool_EncodesCorrectByte()
     {
-        var tag = new TagNode { TagId = "T1", DataType = TagDataType.Bool };
+        var tag = new TagNode { Id = 1, DataType = TagDataType.Bool };
 
         var tBytes = S7DataConverter.EncodeValue(true, tag);
         var fBytes = S7DataConverter.EncodeValue(false, tag);

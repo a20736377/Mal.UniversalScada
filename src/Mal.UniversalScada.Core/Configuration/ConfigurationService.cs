@@ -118,7 +118,7 @@ public class ConfigurationService : IConfigurationService
         var tagsToDelete = allTags.Where(t => t.DeviceId == deviceId).ToList();
         foreach (var tag in tagsToDelete)
         {
-            await _configRepository.DeleteTagAsync(tag.TagId);
+            await _configRepository.DeleteTagAsync(tag.Id);
         }
 
         await _configRepository.DeleteDeviceAsync(deviceId);
@@ -129,7 +129,6 @@ public class ConfigurationService : IConfigurationService
     {
         return new TagNode
         {
-            TagId = $"{deviceId}.Tag_{currentTagCountInDevice + 1:D2}",
             DeviceId = deviceId,
             Name = $"新测点 {currentTagCountInDevice + 1}",
             Address = "40001",
@@ -144,9 +143,9 @@ public class ConfigurationService : IConfigurationService
         };
     }
 
-    public async Task DeleteTagAsync(string tagId)
+    public async Task DeleteTagAsync(long id)
     {
-        await _configRepository.DeleteTagAsync(tagId);
+        await _configRepository.DeleteTagAsync(id);
     }
 
     public async Task<IReadOnlyList<TagNode>> GetAllTagsAsync()
@@ -229,11 +228,11 @@ public class ConfigurationService : IConfigurationService
 
         var tags = new List<TagNode>
         {
-            new() { TagId = "DEV_01.Motor_Current", DeviceId = "DEV_01", Name = "主轴电机工作电流", Address = "40002", DataType = TagDataType.Float, AccessMode = TagAccessMode.ReadOnly, ScaleFactor = 1.0, Offset = 0, Unit = "A", ScanIntervalMs = 100, IsHistorical = true },
-            new() { TagId = "DEV_01.Motor_Speed", DeviceId = "DEV_01", Name = "主轴电机实时转速1", Address = "40001", DataType = TagDataType.Int16, AccessMode = TagAccessMode.ReadOnly, ScaleFactor = 1.0, Offset = 0, Unit = "rpm", ScanIntervalMs = 100, IsHistorical = true },
-            new() { TagId = "DEV_01.System_Start", DeviceId = "DEV_01", Name = "系统启动控制线圈", Address = "00001", DataType = TagDataType.Bool, AccessMode = TagAccessMode.ReadWrite, ScaleFactor = 1.0, Offset = 0, Unit = "", ScanIntervalMs = 100, IsHistorical = true },
-            new() { TagId = "DEV_02.Temperature", DeviceId = "DEV_02", Name = "环境当前温度", Address = "TEMP_VAL", DataType = TagDataType.Float, AccessMode = TagAccessMode.ReadOnly, ScaleFactor = 0.1, Offset = 0, Unit = "℃", ScanIntervalMs = 500, IsHistorical = true },
-            new() { TagId = "DEV_02.Humidity", DeviceId = "DEV_02", Name = "环境当前湿度", Address = "HUMI_VAL", DataType = TagDataType.Float, AccessMode = TagAccessMode.ReadOnly, ScaleFactor = 0.1, Offset = 0, Unit = "%RH", ScanIntervalMs = 500, IsHistorical = true }
+            new() { DeviceId = "DEV_01", Name = "主轴电机工作电流", Address = "40002", DataType = TagDataType.Float, AccessMode = TagAccessMode.ReadOnly, ScaleFactor = 1.0, Offset = 0, Unit = "A", ScanIntervalMs = 100, IsHistorical = true },
+            new() { DeviceId = "DEV_01", Name = "主轴电机实时转速1", Address = "40001", DataType = TagDataType.Int16, AccessMode = TagAccessMode.ReadOnly, ScaleFactor = 1.0, Offset = 0, Unit = "rpm", ScanIntervalMs = 100, IsHistorical = true },
+            new() { DeviceId = "DEV_01", Name = "系统启动控制线圈", Address = "00001", DataType = TagDataType.Bool, AccessMode = TagAccessMode.ReadWrite, ScaleFactor = 1.0, Offset = 0, Unit = "", ScanIntervalMs = 100, IsHistorical = true },
+            new() { DeviceId = "DEV_02", Name = "环境当前温度", Address = "TEMP_VAL", DataType = TagDataType.Float, AccessMode = TagAccessMode.ReadOnly, ScaleFactor = 0.1, Offset = 0, Unit = "℃", ScanIntervalMs = 500, IsHistorical = true },
+            new() { DeviceId = "DEV_02", Name = "环境当前湿度", Address = "HUMI_VAL", DataType = TagDataType.Float, AccessMode = TagAccessMode.ReadOnly, ScaleFactor = 0.1, Offset = 0, Unit = "%RH", ScanIntervalMs = 500, IsHistorical = true }
         };
 
         return new ScadaConfigurationData(

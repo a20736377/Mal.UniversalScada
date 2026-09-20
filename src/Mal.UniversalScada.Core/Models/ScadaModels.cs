@@ -9,9 +9,9 @@ namespace Mal.UniversalScada.Core.Models;
 public class TagNode
 {
     /// <summary>
-    /// 点位唯一标识符 (全局唯一，建议格式如: Device1.Motor_Speed)
+    /// 点位自增数字主键 ID (系统自动递增，作为点位全局唯一标识)
     /// </summary>
-    public string TagId { get; set; } = string.Empty;
+    public long Id { get; set; }
 
     /// <summary>
     /// 所属逻辑设备 ID
@@ -75,9 +75,9 @@ public class TagNode
 public record TagValueSnapshot
 {
     /// <summary>
-    /// 对应的点位唯一 ID
+    /// 对应的点位自增唯一 ID
     /// </summary>
-    public string TagId { get; init; } = string.Empty;
+    public long TagId { get; init; }
 
     /// <summary>
     /// 换算后的工程量当前值 (可为 bool, short, float, double, string 等)
@@ -114,6 +114,11 @@ public record TagValueSnapshot
 /// </summary>
 public class DeviceNode
 {
+    /// <summary>
+    /// 设备自增数字主键 ID (系统自动递增)
+    /// </summary>
+    public long Id { get; set; }
+
     /// <summary>
     /// 设备唯一标识 ID (如: "PLC_Main", "MCU_Sensor_01")
     /// </summary>
@@ -173,7 +178,7 @@ public record WriteResult
     /// <summary>
     /// 目标点位 ID
     /// </summary>
-    public string TagId { get; init; } = string.Empty;
+    public long TagId { get; init; }
 
     /// <summary>
     /// 本次下发写入的值
@@ -193,13 +198,13 @@ public record WriteResult
     /// <summary>
     /// 便捷构造成功结果
     /// </summary>
-    public static WriteResult Success(string tagId, object? val, long elapsedMs = 0) =>
+    public static WriteResult Success(long tagId, object? val, long elapsedMs = 0) =>
         new() { IsSuccess = true, TagId = tagId, TargetValue = val, RoundTripTimeMs = elapsedMs };
 
     /// <summary>
     /// 便捷构造失败结果
     /// </summary>
-    public static WriteResult Failed(string tagId, object? val, string error, long elapsedMs = 0) =>
+    public static WriteResult Failed(long tagId, object? val, string error, long elapsedMs = 0) =>
         new() { IsSuccess = false, TagId = tagId, TargetValue = val, ErrorMessage = error, RoundTripTimeMs = elapsedMs };
 }
 
@@ -211,7 +216,7 @@ public record TagHistoryRecord
     /// <summary>
     /// 点位全局 ID
     /// </summary>
-    public string TagId { get; init; } = string.Empty;
+    public long TagId { get; init; }
 
     /// <summary>
     /// 采样时间戳
@@ -247,7 +252,7 @@ public class AlarmEvent
     /// <summary>
     /// 触发报警的点位 ID
     /// </summary>
-    public string TagId { get; set; } = string.Empty;
+    public long TagId { get; set; }
 
     /// <summary>
     /// 报警消息描述 (如: "1号电机温度过高 (98.5℃)")
@@ -300,6 +305,11 @@ public class AlarmEvent
 /// </summary>
 public class ChannelConfig
 {
+    /// <summary>
+    /// 通道自增数字主键 ID (系统自动递增)
+    /// </summary>
+    public long Id { get; set; }
+
     /// <summary>
     /// 通道唯一标识 ID (如 "CH_COM1", "CH_TCP_LINE1")
     /// </summary>

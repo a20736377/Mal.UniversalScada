@@ -39,8 +39,9 @@ public partial class UserEditDialog : Window
 
         if (_isEditMode && userToEdit != null)
         {
-            TxtTitle.Text = $"✏️ 编辑用户 [{userToEdit.Username}]";
-            Title = $"编辑用户 - {userToEdit.Username}";
+            TxtTitle.Text = $"✏️ 编辑用户 [#{userToEdit.Id} {userToEdit.Username}]";
+            Title = $"编辑用户 - #{userToEdit.Id} {userToEdit.Username}";
+            TxtUserId.Text = $"#{userToEdit.Id}";
             TxtUsername.Text = userToEdit.Username;
             TxtUsername.IsEnabled = false;
             TxtDisplayName.Text = userToEdit.DisplayName;
@@ -53,6 +54,7 @@ public partial class UserEditDialog : Window
         {
             TxtTitle.Text = "➕ 新建监控系统用户";
             Title = "新建用户";
+            TxtUserId.Text = "#系统自增自动分配";
             CboRole.SelectedValue = UserRole.Operator;
             ChkIsEnabled.IsChecked = true;
             LblPasswordTip.Text = "设置登录密码 (必填，至少3位):";
@@ -112,6 +114,7 @@ public partial class UserEditDialog : Window
 
         ResultUser = new UserInfo
         {
+            Id = _originalUser?.Id ?? 0,
             Username = username,
             DisplayName = string.IsNullOrWhiteSpace(displayName) ? username : displayName,
             Role = role,

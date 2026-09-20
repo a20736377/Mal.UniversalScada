@@ -26,7 +26,7 @@ public class PriorityScheduler : IPriorityScheduler
 
     private readonly ConcurrentDictionary<string, IChannel> _channels = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, IDriver> _drivers = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, TagNode> _tagLookup = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<long, TagNode> _tagLookup = new();
     private readonly ConcurrentDictionary<string, DeviceNode> _deviceLookup = new(StringComparer.OrdinalIgnoreCase);
 
     // 高优写指令异步通道 (Key: ChannelId)
@@ -71,7 +71,10 @@ public class PriorityScheduler : IPriorityScheduler
         _tagLookup.Clear();
         foreach (var tag in tagNodes)
         {
-            _tagLookup[tag.TagId] = tag;
+            if (tag.Id > 0)
+            {
+                _tagLookup[tag.Id] = tag;
+            }
             if (_dataBus is RealtimeDataBus rdb)
             {
                 rdb.RegisterTag(tag);
@@ -169,16 +172,16 @@ public class PriorityScheduler : IPriorityScheduler
     }
 
     /// <inheritdoc />
-    public async Task<WriteResult> EnqueueWriteAsync(string tagId, object value, CancellationToken ct = default)
+    public async Task<WriteResult> EnqueueWriteAsync(long tagId, object value, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(tagId))
-            return WriteResult.Failed(tagId, value, "点位 ID 不能为空。");
+        if (tagId <= 0)
+            return WriteResult.Failed(tagId, value, "点位 ID 必须大于 0。");
 
         if (!_tagLookup.TryGetValue(tagId, out var tag))
-            return WriteResult.Failed(tagId, value, $"未找到点位 [{tagId}] 的元数据定义。");
+            return WriteResult.Failed(tagId, value, $"未找到点位 [#{tagId}] 的元数据定义。");
 
         if (!_deviceLookup.TryGetValue(tag.DeviceId, out var device))
-            return WriteResult.Failed(tagId, value, $"未找到点位 [{tagId}] 所属设备 [{tag.DeviceId}]。");
+            return WriteResult.Failed(tagId, value, $"未找到点位 [#{tagId}] 所属设备 [{tag.DeviceId}]。");
 
         if (!_writeChannels.TryGetValue(device.ChannelId, out var writeChan))
         {
@@ -197,17 +200,17 @@ public class PriorityScheduler : IPriorityScheduler
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, WriteResult>> EnqueueBatchWriteAsync(
-        IEnumerable<KeyValuePair<string, object>> writes, 
+    public async Task<IReadOnlyDictionary<long, WriteResult>> EnqueueBatchWriteAsync(
+        IEnumerable<KeyValuePair<long, object>> writes, 
         CancellationToken ct = default)
     {
-        var resultDict = new Dictionary<string, WriteResult>();
+        var resultDict = new Dictionary<long, WriteResult>();
         if (writes == null) return resultDict;
 
         var tasks = writes.Select(async kvp =>
         {
             var res = await EnqueueWriteAsync(kvp.Key, kvp.Value, ct);
-            return new KeyValuePair<string, WriteResult>(kvp.Key, res);
+            return new KeyValuePair<long, WriteResult>(kvp.Key, res);
         });
 
         var results = await Task.WhenAll(tasks);
@@ -324,7 +327,7 @@ public class PriorityScheduler : IPriorityScheduler
         {
             if (!_drivers.TryGetValue(job.Device.DeviceId, out var driver))
             {
-                job.Tcs.TrySetResult(WriteResult.Failed(job.Tag.TagId, job.Value, "未找到关联协议驱动。"));
+                job.Tcs.TrySetResult(WriteResult.Failed(job.Tag.Id, job.Value, "未找到关联协议驱动。"));
                 return;
             }
 
@@ -343,7 +346,7 @@ public class PriorityScheduler : IPriorityScheduler
                 // 回写总线内存快照，保持状态一致
                 _dataBus.PublishSnapshot(new TagValueSnapshot
                 {
-                    TagId = job.Tag.TagId,
+                    TagId = job.Tag.Id,
                     Value = job.Value,
                     RawValue = job.Value,
                     Quality = QualityCode.Good,
@@ -356,7 +359,7 @@ public class PriorityScheduler : IPriorityScheduler
         catch (Exception ex)
         {
             sw.Stop();
-            job.Tcs.TrySetResult(WriteResult.Failed(job.Tag.TagId, job.Value, ex.Message, sw.ElapsedMilliseconds));
+            job.Tcs.TrySetResult(WriteResult.Failed(job.Tag.Id, job.Value, ex.Message, sw.ElapsedMilliseconds));
         }
     }
 
@@ -389,7 +392,7 @@ public class PriorityScheduler : IPriorityScheduler
             // 通信异常：将该设备所有点位发布为 CommFailure
             var failureList = tags.Select(t => new TagValueSnapshot
             {
-                TagId = t.TagId,
+                TagId = t.Id,
                 Value = null,
                 RawValue = null,
                 Quality = QualityCode.CommFailure,
