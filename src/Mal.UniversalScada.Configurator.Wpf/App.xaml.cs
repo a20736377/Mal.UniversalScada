@@ -35,8 +35,8 @@ public partial class App : Application
             AppHost = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
-                    // 1. 组态配置底层数据库仓储 (SQLite)
-                    services.AddSqliteConfigStorage("Data Source=scada_config.db");
+                    // 1. 组态配置底层数据库仓储 (统一共享 SQLite 数据库)
+                    services.AddSqliteConfigStorage();
 
                     // 2. 核心组态业务服务 (认证、组态引擎、导入导出、硬件连通性探测、通道与驱动工厂、点位测试器)
                     services.AddScadaConfigurationCore();

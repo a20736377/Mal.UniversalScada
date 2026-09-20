@@ -388,5 +388,79 @@ public partial class DeviceStatusProps : ObservableObject
     }
 }
 
+/// <summary>
+/// 工业控制阀门专属组合属性类 (支持开闭状态切换、阀体安装朝向、法兰开合与状态色彩)
+/// </summary>
+public partial class ValveProps : ObservableObject
+{
+    [ObservableProperty]
+    private string _orientation = "Horizontal"; // Horizontal, Vertical
+
+    [ObservableProperty]
+    private bool _isOpen = true;
+
+    [ObservableProperty]
+    private string _valveType = "Ball"; // Ball 球阀, Pneumatic 气动调节阀, Gate 闸阀
+
+    [ObservableProperty]
+    private string _openColor = "#10B981";
+
+    [ObservableProperty]
+    private string _closeColor = "#EF4444";
+
+    [ObservableProperty]
+    private string _faultColor = "#F59E0B";
+
+    [ObservableProperty]
+    private bool _isFault = false;
+
+    [ObservableProperty]
+    private string _stateText = "开启 (Open)";
+
+    public void UpdateState(bool isOpen, bool isFault = false)
+    {
+        IsOpen = isOpen;
+        IsFault = isFault;
+        StateText = isFault ? "故障 (Fault)" : (isOpen ? "开启 (Open)" : "截断 (Closed)");
+    }
+}
+
+/// <summary>
+/// 工业旋转泵体专属组合属性类 (支持离心旋转泵、运转叶轮高速旋转动画、转速显示与工况色彩)
+/// </summary>
+public partial class PumpProps : ObservableObject
+{
+    [ObservableProperty]
+    private bool _isRunning = true;
+
+    [ObservableProperty]
+    private bool _isFault = false;
+
+    [ObservableProperty]
+    private string _pumpType = "Centrifugal"; // Centrifugal 离心泵, Gear 齿轮泵, Submersible 潜水泵
+
+    [ObservableProperty]
+    private string _runColor = "#10B981";
+
+    [ObservableProperty]
+    private string _stopColor = "#64748B";
+
+    [ObservableProperty]
+    private string _faultColor = "#EF4444";
+
+    [ObservableProperty]
+    private double _rotationSpeedRpm = 1450.0;
+
+    [ObservableProperty]
+    private string _stateText = "运行中 (Running)";
+
+    public void UpdateState(bool isRunning, bool isFault = false)
+    {
+        IsRunning = isRunning;
+        IsFault = isFault;
+        StateText = isFault ? "故障告警 (Fault)" : (isRunning ? "运行中 (Running)" : "待命停机 (Standby)");
+    }
+}
+
 
 

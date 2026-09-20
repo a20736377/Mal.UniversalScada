@@ -31,8 +31,8 @@ public partial class App : Application
             AppHost = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
-                    // 1. 组态底层数据库仓储 (SQLite)
-                    services.AddSqliteConfigStorage("Data Source=scada_config.db");
+                    // 1. 组态底层数据库仓储 (统一共享 SQLite 数据库)
+                    services.AddSqliteConfigStorage();
 
                     // 2. 核心服务 (通道、驱动工厂、点位读写测试器)
                     services.AddScadaConfigurationCore();
@@ -47,6 +47,7 @@ public partial class App : Application
                     services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IAuditService, Mal.UniversalScada.Core.Services.AuditService>();
                     services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IRecipeService, Mal.UniversalScada.Core.Services.RecipeService>();
                     services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IScreenManager, Mal.UniversalScada.UI.Wpf.Services.ScreenManager>();
+                    services.AddSingleton<Mal.UniversalScada.Core.Abstractions.IUserAuthService, Mal.UniversalScada.Core.Services.UserAuthService>();
 
                     // 4. ViewModel 与主窗体
                     services.AddSingleton<Mal.UniversalScada.UI.Controls.ViewModels.AlarmBannerViewModel>();

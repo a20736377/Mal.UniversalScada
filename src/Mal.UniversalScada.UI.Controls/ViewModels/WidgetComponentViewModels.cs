@@ -1528,4 +1528,184 @@ public partial class DeviceStatusWidgetViewModel : WidgetViewModel
     }
 }
 
+/// <summary>
+/// 工业控制阀门组件视图模型
+/// </summary>
+public partial class ValveWidgetViewModel : WidgetViewModel
+{
+    [ObservableProperty]
+    private ValveProps _props = new();
+
+    public override object ComponentProps => Props;
+
+    public ValveWidgetViewModel()
+    {
+        Type = WidgetType.Valve;
+        Title = "控制阀门";
+        Width = 140;
+        Height = 90;
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null)
+            {
+                OnPropertyChanged(e.PropertyName);
+                OnPropertyChanged(nameof(CurrentColor));
+            }
+        };
+    }
+
+    public string CurrentColor => Props.IsFault ? Props.FaultColor : (Props.IsOpen ? Props.OpenColor : Props.CloseColor);
+
+    public override void LoadProperties(Dictionary<string, string> properties)
+    {
+        base.LoadProperties(properties);
+        if (properties.TryGetValue("Orientation", out var ori)) Props.Orientation = ori;
+        if (properties.TryGetValue("IsOpen", out var openStr) && bool.TryParse(openStr, out var o)) Props.IsOpen = o;
+        if (properties.TryGetValue("ValveType", out var vt)) Props.ValveType = vt;
+        if (properties.TryGetValue("OpenColor", out var oc)) Props.OpenColor = oc;
+        if (properties.TryGetValue("CloseColor", out var cc)) Props.CloseColor = cc;
+        if (properties.TryGetValue("FaultColor", out var fc)) Props.FaultColor = fc;
+        if (properties.TryGetValue("IsFault", out var faultStr) && bool.TryParse(faultStr, out var f)) Props.IsFault = f;
+
+        Props.UpdateState(Props.IsOpen, Props.IsFault);
+        OnPropertyChanged(nameof(CurrentColor));
+    }
+
+    public override void SyncPropertiesFromFields()
+    {
+        base.SyncPropertiesFromFields();
+        Properties["Orientation"] = Props.Orientation ?? "Horizontal";
+        Properties["IsOpen"] = Props.IsOpen.ToString();
+        Properties["ValveType"] = Props.ValveType ?? "Ball";
+        Properties["OpenColor"] = Props.OpenColor ?? "#10B981";
+        Properties["CloseColor"] = Props.CloseColor ?? "#EF4444";
+        Properties["FaultColor"] = Props.FaultColor ?? "#F59E0B";
+        Properties["IsFault"] = Props.IsFault.ToString();
+    }
+
+    public override void UpdateRuntimeValue(object? rawValue, string quality = "Good")
+    {
+        CurrentRawValue = rawValue;
+        Quality = quality;
+
+        if (string.Equals(quality, "Bad", StringComparison.OrdinalIgnoreCase))
+        {
+            Props.UpdateState(Props.IsOpen, isFault: true);
+            OnPropertyChanged(nameof(CurrentColor));
+            return;
+        }
+
+        if (rawValue is bool b)
+        {
+            Props.UpdateState(b, isFault: false);
+        }
+        else if (rawValue is int or short or byte or long or double or float)
+        {
+            double val = Convert.ToDouble(rawValue);
+            Props.UpdateState(val > 0.5, isFault: false);
+        }
+        else if (rawValue is string s)
+        {
+            if (s.Equals("Open", StringComparison.OrdinalIgnoreCase) || s == "1")
+                Props.UpdateState(true, false);
+            else if (s.Equals("Closed", StringComparison.OrdinalIgnoreCase) || s == "0")
+                Props.UpdateState(false, false);
+            else if (s.Equals("Fault", StringComparison.OrdinalIgnoreCase))
+                Props.UpdateState(false, true);
+        }
+
+        OnPropertyChanged(nameof(CurrentColor));
+    }
+}
+
+/// <summary>
+/// 工业旋转离心泵组件视图模型
+/// </summary>
+public partial class PumpWidgetViewModel : WidgetViewModel
+{
+    [ObservableProperty]
+    private PumpProps _props = new();
+
+    public override object ComponentProps => Props;
+
+    public PumpWidgetViewModel()
+    {
+        Type = WidgetType.Pump;
+        Title = "离心主循环泵";
+        Width = 140;
+        Height = 140;
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null)
+            {
+                OnPropertyChanged(e.PropertyName);
+                OnPropertyChanged(nameof(CurrentColor));
+            }
+        };
+    }
+
+    public string CurrentColor => Props.IsFault ? Props.FaultColor : (Props.IsRunning ? Props.RunColor : Props.StopColor);
+
+    public override void LoadProperties(Dictionary<string, string> properties)
+    {
+        base.LoadProperties(properties);
+        if (properties.TryGetValue("IsRunning", out var runStr) && bool.TryParse(runStr, out var r)) Props.IsRunning = r;
+        if (properties.TryGetValue("IsFault", out var faultStr) && bool.TryParse(faultStr, out var f)) Props.IsFault = f;
+        if (properties.TryGetValue("PumpType", out var pt)) Props.PumpType = pt;
+        if (properties.TryGetValue("RunColor", out var rc)) Props.RunColor = rc;
+        if (properties.TryGetValue("StopColor", out var sc)) Props.StopColor = sc;
+        if (properties.TryGetValue("FaultColor", out var fc)) Props.FaultColor = fc;
+        if (properties.TryGetValue("RotationSpeedRpm", out var rpmStr) && double.TryParse(rpmStr, out var rpm)) Props.RotationSpeedRpm = rpm;
+
+        Props.UpdateState(Props.IsRunning, Props.IsFault);
+        OnPropertyChanged(nameof(CurrentColor));
+    }
+
+    public override void SyncPropertiesFromFields()
+    {
+        base.SyncPropertiesFromFields();
+        Properties["IsRunning"] = Props.IsRunning.ToString();
+        Properties["IsFault"] = Props.IsFault.ToString();
+        Properties["PumpType"] = Props.PumpType ?? "Centrifugal";
+        Properties["RunColor"] = Props.RunColor ?? "#10B981";
+        Properties["StopColor"] = Props.StopColor ?? "#64748B";
+        Properties["FaultColor"] = Props.FaultColor ?? "#EF4444";
+        Properties["RotationSpeedRpm"] = Props.RotationSpeedRpm.ToString();
+    }
+
+    public override void UpdateRuntimeValue(object? rawValue, string quality = "Good")
+    {
+        CurrentRawValue = rawValue;
+        Quality = quality;
+
+        if (string.Equals(quality, "Bad", StringComparison.OrdinalIgnoreCase))
+        {
+            Props.UpdateState(Props.IsRunning, isFault: true);
+            OnPropertyChanged(nameof(CurrentColor));
+            return;
+        }
+
+        if (rawValue is bool b)
+        {
+            Props.UpdateState(b, isFault: false);
+        }
+        else if (rawValue is int or short or byte or long or double or float)
+        {
+            double val = Convert.ToDouble(rawValue);
+            Props.UpdateState(val > 0.5, isFault: false);
+        }
+        else if (rawValue is string s)
+        {
+            if (s.Equals("Run", StringComparison.OrdinalIgnoreCase) || s.Equals("Running", StringComparison.OrdinalIgnoreCase) || s == "1")
+                Props.UpdateState(true, false);
+            else if (s.Equals("Stop", StringComparison.OrdinalIgnoreCase) || s.Equals("Stopped", StringComparison.OrdinalIgnoreCase) || s == "0")
+                Props.UpdateState(false, false);
+            else if (s.Equals("Fault", StringComparison.OrdinalIgnoreCase))
+                Props.UpdateState(false, true);
+        }
+
+        OnPropertyChanged(nameof(CurrentColor));
+    }
+}
+
 

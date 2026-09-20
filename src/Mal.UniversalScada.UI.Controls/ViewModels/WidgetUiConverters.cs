@@ -12,11 +12,47 @@ public static class WidgetUiConverters
     public static IValueConverter InverseBoolToVisibility { get; } = new InverseBoolToVisibilityConverterImpl();
     public static IValueConverter ColorHexToBrush { get; } = new ColorHexToBrushConverterImpl();
     public static IValueConverter ColorHexToColor { get; } = new ColorHexToColorConverterImpl();
+    public static IValueConverter BoolToColorBrush { get; } = new BoolToColorBrushConverterImpl();
     public static IValueConverter BoolToFontWeight { get; } = new BoolToFontWeightConverterImpl();
     public static IValueConverter StringToHorizontalAlignment { get; } = new StringToHorizontalAlignmentConverterImpl();
     public static IValueConverter HalfValueConverter { get; } = new HalfValueConverterImpl();
     public static IValueConverter StringEqualsToVisibility { get; } = new StringEqualsToVisibilityConverterImpl();
     public static IValueConverter MinChannelsToVisibility { get; } = new MinChannelsToVisibilityConverterImpl();
+
+    private class BoolToColorBrushConverterImpl : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            bool isTrue = value is bool b && b;
+            string trueColorHex = "#10B981";
+            string falseColorHex = "#64748B";
+
+            if (parameter is string paramStr && paramStr.Contains('|'))
+            {
+                var parts = paramStr.Split('|');
+                if (parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0])) trueColorHex = parts[0];
+                if (parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1])) falseColorHex = parts[1];
+            }
+
+            var chosenHex = isTrue ? trueColorHex : falseColorHex;
+            try
+            {
+                var color = (Color)ColorConverter.ConvertFromString(chosenHex);
+                if (targetType == typeof(Color))
+                {
+                    return color;
+                }
+                return new SolidColorBrush(color);
+            }
+            catch
+            {
+                return isTrue ? Brushes.LimeGreen : Brushes.Gray;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            throw new NotSupportedException();
+    }
 
     private class InverseBoolToVisibilityConverterImpl : IValueConverter
     {

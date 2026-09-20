@@ -209,6 +209,26 @@
 
                             <!-- 工具按钮区 -->
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- 历史栈 (撤销/重做) -->
+                                <Button Content="↩ 撤销" ToolTip="撤销上一步操作 (Ctrl+Z)"
+                                        Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo}"
+                                        Margin="2,0"/>
+                                <Button Content="↪ 重做" ToolTip="恢复重做操作 (Ctrl+Y)"
+                                        Command="{Binding RedoCommand}" IsEnabled="{Binding CanRedo}"
+                                        Margin="2,0"/>
+
+                                <Rectangle Width="1" Height="16" Fill="#334155" Margin="6,0"/>
+
+                                <!-- 成组与解组 -->
+                                <Button Content="🔗 编组" ToolTip="将选中组件组合成组 (Ctrl+G)"
+                                        Command="{Binding GroupSelectedWidgetsCommand}" IsEnabled="{Binding CanGroup}"
+                                        Margin="2,0"/>
+                                <Button Content="🔓 解组" ToolTip="解除选中的组件编组 (Ctrl+Shift+G)"
+                                        Command="{Binding UngroupSelectedWidgetsCommand}" IsEnabled="{Binding CanUngroup}"
+                                        Margin="2,0"/>
+
+                                <Rectangle Width="1" Height="16" Fill="#334155" Margin="6,0"/>
+
                                 <!-- 对齐组 (左/右/顶/底/水平居中/垂直居中) -->
                                 <Button Content="⇤ 左对齐" ToolTip="选中的组件以最左侧基准对齐"
                                         Command="{Binding AlignLeftCommand}" IsEnabled="{Binding HasMultipleSelection}"

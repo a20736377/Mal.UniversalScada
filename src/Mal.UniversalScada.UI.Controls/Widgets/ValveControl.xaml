@@ -1,0 +1,60 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.ValveControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
+    <Grid Margin="4" Cursor="Hand" Background="Transparent" ToolTip="点击切换阀门开/关控制">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- 顶部执行机构 -->
+            <RowDefinition Height="*"/>    <!-- 阀体双三角 -->
+            <RowDefinition Height="Auto"/> <!-- 底部状态文本 -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. 顶部执行器 (气动薄膜头 / 电动头 / 手轮) -->
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,2">
+            <!-- 执行器顶盖 -->
+            <Border Width="28" Height="8" CornerRadius="3"
+                    Background="{Binding ValveProps.IsOpen, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#10B981|#EF4444}"
+                    BorderBrush="#334155" BorderThickness="1"/>
+            <!-- 阀杆 -->
+            <Border Width="3" Height="8" Background="#94A3B8" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- 2. 中间：标准工业 P&ID 阀体 (左右对顶双三角 + 中间阀芯通道) -->
+        <Grid Grid.Row="1" Width="80" Height="40" HorizontalAlignment="Center">
+            <!-- 左侧法兰进气/进液口 -->
+            <Rectangle Width="3" Height="26" Fill="#475569" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+            <!-- 左右对顶双三角阀体 (SVG Path) -->
+            <Path Data="M 3,7 L 39,20 L 3,33 Z M 77,7 L 41,20 L 77,33 Z"
+                  Fill="{Binding ValveProps.IsOpen, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#0D2818|#2A0808}"
+                  Stroke="{Binding ValveProps.IsOpen, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#10B981|#EF4444}"
+                  StrokeThickness="2"
+                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+            <!-- 右侧法兰接口 -->
+            <Rectangle Width="3" Height="26" Fill="#475569" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+            <!-- 阀芯中心开闭微标 -->
+            <Ellipse Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center"
+                     Fill="{Binding ValveProps.IsOpen, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#10B981|#EF4444}"
+                     Stroke="#0F172A" StrokeThickness="1.5">
+                <Ellipse.Effect>
+                    <DropShadowEffect Color="{Binding ValveProps.IsOpen, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#10B981|#EF4444}"
+                                      BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                </Ellipse.Effect>
+            </Ellipse>
+        </Grid>
+
+        <!-- 3. 底部状态与名称 -->
+        <StackPanel Grid.Row="2" HorizontalAlignment="Center" Margin="0,2,0,0">
+            <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="Bold" Foreground="#F8FAFC" HorizontalAlignment="Center"/>
+            <TextBlock Text="{Binding ValveProps.StateText, FallbackValue='已开启'}" FontSize="9" FontWeight="SemiBold"
+                       Foreground="{Binding ValveProps.IsOpen, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#34D399|#F87171}"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

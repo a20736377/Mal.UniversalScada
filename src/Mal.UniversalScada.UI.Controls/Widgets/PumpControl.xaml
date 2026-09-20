@@ -1,0 +1,84 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.Widgets.PumpControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
+    <UserControl.Resources>
+        <!-- 叶轮 360° 顺时针旋转循环动画 -->
+        <Storyboard x:Key="ImpellerRotationAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="ImpellerRotation"
+                             Storyboard.TargetProperty="Angle"
+                             From="0" To="360" Duration="0:0:1.2"/>
+        </Storyboard>
+    </UserControl.Resources>
+
+    <Grid Margin="4" Cursor="Hand" Background="Transparent" ToolTip="点击切换循环泵启/停控制">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>    <!-- 泵体与旋转叶轮 -->
+            <RowDefinition Height="Auto"/> <!-- 底部状态与转速 -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. 离心泵蜗壳主体与进出法兰 -->
+        <Grid Grid.Row="0" Width="96" Height="96" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- 顶部切向流体出水口法兰 -->
+            <Rectangle Width="20" Height="4" Fill="#475569" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,16,0"/>
+            <Rectangle Width="14" Height="8" Fill="#1E293B" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,19,0"/>
+
+            <!-- 底部电机支架底座 -->
+            <Path Data="M 18,88 L 78,88 L 84,94 L 12,94 Z" Fill="#334155" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+
+            <!-- 离心泵圆形蜗壳外壁 -->
+            <Ellipse Width="76" Height="76"
+                     Fill="#090E17"
+                     Stroke="{Binding PumpProps.IsRunning, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#10B981|#475569}"
+                     StrokeThickness="3"
+                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Ellipse.Effect>
+                    <DropShadowEffect Color="{Binding PumpProps.IsRunning, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#10B981|#000000}"
+                                      BlurRadius="10" ShadowDepth="0" Opacity="0.6"/>
+                </Ellipse.Effect>
+            </Ellipse>
+
+            <!-- 内部流体导流同心环 -->
+            <Ellipse Width="58" Height="58"
+                     Stroke="{Binding PumpProps.IsRunning, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#065F46|#1E293B}"
+                     StrokeThickness="1.5" StrokeDashArray="4,3"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+            <!-- 【内部 4 叶旋转叶轮】 -->
+            <Grid x:Name="ImpellerHost" Width="44" Height="44" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                <Grid.RenderTransform>
+                    <RotateTransform x:Name="ImpellerRotation" Angle="0"/>
+                </Grid.RenderTransform>
+
+                <!-- 叶片 1 与 3 (垂直向) -->
+                <Path Data="M 20,4 C 20,16 24,16 24,4 Z M 20,40 C 20,28 24,28 24,40 Z"
+                      Fill="{Binding PumpProps.IsRunning, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#34D399|#94A3B8}"/>
+
+                <!-- 叶片 2 与 4 (水平向) -->
+                <Path Data="M 4,20 C 16,20 16,24 4,24 Z M 40,20 C 28,20 28,24 40,24 Z"
+                      Fill="{Binding PumpProps.IsRunning, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#34D399|#94A3B8}"/>
+
+                <!-- 中心轴承盖 -->
+                <Ellipse Width="10" Height="10"
+                         Fill="{Binding PumpProps.IsRunning, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#10B981|#64748B}"
+                         Stroke="#0F172A" StrokeThickness="1.5"/>
+            </Grid>
+        </Grid>
+
+        <!-- 2. 底部状态与转速信息 -->
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,2,0,0">
+            <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="Bold" Foreground="#F8FAFC" HorizontalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding PumpProps.StateText, FallbackValue='运转中'}" FontSize="9" FontWeight="SemiBold"
+                           Foreground="{Binding PumpProps.IsRunning, Converter={x:Static vm:WidgetUiConverters.BoolToColorBrush}, ConverterParameter=#34D399|#94A3B8}"/>
+                <TextBlock Text=" | " FontSize="9" Foreground="#334155"/>
+                <TextBlock Text="{Binding PumpProps.RotationSpeedRpm, StringFormat='{}{0:F0} RPM'}" FontSize="9" FontFamily="Consolas"
+                           Foreground="#38BDF8"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

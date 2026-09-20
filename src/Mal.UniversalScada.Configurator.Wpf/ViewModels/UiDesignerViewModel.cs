@@ -98,8 +98,84 @@ public partial class UiDesignerViewModel : ObservableObject
         new(WidgetType.StatusLed, "工业状态指示灯", "💡", "三态高光状态灯，带运行/告警标识"),
         new(WidgetType.ControlButton, "普通按钮", "🔘", "下发置位控制指令至下位机点位"),
         new(WidgetType.Pipe, "工艺管道", "🌊", "P&ID 工业工艺管道，带动态介质流动动效"),
+        new(WidgetType.Valve, "工业控制阀", "🚰", "P&ID 工业控制阀，开闭状态流道光效与反转控制"),
+        new(WidgetType.Pump, "离心旋转泵", "🌀", "动力旋转泵，360°旋转叶轮动效与启停控制"),
         new(WidgetType.DeviceStatus, "设备状态卡片", "🖥️", "通信节点状态监视，展示在线/延时/协议/通道")
     };
+
+    #region 撤销重做 (Undo / Redo) 历史栈
+
+    private readonly Stack<List<WidgetConfig>> _undoStack = new();
+    private readonly Stack<List<WidgetConfig>> _redoStack = new();
+    private const int MaxHistorySteps = 50;
+
+    public bool CanUndo => _undoStack.Count > 0;
+    public bool CanRedo => _redoStack.Count > 0;
+
+    public void NotifyHistoryChanged()
+    {
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+    }
+
+    public void PushHistorySnapshot()
+    {
+        if (SelectedView == null) return;
+        var snapshot = Widgets.Select(w => w.ToConfig()).ToList();
+        _undoStack.Push(snapshot);
+        if (_undoStack.Count > MaxHistorySteps)
+        {
+            var list = _undoStack.ToList();
+            list.RemoveAt(list.Count - 1);
+            _undoStack.Clear();
+            for (int i = list.Count - 1; i >= 0; i--) _undoStack.Push(list[i]);
+        }
+        _redoStack.Clear();
+        NotifyHistoryChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUndo))]
+    public void Undo()
+    {
+        if (_undoStack.Count == 0) return;
+
+        var current = Widgets.Select(w => w.ToConfig()).ToList();
+        _redoStack.Push(current);
+
+        var prev = _undoStack.Pop();
+        RestoreFromConfigs(prev);
+        StatusMessage = $"已撤销操作 (历史剩余: {_undoStack.Count} 步)";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRedo))]
+    public void Redo()
+    {
+        if (_redoStack.Count == 0) return;
+
+        var current = Widgets.Select(w => w.ToConfig()).ToList();
+        _undoStack.Push(current);
+
+        var next = _redoStack.Pop();
+        RestoreFromConfigs(next);
+        StatusMessage = $"已重做操作 (重做剩余: {_redoStack.Count} 步)";
+    }
+
+    private void RestoreFromConfigs(List<WidgetConfig> configs)
+    {
+        Widgets.Clear();
+        foreach (var cfg in configs)
+        {
+            Widgets.Add(WidgetViewModel.FromConfig(cfg, isDesignMode: true));
+        }
+        SelectedWidget = Widgets.FirstOrDefault();
+        if (SelectedWidget != null) SelectedWidget.IsSelected = true;
+        NotifySelectionChanged();
+        NotifyHistoryChanged();
+    }
+
+    #endregion
 
     public UiDesignerViewModel(IConfigurationService configService)
     {
@@ -230,6 +306,9 @@ public partial class UiDesignerViewModel : ObservableObject
     {
         Widgets.Clear();
         SelectedWidget = null;
+        _undoStack.Clear();
+        _redoStack.Clear();
+        NotifyHistoryChanged();
 
         if (SelectedView == null) return;
 
@@ -275,19 +354,36 @@ public partial class UiDesignerViewModel : ObservableObject
     public bool HasMultipleSelection => Widgets.Count(w => w.IsSelected) >= 2;
     public bool HasSelection => Widgets.Any(w => w.IsSelected) || SelectedWidget != null;
     public int SelectedCount => Widgets.Count(w => w.IsSelected);
+    public bool CanGroup => Widgets.Count(w => w.IsSelected) >= 2;
+    public bool CanUngroup => Widgets.Any(w => w.IsSelected && !string.IsNullOrEmpty(w.GroupId));
 
     public void NotifySelectionChanged()
     {
         OnPropertyChanged(nameof(HasMultipleSelection));
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(SelectedCount));
+        OnPropertyChanged(nameof(CanGroup));
+        OnPropertyChanged(nameof(CanUngroup));
+        GroupSelectedWidgetsCommand.NotifyCanExecuteChanged();
+        UngroupSelectedWidgetsCommand.NotifyCanExecuteChanged();
     }
 
     private void OnWidgetSelectionRequested(WidgetViewModel vm, bool isCtrl)
     {
         if (isCtrl)
         {
-            vm.IsSelected = !vm.IsSelected;
+            bool targetState = !vm.IsSelected;
+            vm.IsSelected = targetState;
+
+            // 同组成员联动切换
+            if (!string.IsNullOrEmpty(vm.GroupId))
+            {
+                foreach (var peer in Widgets.Where(w => w.GroupId == vm.GroupId && w != vm))
+                {
+                    peer.IsSelected = targetState;
+                }
+            }
+
             if (vm.IsSelected)
             {
                 SelectedWidget = vm;
@@ -303,12 +399,26 @@ public partial class UiDesignerViewModel : ObservableObject
             {
                 foreach (var w in Widgets)
                 {
-                    w.IsSelected = (w == vm);
+                    if (!string.IsNullOrEmpty(vm.GroupId))
+                    {
+                        w.IsSelected = (w.GroupId == vm.GroupId);
+                    }
+                    else
+                    {
+                        w.IsSelected = (w == vm);
+                    }
                 }
                 SelectedWidget = vm;
             }
             else
             {
+                if (!string.IsNullOrEmpty(vm.GroupId))
+                {
+                    foreach (var peer in Widgets.Where(w => w.GroupId == vm.GroupId))
+                    {
+                        peer.IsSelected = true;
+                    }
+                }
                 SelectedWidget = vm;
             }
         }
@@ -317,6 +427,14 @@ public partial class UiDesignerViewModel : ObservableObject
 
     private void OnWidgetSelected(WidgetViewModel vm)
     {
+        // 若点击选中的组件包含 GroupId，确保同组成员也联动保持选中
+        if (!string.IsNullOrEmpty(vm.GroupId))
+        {
+            foreach (var peer in Widgets.Where(w => w.GroupId == vm.GroupId))
+            {
+                peer.IsSelected = true;
+            }
+        }
         NotifySelectionChanged();
     }
 
@@ -324,6 +442,47 @@ public partial class UiDesignerViewModel : ObservableObject
     {
         DeleteWidget(vm);
     }
+
+    #region 组件编组与解组 (Group / Ungroup)
+
+    [RelayCommand(CanExecute = nameof(CanGroup))]
+    public void GroupSelectedWidgets()
+    {
+        var targets = Widgets.Where(w => w.IsSelected).ToList();
+        if (targets.Count < 2) return;
+
+        PushHistorySnapshot();
+        string newGroupId = "grp_" + Guid.NewGuid().ToString("N")[..8];
+        foreach (var w in targets)
+        {
+            w.GroupId = newGroupId;
+        }
+        NotifySelectionChanged();
+        StatusMessage = $"已将选中的 {targets.Count} 个组件编组 (组ID: {newGroupId})";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUngroup))]
+    public void UngroupSelectedWidgets()
+    {
+        var targets = Widgets.Where(w => w.IsSelected && !string.IsNullOrEmpty(w.GroupId)).ToList();
+        if (targets.Count == 0) return;
+
+        PushHistorySnapshot();
+        var targetGroupIds = targets.Select(w => w.GroupId).Distinct().ToHashSet();
+        int affectedCount = 0;
+        foreach (var w in Widgets)
+        {
+            if (w.GroupId != null && targetGroupIds.Contains(w.GroupId))
+            {
+                w.GroupId = null;
+                affectedCount++;
+            }
+        }
+        NotifySelectionChanged();
+        StatusMessage = $"已解除选中的组件编组 (涉及 {affectedCount} 个图元)";
+    }
+
+    #endregion
 
     #region 画布排版与多选对齐
 
@@ -333,6 +492,7 @@ public partial class UiDesignerViewModel : ObservableObject
         var targets = Widgets.Where(w => w.IsSelected).ToList();
         if (targets.Count < 2) return;
 
+        PushHistorySnapshot();
         double minX = targets.Min(w => w.X);
         foreach (var w in targets) w.X = minX;
         StatusMessage = $"已将 {targets.Count} 个组件左对齐 (X={minX})";
@@ -344,6 +504,7 @@ public partial class UiDesignerViewModel : ObservableObject
         var targets = Widgets.Where(w => w.IsSelected).ToList();
         if (targets.Count < 2) return;
 
+        PushHistorySnapshot();
         double maxRight = targets.Max(w => w.X + w.Width);
         foreach (var w in targets) w.X = maxRight - w.Width;
         StatusMessage = $"已将 {targets.Count} 个组件右对齐";
@@ -355,6 +516,7 @@ public partial class UiDesignerViewModel : ObservableObject
         var targets = Widgets.Where(w => w.IsSelected).ToList();
         if (targets.Count < 2) return;
 
+        PushHistorySnapshot();
         double minY = targets.Min(w => w.Y);
         foreach (var w in targets) w.Y = minY;
         StatusMessage = $"已将 {targets.Count} 个组件顶端对齐 (Y={minY})";
@@ -366,6 +528,7 @@ public partial class UiDesignerViewModel : ObservableObject
         var targets = Widgets.Where(w => w.IsSelected).ToList();
         if (targets.Count < 2) return;
 
+        PushHistorySnapshot();
         double maxBottom = targets.Max(w => w.Y + w.Height);
         foreach (var w in targets) w.Y = maxBottom - w.Height;
         StatusMessage = $"已将 {targets.Count} 个组件底端对齐";
@@ -377,6 +540,7 @@ public partial class UiDesignerViewModel : ObservableObject
         var targets = Widgets.Where(w => w.IsSelected).ToList();
         if (targets.Count < 2) return;
 
+        PushHistorySnapshot();
         double avgCenterX = targets.Average(w => w.X + w.Width / 2.0);
         foreach (var w in targets) w.X = Math.Round((avgCenterX - w.Width / 2.0) / 10.0) * 10.0;
         StatusMessage = $"已将 {targets.Count} 个组件水平中线居中对齐";
@@ -388,6 +552,7 @@ public partial class UiDesignerViewModel : ObservableObject
         var targets = Widgets.Where(w => w.IsSelected).ToList();
         if (targets.Count < 2) return;
 
+        PushHistorySnapshot();
         double avgCenterY = targets.Average(w => w.Y + w.Height / 2.0);
         foreach (var w in targets) w.Y = Math.Round((avgCenterY - w.Height / 2.0) / 10.0) * 10.0;
         StatusMessage = $"已将 {targets.Count} 个组件垂直中线居中对齐";
@@ -403,6 +568,7 @@ public partial class UiDesignerViewModel : ObservableObject
             return;
         }
 
+        PushHistorySnapshot();
         var sorted = targets.OrderBy(w => w.X).ToList();
         double totalItemsWidth = sorted.Sum(w => w.Width);
         double span = (sorted.Last().X + sorted.Last().Width) - sorted.First().X;
@@ -428,6 +594,7 @@ public partial class UiDesignerViewModel : ObservableObject
             return;
         }
 
+        PushHistorySnapshot();
         var sorted = targets.OrderBy(w => w.Y).ToList();
         double totalItemsHeight = sorted.Sum(w => w.Height);
         double span = (sorted.Last().Y + sorted.Last().Height) - sorted.First().Y;
@@ -454,6 +621,7 @@ public partial class UiDesignerViewModel : ObservableObject
         if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
         if (selected.Count == 0) return;
 
+        PushHistorySnapshot();
         foreach (var w in selected)
         {
             Widgets.Remove(w);
@@ -469,6 +637,7 @@ public partial class UiDesignerViewModel : ObservableObject
         if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
         if (selected.Count == 0) return;
 
+        PushHistorySnapshot();
         for (int i = 0; i < selected.Count; i++)
         {
             Widgets.Remove(selected[i]);
@@ -484,6 +653,7 @@ public partial class UiDesignerViewModel : ObservableObject
         if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
         if (selected.Count == 0) return;
 
+        PushHistorySnapshot();
         for (int i = Widgets.Count - 2; i >= 0; i--)
         {
             if (Widgets[i].IsSelected && !Widgets[i + 1].IsSelected)
@@ -501,6 +671,7 @@ public partial class UiDesignerViewModel : ObservableObject
         if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
         if (selected.Count == 0) return;
 
+        PushHistorySnapshot();
         for (int i = 1; i < Widgets.Count; i++)
         {
             if (Widgets[i].IsSelected && !Widgets[i - 1].IsSelected)
@@ -533,6 +704,7 @@ public partial class UiDesignerViewModel : ObservableObject
     {
         if (_clipboard.Count == 0) return;
 
+        PushHistorySnapshot();
         foreach (var w in Widgets) w.IsSelected = false;
 
         var added = new List<WidgetViewModel>();
@@ -548,6 +720,7 @@ public partial class UiDesignerViewModel : ObservableObject
                 Width = cfg.Width,
                 Height = cfg.Height,
                 PrimaryTagId = cfg.PrimaryTagId,
+                GroupId = cfg.GroupId,
                 Properties = new Dictionary<string, string>(cfg.Properties),
                 Action = cfg.Action != null ? new WidgetActionConfig
                 {
@@ -594,6 +767,7 @@ public partial class UiDesignerViewModel : ObservableObject
         if (selected.Count == 0 && SelectedWidget != null) selected = new() { SelectedWidget };
         if (selected.Count == 0) return;
 
+        PushHistorySnapshot();
         foreach (var w in selected)
         {
             Widgets.Remove(w);
@@ -802,6 +976,8 @@ public partial class UiDesignerViewModel : ObservableObject
     {
         if (SelectedView == null) return;
 
+        PushHistorySnapshot();
+
         var wConfig = new WidgetConfig
         {
             WidgetId = Guid.NewGuid().ToString("N")[..8],
@@ -854,6 +1030,7 @@ public partial class UiDesignerViewModel : ObservableObject
         var target = vm ?? SelectedWidget;
         if (target != null)
         {
+            PushHistorySnapshot();
             Widgets.Remove(target);
             SelectedWidget = Widgets.FirstOrDefault();
             if (SelectedWidget != null) SelectedWidget.IsSelected = true;
@@ -903,6 +1080,8 @@ public partial class UiDesignerViewModel : ObservableObject
         WidgetType.StatusLed => "运行就绪指示灯",
         WidgetType.ControlButton => "普通按钮",
         WidgetType.Pipe => "工艺输送管道",
+        WidgetType.Valve => "工艺管路控制阀",
+        WidgetType.Pump => "离心循环泵",
         WidgetType.DeviceStatus => "设备状态监视卡片",
         _ => "监控卡片"
     };

@@ -47,6 +47,9 @@ public partial class WidgetViewModel : ObservableObject
     [ObservableProperty]
     private bool _isDesignMode;
 
+    [ObservableProperty]
+    private string? _groupId;
+
     // ==========================================
     // 2. 运行时通用数据量 (动态值、品质、报警状态)
     // ==========================================
@@ -137,6 +140,16 @@ public partial class WidgetViewModel : ObservableObject
     /// 快捷转换：设备状态监视卡片专属组合属性
     /// </summary>
     public virtual DeviceStatusProps? DeviceProps => (this as DeviceStatusWidgetViewModel)?.Props;
+
+    /// <summary>
+    /// 快捷转换：工业控制阀门专属组合属性
+    /// </summary>
+    public virtual ValveProps? ValveProps => (this as ValveWidgetViewModel)?.Props;
+
+    /// <summary>
+    /// 快捷转换：工业离心泵专属组合属性
+    /// </summary>
+    public virtual PumpProps? PumpProps => (this as PumpWidgetViewModel)?.Props;
 
     /// <summary>
     /// 当前组件类型可用的样式与行业预设模板列表
@@ -549,6 +562,7 @@ public partial class WidgetViewModel : ObservableObject
         var config = new WidgetConfig
         {
             WidgetId = Id,
+            GroupId = GroupId,
             Type = Type,
             Title = Title,
             PrimaryTagId = PrimaryTagId ?? string.Empty,
@@ -593,6 +607,8 @@ public partial class WidgetViewModel : ObservableObject
             WidgetType.PanelContainer => new PanelContainerWidgetViewModel(),
             WidgetType.Pipe => new PipeWidgetViewModel(),
             WidgetType.DeviceStatus => new DeviceStatusWidgetViewModel(),
+            WidgetType.Valve => new ValveWidgetViewModel(),
+            WidgetType.Pump => new PumpWidgetViewModel(),
             _ => new NumericCardWidgetViewModel()
         };
 
@@ -607,6 +623,7 @@ public partial class WidgetViewModel : ObservableObject
     {
         var vm = Create(config.Type, isDesignMode);
         vm.Id = config.WidgetId;
+        vm.GroupId = config.GroupId;
         vm.Title = config.Title;
         vm.PrimaryTagId = config.PrimaryTagId;
         vm.X = config.X;
@@ -640,6 +657,8 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.PanelContainer => 360,
         WidgetType.Pipe => 240,
         WidgetType.DeviceStatus => 280,
+        WidgetType.Valve => 140,
+        WidgetType.Pump => 140,
         _ => 160
     };
 
@@ -658,6 +677,8 @@ public partial class WidgetViewModel : ObservableObject
         WidgetType.PanelContainer => 260,
         WidgetType.Pipe => 24,
         WidgetType.DeviceStatus => 140,
+        WidgetType.Valve => 90,
+        WidgetType.Pump => 140,
         _ => 140
     };
 }

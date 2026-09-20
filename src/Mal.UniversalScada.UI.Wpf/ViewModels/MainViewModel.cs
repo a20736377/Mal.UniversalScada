@@ -26,6 +26,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly IAuditService _auditService;
     private readonly IRecipeService _recipeService;
     private readonly IScreenManager _screenManager;
+    private readonly IUserAuthService _authService;
 
     private readonly List<ChannelConfig> _channels = new();
     private readonly List<DeviceNode> _devices = new();
@@ -75,6 +76,31 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private int _packetCounter = 0;
 
+    public string CurrentUsername => _authService.CurrentUser.Username;
+    public string CurrentUserRoleName => _authService.CurrentUser.Role switch
+    {
+        UserRole.Administrator => "系统管理员",
+        UserRole.Engineer => "工程师",
+        UserRole.Operator => "操作员",
+        _ => "访客 (只读)"
+    };
+    public string CurrentUserRoleBadgeColor => _authService.CurrentUser.Role switch
+    {
+        UserRole.Administrator => "#DC2626", // 红
+        UserRole.Engineer => "#8B5CF6",      // 紫
+        UserRole.Operator => "#10B981",      // 绿
+        _ => "#64748B"                       // 灰
+    };
+    public bool IsLoggedIn => _authService.CurrentUser.Role > UserRole.Guest;
+
+    public void RefreshUserState()
+    {
+        OnPropertyChanged(nameof(CurrentUsername));
+        OnPropertyChanged(nameof(CurrentUserRoleName));
+        OnPropertyChanged(nameof(CurrentUserRoleBadgeColor));
+        OnPropertyChanged(nameof(IsLoggedIn));
+    }
+
     public MainViewModel(
         IConfigurationService configService, 
         ITagTester tagTester,
@@ -84,6 +110,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IAuditService auditService,
         IRecipeService recipeService,
         IScreenManager screenManager,
+        IUserAuthService authService,
         AlarmBannerViewModel alarmBanner)
     {
         _configService = configService ?? throw new ArgumentNullException(nameof(configService));
@@ -94,7 +121,14 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
         _recipeService = recipeService ?? throw new ArgumentNullException(nameof(recipeService));
         _screenManager = screenManager ?? throw new ArgumentNullException(nameof(screenManager));
+        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _alarmBanner = alarmBanner ?? throw new ArgumentNullException(nameof(alarmBanner));
+
+        // 订阅用户身份变更通知
+        _authService.CurrentUserChanged += (s, user) =>
+        {
+            Application.Current?.Dispatcher.Invoke(RefreshUserState);
+        };
 
         // 订阅控制按钮下发事件
         ControlButtonControl.ExecuteRequested += OnWidgetControlExecuted;
@@ -216,6 +250,34 @@ public partial class MainViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             StatusMessage = $"载入画面失败: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// 热重载画面方案列表（与设计器最新保存的数据保持实时同步）
+    /// </summary>
+    [RelayCommand]
+    public async Task ReloadViewsAsync()
+    {
+        try
+        {
+            var previousViewId = CurrentView?.ViewId;
+            var list = await _configService.GetUiViewsAsync();
+            Views.Clear();
+            foreach (var item in list)
+            {
+                Views.Add(item);
+            }
+
+            CurrentView = Views.FirstOrDefault(v => v.ViewId == previousViewId)
+                       ?? Views.FirstOrDefault(v => v.IsDefault)
+                       ?? Views.FirstOrDefault();
+
+            StatusMessage = $"🔄 已同步最新画面方案列表 (共加载 {Views.Count} 个画面)";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"同步画面方案失败: {ex.Message}";
         }
     }
 
@@ -379,8 +441,60 @@ public partial class MainViewModel : ObservableObject, IDisposable
         };
     }
 
+    public bool EnsurePermission(UserRole requiredRole, string operationName)
+    {
+        if (_authService.CheckPermission(requiredRole))
+        {
+            return true;
+        }
+
+        // 访客或权限不足，弹窗登录提权
+        var loginWin = new Views.LoginWindow(_authService, requiredRole, $"执行【{operationName}】需要【{GetRoleDisplayName(requiredRole)}】或更高权限，请登录验证。")
+        {
+            Owner = Application.Current?.MainWindow
+        };
+
+        bool? res = loginWin.ShowDialog();
+        RefreshUserState();
+        return res == true && _authService.CheckPermission(requiredRole);
+    }
+
+    private static string GetRoleDisplayName(UserRole role) => role switch
+    {
+        UserRole.Administrator => "系统管理员",
+        UserRole.Engineer => "工程师",
+        UserRole.Operator => "操作员",
+        _ => "访客"
+    };
+
+    [RelayCommand]
+    public void SwitchUser()
+    {
+        var loginWin = new Views.LoginWindow(_authService, UserRole.Operator, "请登录或切换不同角色账号。")
+        {
+            Owner = Application.Current?.MainWindow
+        };
+        loginWin.ShowDialog();
+        RefreshUserState();
+        StatusMessage = $"当前已切换登录用户: {_authService.CurrentUser.Username} ({CurrentUserRoleName})";
+    }
+
+    [RelayCommand]
+    public void Logout()
+    {
+        _authService.Logout();
+        RefreshUserState();
+        StatusMessage = "当前用户已注销，恢复为访客只读模式";
+    }
+
     private void OnWidgetControlExecuted(WidgetViewModel widget)
     {
+        if (!EnsurePermission(UserRole.Operator, $"组件控制下发: {widget.Title}"))
+        {
+            StatusMessage = "⚠️ 权限拦截: 访客无下发控制指令权限";
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(widget.PrimaryTagId))
         {
             MessageBox.Show($"组件【{widget.Title}】未配置绑定的点位 (PrimaryTagId)！", "操作提示", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -391,11 +505,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
         var tag = _tags.FirstOrDefault(t => t.TagId == widget.PrimaryTagId);
         var device = tag != null ? _devices.FirstOrDefault(d => d.DeviceId == tag.DeviceId) : null;
         var channel = device != null ? _channels.FirstOrDefault(c => c.ChannelId == device.ChannelId) : null;
+        var operatorName = _authService.CurrentUser.Username;
 
         Task.Run(async () =>
         {
             // 记录安全审计追踪日志
-            await _auditService.RecordTagWriteAsync("Operator", widget.PrimaryTagId, null, writeVal, true, 0, $"组件控制下发: {widget.Title}");
+            await _auditService.RecordTagWriteAsync(operatorName, widget.PrimaryTagId, null, writeVal, true, 0, $"组件控制下发: {widget.Title}");
 
             if (tag != null && device != null && channel != null)
             {
@@ -491,6 +606,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task ApplySelectedRecipeAsync()
     {
+        if (!EnsurePermission(UserRole.Operator, "下发工艺配方"))
+        {
+            StatusMessage = "⚠️ 权限拦截: 访客无批量下发工艺配方权限";
+            return;
+        }
+
         if (SelectedRecipe == null)
         {
             MessageBox.Show("请先选择要下发的工艺配方！", "配方提示", MessageBoxButton.OK, MessageBoxImage.Warning);

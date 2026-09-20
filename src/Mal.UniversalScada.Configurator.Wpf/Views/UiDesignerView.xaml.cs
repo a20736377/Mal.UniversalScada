@@ -49,7 +49,27 @@ public partial class UiDesignerView : UserControl
         bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
         double step = isShift ? 10.0 : 1.0;
 
-        if (isCtrl && e.Key == Key.C)
+        if (isCtrl && e.Key == Key.Z)
+        {
+            if (vm.CanUndo) vm.UndoCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (isCtrl && e.Key == Key.Y)
+        {
+            if (vm.CanRedo) vm.RedoCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (isCtrl && isShift && e.Key == Key.G)
+        {
+            if (vm.CanUngroup) vm.UngroupSelectedWidgetsCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (isCtrl && !isShift && e.Key == Key.G)
+        {
+            if (vm.CanGroup) vm.GroupSelectedWidgetsCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (isCtrl && e.Key == Key.C)
         {
             vm.CopySelectionCommand.Execute(null);
             e.Handled = true;

@@ -49,6 +49,15 @@
                                       Width="180" Height="28" FontSize="12" FontWeight="Bold"
                                       Background="#1E293B" Foreground="#38BDF8" BorderBrush="#38BDF8" BorderThickness="1"
                                       VerticalContentAlignment="Center" Cursor="Hand"/>
+                            <Button Content="🔄 刷新" Margin="6,0,0,0" Height="28" Padding="8,2" FontSize="11" FontWeight="Bold"
+                                    Background="#1E293B" Foreground="#38BDF8" BorderBrush="#334155" BorderThickness="1" Cursor="Hand"
+                                    Command="{Binding ReloadViewsCommand}" ToolTip="热重载最新的画面方案列表 (同步设计器配置)">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="4"/>
+                                    </Style>
+                                </Button.Resources>
+                            </Button>
                         </StackPanel>
                     </Border>
 
@@ -129,6 +138,27 @@
                             </Style>
                         </Button.Resources>
                     </Button>
+
+                    <!-- 用户身份与权限指示微标 -->
+                    <Border Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Margin="0,0,6,0"
+                                     Fill="{Binding CurrentUserRoleBadgeColor}"/>
+                            <TextBlock Text="{Binding CurrentUsername}" FontWeight="Bold" FontSize="11" Foreground="#F8FAFC" Margin="0,0,4,0"/>
+                            <Border Background="#1E293B" CornerRadius="3" Padding="4,1" Margin="2,0,6,0">
+                                <TextBlock Text="{Binding CurrentUserRoleName}" FontSize="10" Foreground="#94A3B8"/>
+                            </Border>
+                            <Button Content="切换用户" Height="22" Padding="6,1" FontSize="10" FontWeight="SemiBold"
+                                    Background="#0284C7" Foreground="#FFFFFF" BorderThickness="0" Cursor="Hand"
+                                    Command="{Binding SwitchUserCommand}">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="3"/>
+                                    </Style>
+                                </Button.Resources>
+                            </Button>
+                        </StackPanel>
+                    </Border>
 
                     <!-- 实时时钟 -->
                     <StackPanel VerticalAlignment="Center">

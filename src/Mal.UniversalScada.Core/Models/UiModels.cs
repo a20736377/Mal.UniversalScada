@@ -70,7 +70,17 @@ public enum WidgetType
     /// <summary>
     /// 工业设备状态监视卡片 (绑定通信设备，展示在线/离线、通信延迟、协议与通道拓扑)
     /// </summary>
-    DeviceStatus = 13
+    DeviceStatus = 13,
+
+    /// <summary>
+    /// P&amp;ID 工业控制阀门 (支持开闭状态切换与流道开启动效)
+    /// </summary>
+    Valve = 14,
+
+    /// <summary>
+    /// 工业旋转离心泵 (支持叶轮旋转动效与运行状态指示)
+    /// </summary>
+    Pump = 15
 }
 
 /// <summary>
@@ -108,6 +118,11 @@ public class WidgetConfig
     /// 控件全局唯一 ID
     /// </summary>
     public string WidgetId { get; set; } = Guid.NewGuid().ToString("N");
+
+    /// <summary>
+    /// 所属成组的分组 ID (若未成组则为空)
+    /// </summary>
+    public string? GroupId { get; set; }
 
     /// <summary>
     /// 控件标题 / 友好名称 (如 "1号主轴转速", "反应釜液位", "急停状态")
