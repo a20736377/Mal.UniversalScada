@@ -86,6 +86,11 @@ public partial class WidgetViewModel : ObservableObject
     public virtual CircularGaugeProps? GaugeProps => (this as CircularGaugeWidgetViewModel)?.Props;
 
     /// <summary>
+    /// 快捷转换：180° 拱形仪表盘专属组合属性
+    /// </summary>
+    public virtual ArcGaugeProps? ArcGaugeProps => (this as ArcGaugeWidgetViewModel)?.Props;
+
+    /// <summary>
     /// 快捷转换：储罐专属组合属性
     /// </summary>
     public virtual TankLevelProps? TankProps => (this as TankLevelWidgetViewModel)?.Props;
@@ -596,6 +601,7 @@ public partial class WidgetViewModel : ObservableObject
         WidgetViewModel vm = type switch
         {
             WidgetType.GaugeCircular => new CircularGaugeWidgetViewModel(),
+            WidgetType.GaugeArc => new ArcGaugeWidgetViewModel(),
             WidgetType.LevelTank => new TankLevelWidgetViewModel(),
             WidgetType.NumericCard => new NumericCardWidgetViewModel(),
             WidgetType.IoMatrix => new IoMatrixWidgetViewModel(),
@@ -645,6 +651,7 @@ public partial class WidgetViewModel : ObservableObject
     public static double GetDefaultWidth(WidgetType type) => type switch
     {
         WidgetType.GaugeCircular => 180,
+        WidgetType.GaugeArc => 200,
         WidgetType.LevelTank => 150,
         WidgetType.NumericCard => 190,
         WidgetType.IoMatrix => 280,
@@ -665,6 +672,7 @@ public partial class WidgetViewModel : ObservableObject
     public static double GetDefaultHeight(WidgetType type) => type switch
     {
         WidgetType.GaugeCircular => 180,
+        WidgetType.GaugeArc => 140,
         WidgetType.LevelTank => 220,
         WidgetType.NumericCard => 130,
         WidgetType.IoMatrix => 115,

@@ -483,5 +483,90 @@ public partial class PumpProps : ObservableObject
     }
 }
 
+/// <summary>
+/// 180° 半圆弧形/拱形仪表盘专属组合属性类（包含量程、告警阈值、180°表盘几何刻度线、发光青蓝指针及双行读数排版）
+/// </summary>
+public partial class ArcGaugeProps : ObservableObject
+{
+    [ObservableProperty]
+    private double _minValue = -10000;
+
+    [ObservableProperty]
+    private double _maxValue = 10000;
+
+    [ObservableProperty]
+    private string _unit = "rpm";
+
+    [ObservableProperty]
+    private double? _highAlarm;
+
+    [ObservableProperty]
+    private double? _lowAlarm;
+
+    [ObservableProperty]
+    private int _decimals = 1;
+
+    [ObservableProperty]
+    private string _colorHex = "#00D2FF"; // 霓虹天蓝/青蓝发光色
+
+    [ObservableProperty]
+    private double _needleAngle = 0; // -90° (左水平) ~ +90° (右水平), 0° (竖直朝上)
+
+    [ObservableProperty]
+    private double _normalizedProgress = 0.5;
+
+    [ObservableProperty]
+    private string _outerArcPathData = string.Empty;
+
+    [ObservableProperty]
+    private string _majorTicksPathData = string.Empty;
+
+    [ObservableProperty]
+    private string _minorTicksPathData = string.Empty;
+
+    // 6 个主分度刻度数值文本
+    [ObservableProperty]
+    private string _scaleText1 = "-10000.0";
+    [ObservableProperty]
+    private double _scaleX1 = 28;
+    [ObservableProperty]
+    private double _scaleY1 = 100;
+
+    [ObservableProperty]
+    private string _scaleText2 = "-6000.0";
+    [ObservableProperty]
+    private double _scaleX2 = 45;
+    [ObservableProperty]
+    private double _scaleY2 = 56;
+
+    [ObservableProperty]
+    private string _scaleText3 = "-2000.0";
+    [ObservableProperty]
+    private double _scaleX3 = 78;
+    [ObservableProperty]
+    private double _scaleY3 = 28;
+
+    [ObservableProperty]
+    private string _scaleText4 = "2000.0";
+    [ObservableProperty]
+    private double _scaleX4 = 122;
+    [ObservableProperty]
+    private double _scaleY4 = 28;
+
+    [ObservableProperty]
+    private string _scaleText5 = "6000.0";
+    [ObservableProperty]
+    private double _scaleX5 = 155;
+    [ObservableProperty]
+    private double _scaleY5 = 56;
+
+    [ObservableProperty]
+    private string _scaleText6 = "10000.0";
+    [ObservableProperty]
+    private double _scaleX6 = 172;
+    [ObservableProperty]
+    private double _scaleY6 = 100;
+}
+
 
 

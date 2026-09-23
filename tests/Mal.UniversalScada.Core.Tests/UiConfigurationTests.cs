@@ -411,10 +411,10 @@ public class UiConfigurationTests
         Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.DisplayBox, TagDataType.Bool));
         Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.DisplayBox, TagDataType.String));
 
-        // 3. TextLabel (文本标签) 匹配所有类型 (亦支持不绑点位)
-        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.TextLabel, TagDataType.Float));
-        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.TextLabel, TagDataType.Bool));
-        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.TextLabel, TagDataType.String));
+        // 3. TextLabel (文本标签) 纯静态展示文本，无需绑定采集点位
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.TextLabel, TagDataType.Float));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.TextLabel, TagDataType.Bool));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.TextLabel, TagDataType.String));
 
         // 4. PanelContainer (容器) 纯装饰与分组容器，不匹配任何点位
         Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.PanelContainer, TagDataType.Float));
@@ -1125,7 +1125,94 @@ public class UiConfigurationTests
         Assert.Equal(175, devVm.Height);
         Assert.False(devVm.IsCompact);
     }
+
+    [Fact]
+    public void ArcGauge_ViewModel_ScaleGeometryAndDynamicValues_ShouldCalculateAccurately()
+    {
+        // 1. 创建控件 ViewModel 并验证默认参数
+        var vm = WidgetViewModel.Create(WidgetType.GaugeArc);
+        Assert.IsType<ArcGaugeWidgetViewModel>(vm);
+        var gauge = (ArcGaugeWidgetViewModel)vm;
+
+        Assert.Equal(WidgetType.GaugeArc, gauge.Type);
+        Assert.Equal(200, gauge.Width);
+        Assert.Equal(140, gauge.Height);
+        Assert.NotNull(gauge.ArcGaugeProps);
+
+        // 2. 验证默认几何路径与 6 个刻度标签
+        Assert.False(string.IsNullOrWhiteSpace(gauge.Props.OuterArcPathData));
+        Assert.False(string.IsNullOrWhiteSpace(gauge.Props.MajorTicksPathData));
+        Assert.False(string.IsNullOrWhiteSpace(gauge.Props.MinorTicksPathData));
+
+        Assert.Equal("-10000.0", gauge.Props.ScaleText1);
+        Assert.Equal("-6000.0", gauge.Props.ScaleText2);
+        Assert.Equal("-2000.0", gauge.Props.ScaleText3);
+        Assert.Equal("2000.0", gauge.Props.ScaleText4);
+        Assert.Equal("6000.0", gauge.Props.ScaleText5);
+        Assert.Equal("10000.0", gauge.Props.ScaleText6);
+
+        // 3. 验证指针角度线性映射与动态读数
+        // 下限 (-10000) 对应 -90°
+        gauge.UpdateRuntimeValue(-10000);
+        Assert.Equal("-10000.0", gauge.FormattedValue);
+        Assert.Equal(-90.0, gauge.Props.NeedleAngle, precision: 1);
+        Assert.Equal(0.0, gauge.NormalizedProgress, precision: 2);
+
+        // 中间值 (0) 对应 0°
+        gauge.UpdateRuntimeValue(0);
+        Assert.Equal("0.0", gauge.FormattedValue);
+        Assert.Equal(0.0, gauge.Props.NeedleAngle, precision: 1);
+        Assert.Equal(0.5, gauge.NormalizedProgress, precision: 2);
+
+        // 上限 (10000) 对应 +90°
+        gauge.UpdateRuntimeValue(10000);
+        Assert.Equal("10000.0", gauge.FormattedValue);
+        Assert.Equal(90.0, gauge.Props.NeedleAngle, precision: 1);
+        Assert.Equal(1.0, gauge.NormalizedProgress, precision: 2);
+
+        // 微小负值 (-0.67) 对应接近 0° 但偏负的角度
+        gauge.UpdateRuntimeValue(-0.67);
+        Assert.Equal("-0.7", gauge.FormattedValue);
+        Assert.True(gauge.Props.NeedleAngle < 0 && gauge.Props.NeedleAngle > -1.0);
+
+        // 4. 验证样式预设应用 (切换为双极性电流表 -1.0 ~ 1.0 ARMS)
+        var presets = WidgetStylePresetCatalog.GetPresets(WidgetType.GaugeArc);
+        Assert.True(presets.Count >= 2);
+
+        var currentPreset = presets.FirstOrDefault(p => p.Id == "ArcGauge_Current_RMS_1");
+        Assert.NotNull(currentPreset);
+        gauge.ApplyPreset(currentPreset!);
+
+        Assert.Equal(-1.0, gauge.MinValue);
+        Assert.Equal(1.0, gauge.MaxValue);
+        Assert.Equal("ARMS", gauge.Unit);
+        Assert.Equal("-1.0", gauge.Props.ScaleText1);
+        Assert.Equal("-0.6", gauge.Props.ScaleText2);
+        Assert.Equal("-0.2", gauge.Props.ScaleText3);
+        Assert.Equal("0.2", gauge.Props.ScaleText4);
+        Assert.Equal("0.6", gauge.Props.ScaleText5);
+        Assert.Equal("1.0", gauge.Props.ScaleText6);
+
+        // 运行时测试 -0.7 ARMS 对应角度与读数
+        gauge.UpdateRuntimeValue(-0.7);
+        Assert.Equal("-0.7", gauge.FormattedValue);
+        // ratio = (-0.7 - (-1.0)) / 2.0 = 0.3 / 2.0 = 0.15 => angle = -90 + 0.15*180 = -63°
+        Assert.Equal(-63.0, gauge.Props.NeedleAngle, precision: 1);
+
+        // 5. 验证属性序列化与反序列化
+        gauge.SyncPropertiesFromFields();
+        Assert.Equal("-1", gauge.Properties["MinValue"]);
+        Assert.Equal("1", gauge.Properties["MaxValue"]);
+        Assert.Equal("ARMS", gauge.Properties["Unit"]);
+
+        var restoredGauge = new ArcGaugeWidgetViewModel();
+        restoredGauge.LoadProperties(gauge.Properties);
+        Assert.Equal(-1.0, restoredGauge.MinValue);
+        Assert.Equal(1.0, restoredGauge.MaxValue);
+        Assert.Equal("ARMS", restoredGauge.Unit);
+    }
 }
+
 
 
 

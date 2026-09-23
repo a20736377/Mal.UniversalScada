@@ -420,38 +420,41 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 标题 -->
-                            <TextBlock Text="展示标题 / 标签 (Title):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedWidget.Title, UpdateSourceTrigger=PropertyChanged}" Height="30" Margin="0,0,0,10"/>
+                            <!-- 标题 (对普通组件展示，对 TextLabel 纯静态文本组件直接在下方专属面板编辑，无需重复标题) -->
+                            <StackPanel Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='!TextLabel'}">
+                                <TextBlock Text="展示标题 / 标签 (Title):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding SelectedWidget.Title, UpdateSourceTrigger=PropertyChanged}" Height="30" Margin="0,0,0,10"/>
+                            </StackPanel>
+                            <!-- 绑定主点位 (带数据类型精准过滤，静态标签与容器组件无需绑定) -->
+                            <StackPanel Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='!TextLabel,!PanelContainer'}">
+                                <DockPanel Margin="0,0,0,4">
+                                    <TextBlock Text="绑定采集点位 (Tag):" FontSize="11" Foreground="#475569" VerticalAlignment="Center"/>
+                                    <TextBlock Text="🎯 仅显示兼容数据类型" FontSize="9" Foreground="#0284C7" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </DockPanel>
+                                <ComboBox ItemsSource="{Binding FilteredAvailableTags}"
+                                          SelectedValue="{Binding SelectedWidget.PrimaryTagId, Mode=TwoWay}"
+                                          SelectedValuePath="Id"
+                                          DisplayMemberPath="DisplayText"
+                                          Height="30" Margin="0,0,0,4"/>
 
-                            <!-- 绑定主点位 (带数据类型精准过滤) -->
-                            <DockPanel Margin="0,0,0,4">
-                                <TextBlock Text="绑定采集点位 (Tag):" FontSize="11" Foreground="#475569" VerticalAlignment="Center"/>
-                                <TextBlock Text="🎯 仅显示兼容数据类型" FontSize="9" Foreground="#0284C7" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </DockPanel>
-                            <ComboBox ItemsSource="{Binding FilteredAvailableTags}"
-                                      SelectedValue="{Binding SelectedWidget.PrimaryTagId, Mode=TwoWay}"
-                                      SelectedValuePath="Id"
-                                      DisplayMemberPath="DisplayText"
-                                      Height="30" Margin="0,0,0,4"/>
-
-                            <!-- 所选点位详细信息与数据类型徽章卡片 -->
-                            <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="5" Padding="8,6" Margin="0,0,0,10"
-                                    Visibility="{Binding SelectedTagInfo, Converter={x:Static vm:DesignerUiConverters.NullToCollapsed}}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Background="#0284C7" CornerRadius="3" Padding="5,2" Margin="0,0,8,0" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding SelectedTagInfo.DataTypeLabel}" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                    </Border>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding SelectedTagInfo.Name}" FontSize="11" FontWeight="SemiBold" Foreground="#1E293B" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding SelectedTagInfo.DetailSummary}" FontSize="9" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
+                                <!-- 所选点位详细信息与数据类型徽章卡片 -->
+                                <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="5" Padding="8,6" Margin="0,0,0,10"
+                                        Visibility="{Binding SelectedTagInfo, Converter={x:Static vm:DesignerUiConverters.NullToCollapsed}}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Background="#0284C7" CornerRadius="3" Padding="5,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SelectedTagInfo.DataTypeLabel}" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SelectedTagInfo.Name}" FontSize="11" FontWeight="SemiBold" Foreground="#1E293B" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding SelectedTagInfo.DetailSummary}" FontSize="9" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
 
                             <!-- 坐标与大小 -->
                             <Grid Margin="0,0,0,10">
@@ -609,6 +612,49 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- 2.1.2 180° 拱形仪表专属配置 (GaugeArc) -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='GaugeArc'}">
+                                <StackPanel>
+                                    <TextBlock Text="🧭 180° 拱形仪表专属参数 (ArcGaugeProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="量程下限 (Min):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.ArcGaugeProps.MinValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="量程上限 (Max):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.ArcGaugeProps.MaxValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="工程单位 (Unit):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.ArcGaugeProps.Unit, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="小数精度 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                            <TextBox Text="{Binding SelectedWidget.ArcGaugeProps.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="指针霓虹主题色 (Color):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <controls:ColorPickerBox ColorHex="{Binding SelectedWidget.ArcGaugeProps.ColorHex, Mode=TwoWay}"/>
+                                </StackPanel>
+                            </Border>
+
                             <!-- 2.2 储罐专属配置 (LevelTank) -->
                             <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
                                     Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='LevelTank'}">
@@ -696,9 +742,9 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 2.3 科技数显卡片专属配置 (NumericCard, TextLabel, SetpointInput) -->
+                            <!-- 2.3 科技数显卡片专属配置 (NumericCard, SetpointInput) -->
                             <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12"
-                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='NumericCard,TextLabel,SetpointInput'}">
+                                    Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='NumericCard,SetpointInput'}">
                                 <StackPanel>
                                     <TextBlock Text="📟 数显科技卡片专属组合参数 (NumericCardProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
 
@@ -873,7 +919,7 @@
                                 <StackPanel>
                                     <TextBlock Text="🏷️ 文本标签专属参数 (TextLabelProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
 
-                                    <TextBlock Text="静态/说明文本 (Text):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                                    <TextBlock Text="文本内容 (Text):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
                                     <TextBox Text="{Binding SelectedWidget.LabelProps.Text, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
 
                                     <Grid Margin="0,0,0,8">
@@ -1227,8 +1273,9 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 3. 即时动态预览调试 (依组件/数据类型自适应呈现) -->
-                             <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10">
+                            <!-- 3. 即时动态预览调试 (依组件/数据类型自适应呈现，静态标签与容器组件无需调试) -->
+                             <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10"
+                                     Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='!TextLabel,!PanelContainer'}">
                                  <StackPanel>
                                      <TextBlock Text="🔍 画面动态即时预览调试" FontWeight="SemiBold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,6"/>
                                      <DockPanel Margin="0,0,0,4">
@@ -1237,7 +1284,7 @@
                                      </DockPanel>
 
                                      <!-- 3.1 模拟量滑块调试 (针对数值型与图表组件) -->
-                                     <StackPanel Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='GaugeCircular,LevelTank,NumericCard,TrendChart,DisplayBox'}">
+                                     <StackPanel Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='GaugeCircular,GaugeArc,LevelTank,NumericCard,TrendChart,DisplayBox'}">
                                          <Slider Minimum="{Binding SelectedWidget.MinValue}" Maximum="{Binding SelectedWidget.MaxValue}"
                                                  Value="{Binding SelectedWidget.CurrentRawValue, Mode=TwoWay}"
                                                  Margin="0,4,0,6" ValueChanged="OnPreviewSliderValueChanged"/>

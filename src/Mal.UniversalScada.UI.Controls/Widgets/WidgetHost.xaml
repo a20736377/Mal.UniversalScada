@@ -38,6 +38,19 @@
             </widgets:CircularGaugeControl.Style>
         </widgets:CircularGaugeControl>
 
+        <widgets:ArcGaugeControl>
+            <widgets:ArcGaugeControl.Style>
+                <Style TargetType="widgets:ArcGaugeControl">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Type}" Value="{x:Static models:WidgetType.GaugeArc}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </widgets:ArcGaugeControl.Style>
+        </widgets:ArcGaugeControl>
+
         <widgets:TankLevelControl>
             <widgets:TankLevelControl.Style>
                 <Style TargetType="widgets:TankLevelControl">

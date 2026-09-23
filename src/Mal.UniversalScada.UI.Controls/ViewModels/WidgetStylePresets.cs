@@ -28,6 +28,7 @@ public static class WidgetStylePresetCatalog
     static WidgetStylePresetCatalog()
     {
         RegisterCircularGaugePresets();
+        RegisterArcGaugePresets();
         RegisterControlButtonPresets();
         RegisterTankLevelPresets();
         RegisterStatusLedPresets();
@@ -338,6 +339,299 @@ public static class WidgetStylePresetCatalog
                     g.Decimals = 0;
                     g.UpdateSegmentArcs();
                     g.ReevaluateGaugeColor();
+                }
+            }
+        ));
+    }
+    #endregion
+
+    #region 180° 拱形仪表盘预设 (ArcGauge)
+    private static void RegisterArcGaugePresets()
+    {
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Spindle_Speed_10000",
+            Type: WidgetType.GaugeArc,
+            Name: "主轴高精双向转速表 (-10000~10000 rpm)",
+            Icon: "🧭",
+            Category: "高精测控",
+            Description: "主轴正反向动态转速监测，±10000 rpm 双极性半圆拱形刻度，霓虹青蓝发光指针",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "主轴转速";
+                    g.Unit = "rpm";
+                    g.MinValue = -10000;
+                    g.MaxValue = 10000;
+                    g.ColorHex = "#00D2FF";
+                    g.Decimals = 1;
+                    g.HighAlarm = 9000;
+                    g.LowAlarm = -9000;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Micro_Spindle_30000",
+            Type: WidgetType.GaugeArc,
+            Name: "高速微型电主轴转速表 (-30000~30000 rpm)",
+            Icon: "⚡",
+            Category: "高精测控",
+            Description: "精密雕铣/高速磨头电主轴转速监测，超28000 rpm报警",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "高速电主轴转速";
+                    g.Unit = "rpm";
+                    g.MinValue = -30000;
+                    g.MaxValue = 30000;
+                    g.ColorHex = "#38BDF8";
+                    g.Decimals = 0;
+                    g.HighAlarm = 28000;
+                    g.LowAlarm = -28000;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Current_RMS_1",
+            Type: WidgetType.GaugeArc,
+            Name: "双极性交流电流表 (-1.0~1.0 ARMS)",
+            Icon: "⚡",
+            Category: "电气测控",
+            Description: "多通道精密有效值电流监测，±1.0 ARMS 范围，0.1 高精度分辨率",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "CH1 电流";
+                    g.Unit = "ARMS";
+                    g.MinValue = -1.0;
+                    g.MaxValue = 1.0;
+                    g.ColorHex = "#00D2FF";
+                    g.Decimals = 1;
+                    g.HighAlarm = 0.9;
+                    g.LowAlarm = -0.9;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Current_RMS_5",
+            Type: WidgetType.GaugeArc,
+            Name: "互感器二次侧相电流表 (-5.0~5.0 ARMS)",
+            Icon: "🔋",
+            Category: "电气测控",
+            Description: "标准 5A 电流互感器输出相电流监视，带对称超限警报",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "相电流 RMS";
+                    g.Unit = "ARMS";
+                    g.MinValue = -5.0;
+                    g.MaxValue = 5.0;
+                    g.ColorHex = "#0284C7";
+                    g.Decimals = 2;
+                    g.HighAlarm = 4.5;
+                    g.LowAlarm = -4.5;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Following_Error_50",
+            Type: WidgetType.GaugeArc,
+            Name: "伺服轴位置跟随误差仪 (-50.0~50.0 μm)",
+            Icon: "🎯",
+            Category: "数控伺服",
+            Description: "CNC 进给轴指令位置与编码器实际位置差值，超限触发轮廓超差报警",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "X轴跟随误差";
+                    g.Unit = "μm";
+                    g.MinValue = -50.0;
+                    g.MaxValue = 50.0;
+                    g.ColorHex = "#06B6D4";
+                    g.Decimals = 1;
+                    g.HighAlarm = 35.0;
+                    g.LowAlarm = -35.0;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Torque_100",
+            Type: WidgetType.GaugeArc,
+            Name: "双向动力扭矩表 (-100~100 N·m)",
+            Icon: "🔄",
+            Category: "机械力学",
+            Description: "主驱动轴正反向动态扭矩监测，高响应发光指针显示",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "输出轴转矩";
+                    g.Unit = "N·m";
+                    g.MinValue = -100;
+                    g.MaxValue = 100;
+                    g.ColorHex = "#38BDF8";
+                    g.Decimals = 1;
+                    g.HighAlarm = 85.0;
+                    g.LowAlarm = -85.0;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Force_Tension_50",
+            Type: WidgetType.GaugeArc,
+            Name: "双向进给拉压力表 (-50.0~50.0 kN)",
+            Icon: "⚓",
+            Category: "机械力学",
+            Description: "伺服压机/液压油缸推拉力双向监测，±50 kN 动态测力",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "推力/拉力";
+                    g.Unit = "kN";
+                    g.MinValue = -50.0;
+                    g.MaxValue = 50.0;
+                    g.ColorHex = "#F59E0B";
+                    g.Decimals = 1;
+                    g.HighAlarm = 45.0;
+                    g.LowAlarm = -45.0;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Spindle_Load_150",
+            Type: WidgetType.GaugeArc,
+            Name: "主轴负载率监测表 (0~150 %)",
+            Icon: "📊",
+            Category: "数控伺服",
+            Description: "加工中心主轴切削功率负载率，100%额定，120%过载保护",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "主轴负载率";
+                    g.Unit = "%";
+                    g.MinValue = 0;
+                    g.MaxValue = 150;
+                    g.ColorHex = "#10B981";
+                    g.Decimals = 1;
+                    g.HighAlarm = 120.0;
+                    g.LowAlarm = null;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Diff_Pressure_100",
+            Type: WidgetType.GaugeArc,
+            Name: "管路双向微差压表 (-100~100 kPa)",
+            Icon: "💨",
+            Category: "压力流体",
+            Description: "洁净室正负微差压/过滤器前后阻力差压监视",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "滤芯两端差压";
+                    g.Unit = "kPa";
+                    g.MinValue = -100;
+                    g.MaxValue = 100;
+                    g.ColorHex = "#14B8A6";
+                    g.Decimals = 1;
+                    g.HighAlarm = 75.0;
+                    g.LowAlarm = -75.0;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Vacuum_Pressure",
+            Type: WidgetType.GaugeArc,
+            Name: "工业负压真空计 (-100.0~0.0 kPa)",
+            Icon: "🕳️",
+            Category: "压力流体",
+            Description: "真空吸盘/负压脱气仓实时负压监控，-80 kPa 为达标阈值",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "真空吸盘负压";
+                    g.Unit = "kPa";
+                    g.MinValue = -100.0;
+                    g.MaxValue = 0.0;
+                    g.ColorHex = "#60A5FA";
+                    g.Decimals = 1;
+                    g.LowAlarm = -20.0; // 负压不足报警
+                    g.HighAlarm = null;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Phase_Angle_90",
+            Type: WidgetType.GaugeArc,
+            Name: "电网相角差监视仪 (-90°~90°)",
+            Icon: "📐",
+            Category: "电气测控",
+            Description: "微电网并网同步相角差/变频驱动电压电流相位差监测",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "并网相角差";
+                    g.Unit = "°";
+                    g.MinValue = -90.0;
+                    g.MaxValue = 90.0;
+                    g.ColorHex = "#8B5CF6";
+                    g.Decimals = 1;
+                    g.HighAlarm = 30.0;
+                    g.LowAlarm = -30.0;
+                    g.UpdateScaleGeometry();
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "ArcGauge_Air_Velocity_60",
+            Type: WidgetType.GaugeArc,
+            Name: "通风管道气流风速仪 (0~60 m/s)",
+            Icon: "🌬️",
+            Category: "动力环境",
+            Description: "主风道送排风流速在线监视，超45 m/s高速风噪预警",
+            Apply: vm =>
+            {
+                if (vm is ArcGaugeWidgetViewModel g)
+                {
+                    g.Title = "主风管风速";
+                    g.Unit = "m/s";
+                    g.MinValue = 0;
+                    g.MaxValue = 60;
+                    g.ColorHex = "#2DD4BF";
+                    g.Decimals = 1;
+                    g.HighAlarm = 45.0;
+                    g.LowAlarm = 5.0;
+                    g.UpdateScaleGeometry();
                 }
             }
         ));
@@ -828,15 +1122,38 @@ public static class WidgetStylePresetCatalog
     }
     #endregion
 
-    #region 文本标签预设 (TextLabel)
+    #region 文本标签预设 (TextLabel - 纯静态标签展示，无需绑定采集点位)
     private static void RegisterTextLabelPresets()
     {
         Register(new WidgetStylePreset(
+            Id: "Label_Screen_Main_Title",
+            Type: WidgetType.TextLabel,
+            Name: "大屏主控全局大标题 (22px 霓虹蓝)",
+            Icon: "🖥️",
+            Category: "全局标题",
+            Description: "科技天蓝 22 号大字加粗，居中对齐，适合大屏顶部总控制看板名称",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "产线监控大屏";
+                    lbl.Text = "智能数字孪生产线总监控看板";
+                    lbl.Width = 420;
+                    lbl.Height = 48;
+                    lbl.LabelFontSize = 22;
+                    lbl.IsBold = true;
+                    lbl.TextColor = "#38BDF8";
+                    lbl.TextAlignment = "Center";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
             Id: "Label_Station_Header",
             Type: WidgetType.TextLabel,
-            Name: "工位工艺高亮标题板",
+            Name: "工位工艺高亮标题板 (18px 青蓝)",
             Icon: "🏷️",
-            Category: "文字标识",
+            Category: "工位区域",
             Description: "科技青蓝 18 号加粗标题，居中对齐，工位铭牌与区域标题",
             Apply: vm =>
             {
@@ -853,22 +1170,231 @@ public static class WidgetStylePresetCatalog
         ));
 
         Register(new WidgetStylePreset(
-            Id: "Label_Warning_Note",
+            Id: "Label_Section_Subheader",
             Type: WidgetType.TextLabel,
-            Name: "安全警示标注文本",
-            Icon: "⚠️",
-            Category: "文字标识",
-            Description: "醒目金黄 14 号加粗提示文本，操作安全须知与警戒标注",
+            Name: "参数分组前缀小节标题 (13px 灰白)",
+            Icon: "📑",
+            Category: "工位区域",
+            Description: "浅蓝灰 13 号加粗带引导符号，适合卡片群组或控制参数分组标题",
             Apply: vm =>
             {
                 if (vm is TextLabelWidgetViewModel lbl)
                 {
-                    lbl.Title = "安全防范提示";
-                    lbl.Text = "注意：设备运行时严禁触碰安全光幕！";
+                    lbl.Title = "参数分组";
+                    lbl.Text = "▸ 主回路温控与动力参数";
+                    lbl.Width = 200;
+                    lbl.Height = 32;
+                    lbl.LabelFontSize = 13;
+                    lbl.IsBold = true;
+                    lbl.TextColor = "#94A3B8";
+                    lbl.TextAlignment = "Left";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_Device_Tag_Nameplate",
+            Type: WidgetType.TextLabel,
+            Name: "设备资产位号铭牌 (12px 科技紫)",
+            Icon: "🆔",
+            Category: "设备铭牌",
+            Description: "科技紫 12 号等宽居中，适合设备出厂编号、资产编码与位号标记",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "设备位号";
+                    lbl.Text = "TAG: CNC-SPINDLE-M01";
+                    lbl.Width = 190;
+                    lbl.Height = 32;
+                    lbl.LabelFontSize = 12;
+                    lbl.IsBold = true;
+                    lbl.TextColor = "#A78BFA";
+                    lbl.TextAlignment = "Center";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_State_Normal_Ready",
+            Type: WidgetType.TextLabel,
+            Name: "系统就绪状态常驻标签 (13px 工业绿)",
+            Icon: "🟢",
+            Category: "工况指示",
+            Description: "工控翡翠绿 13 号，带状态圆点，静态标注设备就绪与安全连锁状态",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "运行就绪";
+                    lbl.Text = "● 系统运行正常 (ALL READY)";
+                    lbl.Width = 210;
+                    lbl.Height = 34;
+                    lbl.LabelFontSize = 13;
+                    lbl.IsBold = true;
+                    lbl.TextColor = "#10B981";
+                    lbl.TextAlignment = "Left";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_Safety_Danger_Alert",
+            Type: WidgetType.TextLabel,
+            Name: "危险禁入红色高亮警示 (14px 警报红)",
+            Icon: "🛑",
+            Category: "安全警示",
+            Description: "高警示赤红 14 号加粗，醒目标注强电危险、激光或机械运动死区",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "危险警示";
+                    lbl.Text = "DANGER 危险：高压区域 严禁带电检修！";
+                    lbl.Width = 280;
+                    lbl.Height = 36;
                     lbl.LabelFontSize = 14;
                     lbl.IsBold = true;
-                    lbl.TextColor = "#FBBF24";
+                    lbl.TextColor = "#EF4444";
                     lbl.TextAlignment = "Left";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_Warning_Note",
+            Type: WidgetType.TextLabel,
+            Name: "操作安全须知提示 (13px 琥珀金黄)",
+            Icon: "⚠️",
+            Category: "安全警示",
+            Description: "醒目金黄 13 号加粗提示文本，操作安全须知与警戒规程",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "操作提示";
+                    lbl.Text = "注意：设备运行时严禁触碰安全光幕！";
+                    lbl.Width = 260;
+                    lbl.Height = 36;
+                    lbl.LabelFontSize = 13;
+                    lbl.IsBold = true;
+                    lbl.TextColor = "#F59E0B";
+                    lbl.TextAlignment = "Left";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_EStop_Instructions",
+            Type: WidgetType.TextLabel,
+            Name: "急停与复位操作规程 (12px 玫瑰红)",
+            Icon: "⛔",
+            Category: "安全警示",
+            Description: "玫瑰红 12 号加粗，引导操作人员顺时针旋转释放急停并复位",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "复位操作指南";
+                    lbl.Text = "急停触发后请顺时针旋转释放，并点击上位机复位";
+                    lbl.Width = 280;
+                    lbl.Height = 36;
+                    lbl.LabelFontSize = 12;
+                    lbl.IsBold = true;
+                    lbl.TextColor = "#FB7185";
+                    lbl.TextAlignment = "Left";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_Cleanroom_Spec",
+            Type: WidgetType.TextLabel,
+            Name: "车间环境基准规范 (12px 薄荷绿)",
+            Icon: "🌿",
+            Category: "工艺说明",
+            Description: "极光薄荷绿 12 号，提示无尘车间标准温湿度基准与合格范围",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "环境标准";
+                    lbl.Text = "万级洁净室基准: 22±1℃ / 50±5%RH";
+                    lbl.Width = 240;
+                    lbl.Height = 32;
+                    lbl.LabelFontSize = 12;
+                    lbl.IsBold = false;
+                    lbl.TextColor = "#2DD4BF";
+                    lbl.TextAlignment = "Left";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_Batch_Workorder",
+            Type: WidgetType.TextLabel,
+            Name: "生产工单与批次说明 (12px 浅灰白)",
+            Icon: "📋",
+            Category: "生产信息",
+            Description: "浅灰白 12 号，标注当前正在执行的生产工单编号与工件批号",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "当前批次";
+                    lbl.Text = "工单: WO-2026-0923 | 批号: LOT-B08";
+                    lbl.Width = 240;
+                    lbl.Height = 32;
+                    lbl.LabelFontSize = 12;
+                    lbl.IsBold = false;
+                    lbl.TextColor = "#CBD5E1";
+                    lbl.TextAlignment = "Left";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_Fieldbus_Channel",
+            Type: WidgetType.TextLabel,
+            Name: "现场总线通信标注 (11px 拓扑深灰)",
+            Icon: "🔌",
+            Category: "通信标注",
+            Description: "深炭灰 11 号右对齐，适合角落弱化标注现场总线名称、波特率与端口",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "通信端口";
+                    lbl.Text = "BUS: PROFINET RT / Port: 502";
+                    lbl.Width = 190;
+                    lbl.Height = 28;
+                    lbl.LabelFontSize = 11;
+                    lbl.IsBold = false;
+                    lbl.TextColor = "#64748B";
+                    lbl.TextAlignment = "Right";
+                }
+            }
+        ));
+
+        Register(new WidgetStylePreset(
+            Id: "Label_Version_Watermark",
+            Type: WidgetType.TextLabel,
+            Name: "系统版本与版权水印 (10px 弱化灰)",
+            Icon: "©️",
+            Category: "全局标题",
+            Description: "弱化深灰 10 号小字右对齐，适合画面右下角版权与版本标识",
+            Apply: vm =>
+            {
+                if (vm is TextLabelWidgetViewModel lbl)
+                {
+                    lbl.Title = "版本信息";
+                    lbl.Text = "Universal SCADA HMI v2.4.0 (Build 2026.09)";
+                    lbl.Width = 260;
+                    lbl.Height = 26;
+                    lbl.LabelFontSize = 10;
+                    lbl.IsBold = false;
+                    lbl.TextColor = "#475569";
+                    lbl.TextAlignment = "Right";
                 }
             }
         ));

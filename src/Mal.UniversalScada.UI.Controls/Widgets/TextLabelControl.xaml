@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
     <Border Background="Transparent" Padding="4,2">
-        <TextBlock Text="{Binding FormattedValue}"
+        <TextBlock Text="{Binding DisplayText}"
                    FontSize="{Binding LabelProps.FontSize}"
                    FontWeight="{Binding LabelProps.IsBold, Converter={x:Static vm:WidgetUiConverters.BoolToFontWeight}}"
                    Foreground="{Binding LabelProps.TextColor, Converter={x:Static vm:WidgetUiConverters.ColorHexToBrush}}"

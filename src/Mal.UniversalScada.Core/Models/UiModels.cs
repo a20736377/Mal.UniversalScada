@@ -80,7 +80,12 @@ public enum WidgetType
     /// <summary>
     /// 工业旋转离心泵 (支持叶轮旋转动效与运行状态指示)
     /// </summary>
-    Pump = 15
+    Pump = 15,
+
+    /// <summary>
+    /// 180° 半圆弧形/拱形仪表盘 (模拟量展示，带发光青蓝指针与密集刻度齿)
+    /// </summary>
+    GaugeArc = 16
 }
 
 /// <summary>

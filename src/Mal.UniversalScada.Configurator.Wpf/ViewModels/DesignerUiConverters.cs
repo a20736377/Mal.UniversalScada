@@ -90,8 +90,24 @@ public static class DesignerUiConverters
         {
             if (value is WidgetType currentType && parameter is string allowedTypesStr)
             {
-                var allowed = allowedTypesStr.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-                foreach (var t in allowed)
+                var types = allowedTypesStr.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                bool hasExclude = types.Any(t => t.StartsWith('!'));
+
+                if (hasExclude)
+                {
+                    // 排除模式：命中了 !TypeName 则 Collapsed，否则 Visible
+                    foreach (var t in types)
+                    {
+                        if (t.StartsWith('!') && string.Equals(t[1..], currentType.ToString(), StringComparison.OrdinalIgnoreCase))
+                        {
+                            return Visibility.Collapsed;
+                        }
+                    }
+                    return Visibility.Visible;
+                }
+
+                // 包含模式：必须在指定列表中才 Visible
+                foreach (var t in types)
                 {
                     if (string.Equals(t, currentType.ToString(), StringComparison.OrdinalIgnoreCase))
                     {

@@ -48,7 +48,7 @@ public class TagOptionItem
 
         return widgetType switch
         {
-            WidgetType.GaugeCircular or WidgetType.LevelTank or WidgetType.NumericCard or WidgetType.TrendChart
+            WidgetType.GaugeCircular or WidgetType.GaugeArc or WidgetType.LevelTank or WidgetType.NumericCard or WidgetType.TrendChart
                 => isNumeric,
             WidgetType.StatusLed
                 => isBool,
@@ -60,10 +60,8 @@ public class TagOptionItem
                 => isNumeric && accessMode != TagAccessMode.ReadOnly,
             WidgetType.DisplayBox
                 => isNumeric || isBool || dataType == TagDataType.String,
-            WidgetType.TextLabel
-                => true,
-            WidgetType.PanelContainer
-                => false, // 容器组件为纯布局分组框，无需绑定采集点位
+            WidgetType.TextLabel or WidgetType.PanelContainer
+                => false, // 纯静态展示标签与容器组件，无需绑定采集点位
             _ => true
         };
     }

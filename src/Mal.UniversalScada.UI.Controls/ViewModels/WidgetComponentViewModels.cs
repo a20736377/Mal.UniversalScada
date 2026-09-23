@@ -944,8 +944,32 @@ public partial class TextLabelWidgetViewModel : WidgetViewModel
         Type = WidgetType.TextLabel;
         Width = 180;
         Height = 46;
-        _props.PropertyChanged += (s, e) => { if (e.PropertyName != null) OnPropertyChanged(e.PropertyName); };
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(TextLabelProps.Text))
+            {
+                Title = Props.Text;
+                FormattedValue = Props.Text;
+                OnPropertyChanged(nameof(DisplayText));
+            }
+            if (e.PropertyName != null) OnPropertyChanged(e.PropertyName);
+        };
+        PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(Title))
+            {
+                if (string.IsNullOrWhiteSpace(Props.Text) || Props.Text == "文本标签 / 工位说明")
+                {
+                    Props.Text = Title;
+                }
+                FormattedValue = Props.Text;
+                OnPropertyChanged(nameof(DisplayText));
+            }
+        };
+        FormattedValue = Props.Text;
     }
+
+    public string DisplayText => !string.IsNullOrWhiteSpace(Props.Text) ? Props.Text : (!string.IsNullOrWhiteSpace(Title) ? Title : "文本标签");
 
     public string Text { get => Props.Text; set => Props.Text = value; }
     public double LabelFontSize { get => Props.FontSize; set => Props.FontSize = value; }
@@ -1755,6 +1779,253 @@ public partial class PumpWidgetViewModel : WidgetViewModel
         }
 
         OnPropertyChanged(nameof(CurrentColor));
+    }
+}
+
+/// <summary>
+/// 180° 半圆弧形/拱形仪表盘组件视图模型（继承自基类 WidgetViewModel，持有 ArcGaugeProps）
+/// </summary>
+public partial class ArcGaugeWidgetViewModel : WidgetViewModel
+{
+    [ObservableProperty]
+    private ArcGaugeProps _props = new();
+
+    public override object ComponentProps => Props;
+
+    public ArcGaugeWidgetViewModel()
+    {
+        Type = WidgetType.GaugeArc;
+        Width = 200;
+        Height = 140;
+        UpdateScaleGeometry();
+
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null)
+            {
+                if (e.PropertyName is nameof(ArcGaugeProps.MinValue) or nameof(ArcGaugeProps.MaxValue) or nameof(ArcGaugeProps.Decimals))
+                {
+                    UpdateScaleGeometry();
+                }
+                OnPropertyChanged(e.PropertyName);
+            }
+        };
+    }
+
+    public override double MinValue { get => Props.MinValue; set => Props.MinValue = value; }
+    public override double MaxValue { get => Props.MaxValue; set => Props.MaxValue = value; }
+    public override string Unit { get => Props.Unit; set => Props.Unit = value; }
+    public override double? HighAlarm { get => Props.HighAlarm; set => Props.HighAlarm = value; }
+    public override double? LowAlarm { get => Props.LowAlarm; set => Props.LowAlarm = value; }
+    public override int Decimals { get => Props.Decimals; set => Props.Decimals = value; }
+    public override string ColorHex { get => Props.ColorHex; set => Props.ColorHex = value; }
+    public override double NormalizedProgress { get => Props.NormalizedProgress; set => Props.NormalizedProgress = value; }
+
+    public double NeedleAngle
+    {
+        get => Props.NeedleAngle;
+        set => Props.NeedleAngle = value;
+    }
+
+    public override void LoadProperties(Dictionary<string, string> properties)
+    {
+        base.LoadProperties(properties);
+
+        if (properties.TryGetValue("MinValue", out var minStr) && double.TryParse(minStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var minVal))
+            Props.MinValue = minVal;
+
+        if (properties.TryGetValue("MaxValue", out var maxStr) && double.TryParse(maxStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var maxVal))
+            Props.MaxValue = maxVal;
+        else if (Props.MinValue >= Props.MaxValue)
+            Props.MaxValue = Props.MinValue + 100;
+
+        if (properties.TryGetValue("Unit", out var unit))
+            Props.Unit = unit;
+
+        if (properties.TryGetValue("HighAlarm", out var hiStr) && double.TryParse(hiStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var hiVal))
+            Props.HighAlarm = hiVal;
+
+        if (properties.TryGetValue("LowAlarm", out var loStr) && double.TryParse(loStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var loVal))
+            Props.LowAlarm = loVal;
+
+        if (properties.TryGetValue("Decimals", out var decStr) && int.TryParse(decStr, out var decVal))
+            Props.Decimals = decVal;
+
+        if (properties.TryGetValue("ColorHex", out var color))
+            Props.ColorHex = color;
+
+        UpdateScaleGeometry();
+    }
+
+    public override void SyncPropertiesFromFields()
+    {
+        base.SyncPropertiesFromFields();
+
+        Properties["MinValue"] = Props.MinValue.ToString(CultureInfo.InvariantCulture);
+        Properties["MaxValue"] = Props.MaxValue.ToString(CultureInfo.InvariantCulture);
+        Properties["Unit"] = Props.Unit ?? string.Empty;
+        Properties["ColorHex"] = Props.ColorHex ?? "#00D2FF";
+        Properties["Decimals"] = Props.Decimals.ToString();
+
+        if (Props.HighAlarm.HasValue) Properties["HighAlarm"] = Props.HighAlarm.Value.ToString(CultureInfo.InvariantCulture);
+        else Properties.Remove("HighAlarm");
+
+        if (Props.LowAlarm.HasValue) Properties["LowAlarm"] = Props.LowAlarm.Value.ToString(CultureInfo.InvariantCulture);
+        else Properties.Remove("LowAlarm");
+    }
+
+    /// <summary>
+    /// 重新计算 180° 拱形表盘主次刻度线及 6 处分度标签的坐标和数值
+    /// </summary>
+    public void UpdateScaleGeometry()
+    {
+        var min = Props.MinValue;
+        var max = Props.MaxValue;
+        var range = max - min;
+        if (range <= 0) range = 100;
+
+        const double cx = 100.0;
+        const double cy = 102.0;
+        const double rOuter = 78.0;
+
+        // 1. 外圈 180° 拱门弧线 (-90° ~ +90°)
+        var xStart = cx - rOuter;
+        var xEnd = cx + rOuter;
+        Props.OuterArcPathData = FormattableString.Invariant($"M {xStart:F2} {cy:F2} A {rOuter:F2} {rOuter:F2} 0 0 1 {xEnd:F2} {cy:F2}");
+
+        // 2. 主刻度线 (5 等分，6 条主分度刻度线，-90°, -54°, -18°, +18°, +54°, +90°)
+        const int divisions = 5;
+        const double rMajorOut = 78.0;
+        const double rMajorIn = 69.0;
+        var majorSb = new System.Text.StringBuilder();
+
+        for (int i = 0; i <= divisions; i++)
+        {
+            var deg = -90.0 + i * (180.0 / divisions);
+            var rad = deg * Math.PI / 180.0;
+            var x1 = cx + rMajorOut * Math.Sin(rad);
+            var y1 = cy - rMajorOut * Math.Cos(rad);
+            var x2 = cx + rMajorIn * Math.Sin(rad);
+            var y2 = cy - rMajorIn * Math.Cos(rad);
+            majorSb.Append(FormattableString.Invariant($"M {x1:F2} {y1:F2} L {x2:F2} {y2:F2} "));
+        }
+        Props.MajorTicksPathData = majorSb.ToString();
+
+        // 3. 次刻度线 (每大格细分 5 小格，每格 4 条短刻度线，总共 20 条短刻度)
+        const int minorSubDivs = 5;
+        const double rMinorOut = 78.0;
+        const double rMinorIn = 73.0;
+        var minorSb = new System.Text.StringBuilder();
+
+        for (int i = 0; i < divisions; i++)
+        {
+            for (int j = 1; j < minorSubDivs; j++)
+            {
+                var deg = -90.0 + (i + (double)j / minorSubDivs) * (180.0 / divisions);
+                var rad = deg * Math.PI / 180.0;
+                var x1 = cx + rMinorOut * Math.Sin(rad);
+                var y1 = cy - rMinorOut * Math.Cos(rad);
+                var x2 = cx + rMinorIn * Math.Sin(rad);
+                var y2 = cy - rMinorIn * Math.Cos(rad);
+                minorSb.Append(FormattableString.Invariant($"M {x1:F2} {y1:F2} L {x2:F2} {y2:F2} "));
+            }
+        }
+        Props.MinorTicksPathData = minorSb.ToString();
+
+        // 4. 6 个分度数值文本与坐标
+        const double rLabel = 53.0;
+        for (int i = 0; i <= divisions; i++)
+        {
+            var deg = -90.0 + i * (180.0 / divisions);
+            var rad = deg * Math.PI / 180.0;
+            var val = min + i * (range / divisions);
+            var text = FormatScaleNumber(val, Props.Decimals);
+
+            // 标注在内侧
+            var lx = cx + rLabel * Math.Sin(rad);
+            var ly = cy - rLabel * Math.Cos(rad);
+
+            switch (i)
+            {
+                case 0:
+                    Props.ScaleText1 = text;
+                    Props.ScaleX1 = lx;
+                    Props.ScaleY1 = ly;
+                    break;
+                case 1:
+                    Props.ScaleText2 = text;
+                    Props.ScaleX2 = lx;
+                    Props.ScaleY2 = ly;
+                    break;
+                case 2:
+                    Props.ScaleText3 = text;
+                    Props.ScaleX3 = lx;
+                    Props.ScaleY3 = ly;
+                    break;
+                case 3:
+                    Props.ScaleText4 = text;
+                    Props.ScaleX4 = lx;
+                    Props.ScaleY4 = ly;
+                    break;
+                case 4:
+                    Props.ScaleText5 = text;
+                    Props.ScaleX5 = lx;
+                    Props.ScaleY5 = ly;
+                    break;
+                case 5:
+                    Props.ScaleText6 = text;
+                    Props.ScaleX6 = lx;
+                    Props.ScaleY6 = ly;
+                    break;
+            }
+        }
+    }
+
+    private static string FormatScaleNumber(double val, int decimals)
+    {
+        if (decimals <= 0)
+        {
+            return Math.Round(val).ToString(CultureInfo.InvariantCulture);
+        }
+        var fmt = $"F{Math.Clamp(decimals, 1, 4)}";
+        return val.ToString(fmt, CultureInfo.InvariantCulture);
+    }
+
+    public override void UpdateRuntimeValue(object? rawValue, string quality = "Good")
+    {
+        CurrentRawValue = rawValue;
+        Quality = quality;
+
+        if (rawValue == null)
+        {
+            FormattedValue = "--";
+            Props.NormalizedProgress = 0.5;
+            Props.NeedleAngle = 0;
+            IsAlarm = false;
+            return;
+        }
+
+        if (double.TryParse(rawValue.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var num))
+        {
+            var fmt = $"F{Math.Clamp(Props.Decimals, 0, 4)}";
+            FormattedValue = num.ToString(fmt, CultureInfo.InvariantCulture);
+
+            var range = Props.MaxValue - Props.MinValue;
+            if (range <= 0) range = 100;
+
+            var ratio = Math.Clamp((num - Props.MinValue) / range, 0.0, 1.0);
+            Props.NormalizedProgress = ratio;
+            Props.NeedleAngle = -90.0 + (ratio * 180.0);
+
+            bool alarm = false;
+            if (Props.HighAlarm.HasValue && num >= Props.HighAlarm.Value) alarm = true;
+            if (Props.LowAlarm.HasValue && num <= Props.LowAlarm.Value) alarm = true;
+            IsAlarm = alarm;
+        }
+        else
+        {
+            FormattedValue = rawValue.ToString() ?? "--";
+        }
     }
 }
 

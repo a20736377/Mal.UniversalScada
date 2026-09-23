@@ -18,6 +18,29 @@ public static class WidgetUiConverters
     public static IValueConverter HalfValueConverter { get; } = new HalfValueConverterImpl();
     public static IValueConverter StringEqualsToVisibility { get; } = new StringEqualsToVisibilityConverterImpl();
     public static IValueConverter MinChannelsToVisibility { get; } = new MinChannelsToVisibilityConverterImpl();
+    public static IValueConverter AlarmToBorderBrush { get; } = new AlarmToBorderBrushConverterImpl();
+    public static IValueConverter StringNotEmptyToVisibility { get; } = new StringNotEmptyToVisibilityConverterImpl();
+
+    private class AlarmToBorderBrushConverterImpl : IValueConverter
+    {
+        private static readonly SolidColorBrush AlarmBrush = new(Color.FromRgb(239, 68, 68)); // #EF4444
+        private static readonly SolidColorBrush NormalBrush = new(Color.FromRgb(30, 41, 59));  // #1E293B
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is true ? AlarmBrush : NormalBrush;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            throw new NotSupportedException();
+    }
+
+    private class StringNotEmptyToVisibilityConverterImpl : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            string.IsNullOrWhiteSpace(value as string) ? Visibility.Collapsed : Visibility.Visible;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            throw new NotSupportedException();
+    }
 
     private class BoolToColorBrushConverterImpl : IValueConverter
     {

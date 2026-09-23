@@ -409,7 +409,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         return widget.Type switch
         {
-            WidgetType.GaugeCircular =>
+            WidgetType.GaugeCircular or WidgetType.GaugeArc =>
                 Math.Round(mid + (Math.Sin(step + widget.X * 0.01) * amplitude) + ((rand.NextDouble() - 0.5) * 2), 1),
 
             WidgetType.LevelTank =>
