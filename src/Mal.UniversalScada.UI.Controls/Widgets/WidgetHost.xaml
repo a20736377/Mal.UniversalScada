@@ -13,6 +13,28 @@
              Width="{Binding Width, Mode=TwoWay}"
              Height="{Binding Height, Mode=TwoWay}">
     
+    <UserControl.Resources>
+        <!-- 尺寸调整手柄 Thumb 专属工业风样式 -->
+        <Style x:Key="ResizeThumbStyle" TargetType="{x:Type Thumb}">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border Background="#FFFFFF"
+                                BorderBrush="#0284C7"
+                                BorderThickness="1.5"
+                                CornerRadius="2">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.3"/>
+                            </Border.Effect>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    
     <UserControl.Style>
         <Style TargetType="UserControl">
             <Style.Triggers>
@@ -28,13 +50,11 @@
         <ContentControl Content="{Binding}"
                         ContentTemplateSelector="{x:Static widgets:WidgetViewTemplateSelector.Instance}" />
 
-        <!-- 设计模式专属：高亮选中框与拖拽遮罩 -->
-        <Border x:Name="DesignerAdorner"
-                BorderThickness="2" CornerRadius="10" IsHitTestVisible="False">
-            <Border.Style>
-                <Style TargetType="Border">
+        <!-- 设计模式专属：高亮选中框、8向尺寸调整手柄与尺寸实时反馈 -->
+        <Grid x:Name="ResizeOverlayGrid">
+            <Grid.Style>
+                <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed"/>
-                    <Setter Property="BorderBrush" Value="Transparent"/>
                     <Style.Triggers>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
@@ -42,12 +62,62 @@
                                 <Condition Binding="{Binding IsSelected}" Value="True"/>
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Visible"/>
-                            <Setter Property="BorderBrush" Value="#38BDF8"/>
                         </MultiDataTrigger>
                     </Style.Triggers>
                 </Style>
-            </Border.Style>
-        </Border>
+            </Grid.Style>
+
+            <!-- 选中高亮边框 -->
+            <Border BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="6" IsHitTestVisible="False" Margin="-1"/>
+
+            <!-- 8 方向尺寸调整 Thumb -->
+            <!-- 西北 (Top-Left) -->
+            <Thumb Style="{StaticResource ResizeThumbStyle}" Tag="NW" Cursor="SizeNWSE"
+                   HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-4,-4,0,0"
+                   DragStarted="OnResizeThumbDragStarted" DragDelta="OnResizeThumbDragDelta" DragCompleted="OnResizeThumbDragCompleted"/>
+
+            <!-- 北 (Top-Center) -->
+            <Thumb Style="{StaticResource ResizeThumbStyle}" Tag="N" Cursor="SizeNS"
+                   HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-4,0,0"
+                   DragStarted="OnResizeThumbDragStarted" DragDelta="OnResizeThumbDragDelta" DragCompleted="OnResizeThumbDragCompleted"/>
+
+            <!-- 东北 (Top-Right) -->
+            <Thumb Style="{StaticResource ResizeThumbStyle}" Tag="NE" Cursor="SizeNESW"
+                   HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,-4,0"
+                   DragStarted="OnResizeThumbDragStarted" DragDelta="OnResizeThumbDragDelta" DragCompleted="OnResizeThumbDragCompleted"/>
+
+            <!-- 东 (Right-Center) -->
+            <Thumb Style="{StaticResource ResizeThumbStyle}" Tag="E" Cursor="SizeWE"
+                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-4,0"
+                   DragStarted="OnResizeThumbDragStarted" DragDelta="OnResizeThumbDragDelta" DragCompleted="OnResizeThumbDragCompleted"/>
+
+            <!-- 东南 (Bottom-Right) -->
+            <Thumb Style="{StaticResource ResizeThumbStyle}" Tag="SE" Cursor="SizeNWSE"
+                   HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-4,-4"
+                   DragStarted="OnResizeThumbDragStarted" DragDelta="OnResizeThumbDragDelta" DragCompleted="OnResizeThumbDragCompleted"/>
+
+            <!-- 南 (Bottom-Center) -->
+            <Thumb Style="{StaticResource ResizeThumbStyle}" Tag="S" Cursor="SizeNS"
+                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,-4"
+                   DragStarted="OnResizeThumbDragStarted" DragDelta="OnResizeThumbDragDelta" DragCompleted="OnResizeThumbDragCompleted"/>
+
+            <!-- 西南 (Bottom-Left) -->
+            <Thumb Style="{StaticResource ResizeThumbStyle}" Tag="SW" Cursor="SizeNESW"
+                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-4,0,0,-4"
+                   DragStarted="OnResizeThumbDragStarted" DragDelta="OnResizeThumbDragDelta" DragCompleted="OnResizeThumbDragCompleted"/>
+
+            <!-- 西 (Left-Center) -->
+            <Thumb Style="{StaticResource ResizeThumbStyle}" Tag="W" Cursor="SizeWE"
+                   HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-4,0,0,0"
+                   DragStarted="OnResizeThumbDragStarted" DragDelta="OnResizeThumbDragDelta" DragCompleted="OnResizeThumbDragCompleted"/>
+
+            <!-- 拖拽缩放时实时尺寸提示徽章 -->
+            <Border x:Name="SizeBadge" Background="#0F172A" BorderBrush="#38BDF8" BorderThickness="1"
+                    CornerRadius="4" Padding="6,2" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                    Margin="0,0,0,-24" Visibility="Collapsed" IsHitTestVisible="False">
+                <TextBlock x:Name="SizeBadgeText" Foreground="#38BDF8" FontSize="10" FontFamily="Consolas" FontWeight="Bold"/>
+            </Border>
+        </Grid>
 
         <!-- 选中状态右上角删除按钮 (仅设计模式显示) -->
         <Button x:Name="DeleteButton" Content="✕" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top"
