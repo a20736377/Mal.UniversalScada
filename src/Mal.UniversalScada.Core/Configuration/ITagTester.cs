@@ -83,7 +83,7 @@ public class DefaultTagTester : ITagTester
             channelInst = _channelFactory.CreateChannel(channel);
             driverInst = _driverFactory.CreateDriver(device.ProtocolType, device.CustomProtocolName);
 
-            var timeoutMs = Math.Max(device.TimeoutMs, 2000);
+            var timeoutMs = Math.Max(device.TimeoutMs, 2000000);
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             cts.CancelAfter(timeoutMs);
 
