@@ -6,14 +6,6 @@
              xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:WidgetViewModel}">
-    <UserControl.Resources>
-        <!-- 叶轮 360° 顺时针旋转循环动画 -->
-        <Storyboard x:Key="ImpellerRotationAnimation" RepeatBehavior="Forever">
-            <DoubleAnimation Storyboard.TargetName="ImpellerRotation"
-                             Storyboard.TargetProperty="Angle"
-                             From="0" To="360" Duration="0:0:1.2"/>
-        </Storyboard>
-    </UserControl.Resources>
 
     <Grid Margin="4" Cursor="Hand" Background="Transparent" ToolTip="点击切换循环泵启/停控制">
         <Grid.RowDefinitions>

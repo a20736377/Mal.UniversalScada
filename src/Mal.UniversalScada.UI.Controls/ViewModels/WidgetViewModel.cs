@@ -171,6 +171,11 @@ public partial class WidgetViewModel : ObservableObject
     public virtual PumpProps? PumpProps => (this as PumpWidgetViewModel)?.Props;
 
     /// <summary>
+    /// 快捷转换：静态/动态图片图元专属组合属性
+    /// </summary>
+    public virtual ImageProps? ImageProps => (this as ImageWidgetViewModel)?.Props;
+
+    /// <summary>
     /// 当前组件类型可用的样式与行业预设模板列表
     /// </summary>
     public IReadOnlyList<WidgetStylePreset> AvailablePresets => WidgetStylePresetCatalog.GetPresets(Type);

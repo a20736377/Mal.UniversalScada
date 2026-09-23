@@ -2238,4 +2238,100 @@ public partial class ArcGaugeWidgetViewModel : WidgetViewModel
     }
 }
 
+/// <summary>
+/// 静态/动态图片图元组件视图模型
+/// </summary>
+[ScadaWidget(
+    WidgetType.Image,
+    displayName: "图片组件",
+    icon: "🖼️",
+    category: "基础图元",
+    description: "静态工况底图、设备照片、工艺流程图或摄像头快照图片展示",
+    order: 85,
+    defaultWidth: 260,
+    defaultHeight: 180,
+    defaultTitle: "工艺总览图",
+    viewType: typeof(ImageControl),
+    propertyEditorType: typeof(ImagePropertyEditor))]
+public partial class ImageWidgetViewModel : WidgetViewModel
+{
+    [ObservableProperty]
+    private ImageProps _props = new();
+
+    public override object ComponentProps => Props;
+
+    public ImageWidgetViewModel()
+    {
+        Type = WidgetType.Image;
+        Title = "工艺总览图";
+        Width = 260;
+        Height = 180;
+        _props.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName != null) OnPropertyChanged(e.PropertyName);
+        };
+    }
+
+    public string ImagePath { get => Props.ImagePath; set => Props.ImagePath = value; }
+    public string Stretch { get => Props.Stretch; set => Props.Stretch = value; }
+    public double ImageOpacity { get => Props.Opacity; set => Props.Opacity = value; }
+
+    public override void LoadProperties(Dictionary<string, string> properties)
+    {
+        base.LoadProperties(properties);
+
+        if (properties.TryGetValue("ImagePath", out var path)) Props.ImagePath = path;
+        if (properties.TryGetValue("Stretch", out var stretch)) Props.Stretch = stretch;
+        if (properties.TryGetValue("Opacity", out var opStr) && double.TryParse(opStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var op))
+            Props.Opacity = op;
+        if (properties.TryGetValue("BorderColor", out var bc)) Props.BorderColor = bc;
+        if (properties.TryGetValue("BorderThickness", out var btStr) && double.TryParse(btStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var bt))
+            Props.BorderThickness = bt;
+        if (properties.TryGetValue("CornerRadius", out var crStr) && double.TryParse(crStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var cr))
+            Props.CornerRadius = cr;
+        if (properties.TryGetValue("ShowBorder", out var sbStr) && bool.TryParse(sbStr, out var sb))
+            Props.ShowBorder = sb;
+        if (properties.TryGetValue("BackgroundColor", out var bg)) Props.BackgroundColor = bg;
+        if (properties.TryGetValue("IsAutoRefresh", out var arStr) && bool.TryParse(arStr, out var ar))
+            Props.IsAutoRefresh = ar;
+        if (properties.TryGetValue("RefreshIntervalSec", out var riStr) && int.TryParse(riStr, out var ri))
+            Props.RefreshIntervalSec = ri;
+        if (properties.TryGetValue("FallbackText", out var ft)) Props.FallbackText = ft;
+    }
+
+    public override void SyncPropertiesFromFields()
+    {
+        base.SyncPropertiesFromFields();
+
+        Properties["ImagePath"] = Props.ImagePath;
+        Properties["Stretch"] = Props.Stretch;
+        Properties["Opacity"] = Props.Opacity.ToString("F2", CultureInfo.InvariantCulture);
+        Properties["BorderColor"] = Props.BorderColor;
+        Properties["BorderThickness"] = Props.BorderThickness.ToString("F1", CultureInfo.InvariantCulture);
+        Properties["CornerRadius"] = Props.CornerRadius.ToString("F1", CultureInfo.InvariantCulture);
+        Properties["ShowBorder"] = Props.ShowBorder.ToString();
+        Properties["BackgroundColor"] = Props.BackgroundColor;
+        Properties["IsAutoRefresh"] = Props.IsAutoRefresh.ToString();
+        Properties["RefreshIntervalSec"] = Props.RefreshIntervalSec.ToString();
+        Properties["FallbackText"] = Props.FallbackText;
+    }
+
+    public override void UpdateRuntimeValue(object? rawValue, string quality = "Good")
+    {
+        CurrentRawValue = rawValue;
+        Quality = quality;
+
+        // 若绑定了字符串点位（如动态快照路径/图片 URL 或 Base64 数据），则动态切换展示图片
+        if (rawValue is string s && !string.IsNullOrWhiteSpace(s))
+        {
+            Props.ImagePath = s;
+            FormattedValue = s;
+        }
+        else
+        {
+            FormattedValue = Props.ImagePath;
+        }
+    }
+}
+
 

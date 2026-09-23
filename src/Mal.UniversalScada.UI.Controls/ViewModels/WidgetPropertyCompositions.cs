@@ -568,5 +568,49 @@ public partial class ArcGaugeProps : ObservableObject
     private double _scaleY6 = 100;
 }
 
+/// <summary>
+/// 静态/动态图片图元专属组合属性类（支持图片路径/URL、拉伸模式、不透明度、圆角与边框、定时刷新）
+/// </summary>
+public partial class ImageProps : ObservableObject
+{
+    [ObservableProperty]
+    private string _imagePath = string.Empty;
+
+    [ObservableProperty]
+    private string _stretch = "Uniform"; // Uniform, UniformToFill, Fill, None
+
+    [ObservableProperty]
+    private double _opacity = 1.0;
+
+    [ObservableProperty]
+    private string _borderColor = "#38BDF8";
+
+    [ObservableProperty]
+    private double _borderThickness = 0.0;
+
+    [ObservableProperty]
+    private double _cornerRadius = 4.0;
+
+    [ObservableProperty]
+    private bool _showBorder = false;
+
+    [ObservableProperty]
+    private string _backgroundColor = "Transparent";
+
+    [ObservableProperty]
+    private bool _isAutoRefresh = false;
+
+    [ObservableProperty]
+    private int _refreshIntervalSec = 5;
+
+    [ObservableProperty]
+    private string _fallbackText = "未配置图片";
+
+    public void UpdatePath(string newPath)
+    {
+        ImagePath = newPath ?? string.Empty;
+    }
+}
+
 
 

@@ -426,8 +426,8 @@
                                 <TextBlock Text="展示标题 / 标签 (Title):" FontSize="11" Foreground="#475569" Margin="0,0,0,4"/>
                                 <TextBox Text="{Binding SelectedWidget.Title, UpdateSourceTrigger=PropertyChanged}" Height="30" Margin="0,0,0,10"/>
                             </StackPanel>
-                            <!-- 绑定主点位 (带数据类型精准过滤，静态标签与容器组件无需绑定) -->
-                            <StackPanel Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='!TextLabel,!PanelContainer'}">
+                            <!-- 绑定主点位 (带数据类型精准过滤，静态标签、容器与图片组件无需绑定) -->
+                            <StackPanel Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='!TextLabel,!PanelContainer,!Image'}">
                                 <DockPanel Margin="0,0,0,4">
                                     <TextBlock Text="绑定采集点位 (Tag):" FontSize="11" Foreground="#475569" VerticalAlignment="Center"/>
                                     <TextBlock Text="🎯 仅显示兼容数据类型" FontSize="9" Foreground="#0284C7" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
@@ -496,7 +496,7 @@
 
                             <!-- 3. 即时动态预览调试 (依组件/数据类型自适应呈现，静态标签与容器组件无需调试) -->
                              <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10"
-                                     Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='!TextLabel,!PanelContainer'}">
+                                     Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='!TextLabel,!PanelContainer,!Image'}">
                                  <StackPanel>
                                      <TextBlock Text="🔍 画面动态即时预览调试" FontWeight="SemiBold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,6"/>
                                      <DockPanel Margin="0,0,0,4">

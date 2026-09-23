@@ -176,6 +176,82 @@ public class WidgetRegistryAndDecouplingTests
         Assert.NotNull(desc);
         Assert.Equal("智能流量控制器", desc.DisplayName);
     }
+
+    [Fact]
+    public void PumpControl_StateUpdateAndAnimation_DoesNotThrow()
+    {
+        RunInSta(() =>
+        {
+            var pvm = new PumpWidgetViewModel();
+            var pumpControl = new PumpControl { DataContext = pvm };
+
+            // 触发运行时点位更新与启停切换，确保无 NameScope 异常
+            pvm.UpdateRuntimeValue(true);
+            Assert.True(pvm.Props.IsRunning);
+
+            pvm.UpdateRuntimeValue(false);
+            Assert.False(pvm.Props.IsRunning);
+
+            pvm.Props.UpdateState(isRunning: true, isFault: false);
+            Assert.True(pvm.Props.IsRunning);
+
+            pvm.Props.RotationSpeedRpm = 1800;
+            pvm.UpdateRuntimeValue(true);
+        });
+    }
+
+    [Fact]
+    public void ImageWidget_DiscoveredAndRendersCorrectly()
+    {
+        RunInSta(() =>
+        {
+            var registry = WidgetRegistry.Instance;
+            var desc = registry.GetDescriptor(WidgetType.Image);
+            Assert.NotNull(desc);
+            Assert.Equal("图片组件", desc.DisplayName);
+            Assert.Equal("基础图元", desc.Category);
+            Assert.Equal("🖼️", desc.Icon);
+            Assert.Equal(260, desc.DefaultWidth);
+            Assert.Equal(180, desc.DefaultHeight);
+
+            // 验证 ViewModel 实例创建
+            var vm = registry.CreateViewModel(WidgetType.Image);
+            Assert.IsType<ImageWidgetViewModel>(vm);
+            var imageVm = (ImageWidgetViewModel)vm;
+            Assert.Equal("工艺总览图", imageVm.Title);
+            Assert.NotNull(imageVm.ImageProps);
+
+            // 验证属性设置与序列化
+            imageVm.ImageProps.ImagePath = "C:\\scada\\layout.png";
+            imageVm.ImageProps.Stretch = "UniformToFill";
+            imageVm.ImageProps.Opacity = 0.85;
+            imageVm.ImageProps.BorderColor = "#10B981";
+            imageVm.ImageProps.CornerRadius = 8.0;
+
+            var cfg = imageVm.ToConfig();
+            Assert.Equal(WidgetType.Image, cfg.Type);
+            Assert.Equal("C:\\scada\\layout.png", cfg.Properties["ImagePath"]);
+            Assert.Equal("UniformToFill", cfg.Properties["Stretch"]);
+
+            var restoredVm = Assert.IsType<ImageWidgetViewModel>(WidgetViewModel.FromConfig(cfg));
+            Assert.NotNull(restoredVm.ImageProps);
+            Assert.Equal("C:\\scada\\layout.png", restoredVm.ImageProps!.ImagePath);
+            Assert.Equal("UniformToFill", restoredVm.ImageProps.Stretch);
+            Assert.Equal(0.85, restoredVm.ImageProps.Opacity, 2);
+
+            // 验证 View 模板选择器能够无反射硬编码动态识别 ImageControl
+            var viewTemplate = WidgetViewTemplateSelector.Instance.SelectTemplate(imageVm, new ContentPresenter());
+            Assert.NotNull(viewTemplate);
+            var view = viewTemplate.LoadContent();
+            Assert.IsType<ImageControl>(view);
+
+            // 验证 PropertyEditor 模板选择器能够无硬编码动态识别 ImagePropertyEditor
+            var editorTemplate = WidgetEditorTemplateSelector.Instance.SelectTemplate(imageVm, new ContentPresenter());
+            Assert.NotNull(editorTemplate);
+            var editor = editorTemplate.LoadContent();
+            Assert.IsType<ImagePropertyEditor>(editor);
+        });
+    }
 }
 
 // 模拟外部第三方扩展组件库中的类定义

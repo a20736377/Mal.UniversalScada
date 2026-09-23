@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Mal.UniversalScada.UI.Controls.ViewModels;
 
@@ -10,7 +11,8 @@ namespace Mal.UniversalScada.UI.Controls.Widgets;
 public partial class PumpControl : UserControl
 {
     public static event Action<WidgetViewModel>? ToggleRequested;
-    private Storyboard? _rotationStoryboard;
+    private RotateTransform? _impellerRotateTransform;
+    private DoubleAnimation? _rotationAnimation;
     private PumpProps? _currentProps;
 
     public PumpControl()
@@ -24,7 +26,6 @@ public partial class PumpControl : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _rotationStoryboard = TryFindResource("ImpellerRotationAnimation") as Storyboard;
         HookProps(DataContext);
         UpdateAnimationState();
     }
@@ -32,7 +33,7 @@ public partial class PumpControl : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         UnhookProps();
-        _rotationStoryboard?.Stop(this);
+        GetRotateTransform()?.BeginAnimation(RotateTransform.AngleProperty, null);
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -67,24 +68,56 @@ public partial class PumpControl : UserControl
 
     private void OnPropsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PumpProps.IsRunning) || e.PropertyName == nameof(PumpProps.IsFault))
+        if (e.PropertyName == nameof(PumpProps.IsRunning) ||
+            e.PropertyName == nameof(PumpProps.IsFault) ||
+            e.PropertyName == nameof(PumpProps.RotationSpeedRpm))
         {
             UpdateAnimationState();
         }
     }
 
+    private RotateTransform? GetRotateTransform()
+    {
+        if (_impellerRotateTransform != null) return _impellerRotateTransform;
+        if (ImpellerHost?.RenderTransform is RotateTransform rt)
+        {
+            _impellerRotateTransform = rt;
+        }
+        else if (ImpellerHost != null)
+        {
+            _impellerRotateTransform = new RotateTransform(0);
+            ImpellerHost.RenderTransform = _impellerRotateTransform;
+        }
+        return _impellerRotateTransform;
+    }
+
     private void UpdateAnimationState()
     {
-        if (_rotationStoryboard == null) return;
+        var rt = GetRotateTransform();
+        if (rt == null) return;
 
         bool shouldRun = _currentProps?.IsRunning == true && _currentProps?.IsFault != true;
         if (shouldRun)
         {
-            _rotationStoryboard.Begin(this, isControllable: true);
+            double durationSec = 1.2;
+            if (_currentProps != null && _currentProps.RotationSpeedRpm > 10.0)
+            {
+                // 根据实际设定 RPM 动态计算转速动画周期 (如 1450 RPM => 约 0.8s 视觉周期)
+                durationSec = Math.Clamp(60.0 / _currentProps.RotationSpeedRpm * 20.0, 0.3, 2.5);
+            }
+
+            _rotationAnimation = new DoubleAnimation
+            {
+                From = 0.0,
+                To = 360.0,
+                Duration = new Duration(TimeSpan.FromSeconds(durationSec)),
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            rt.BeginAnimation(RotateTransform.AngleProperty, _rotationAnimation);
         }
         else
         {
-            _rotationStoryboard.Stop(this);
+            rt.BeginAnimation(RotateTransform.AngleProperty, null);
         }
     }
 

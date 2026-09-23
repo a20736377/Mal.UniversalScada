@@ -1,8 +1,10 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace Mal.UniversalScada.UI.Controls.ViewModels;
 
@@ -20,6 +22,8 @@ public static class WidgetUiConverters
     public static IValueConverter MinChannelsToVisibility { get; } = new MinChannelsToVisibilityConverterImpl();
     public static IValueConverter AlarmToBorderBrush { get; } = new AlarmToBorderBrushConverterImpl();
     public static IValueConverter StringNotEmptyToVisibility { get; } = new StringNotEmptyToVisibilityConverterImpl();
+    public static IValueConverter StringToStretch { get; } = new StringToStretchConverterImpl();
+    public static IValueConverter StringToImageSource { get; } = new StringToImageSourceConverterImpl();
 
     private class AlarmToBorderBrushConverterImpl : IValueConverter
     {
@@ -35,8 +39,16 @@ public static class WidgetUiConverters
 
     private class StringNotEmptyToVisibilityConverterImpl : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-            string.IsNullOrWhiteSpace(value as string) ? Visibility.Collapsed : Visibility.Visible;
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            bool isNotEmpty = !string.IsNullOrWhiteSpace(value as string);
+            bool isInverse = parameter is string p && string.Equals(p, "Inverse", StringComparison.OrdinalIgnoreCase);
+            if (isInverse)
+            {
+                return isNotEmpty ? Visibility.Collapsed : Visibility.Visible;
+            }
+            return isNotEmpty ? Visibility.Visible : Visibility.Collapsed;
+        }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
             throw new NotSupportedException();
@@ -307,6 +319,71 @@ public class MinChannelsToVisibilityConverterImpl : IValueConverter
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+public class StringToStretchConverterImpl : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is Stretch s) return s;
+        if (value is string str && !string.IsNullOrWhiteSpace(str))
+        {
+            if (Enum.TryParse<Stretch>(str, true, out var parsed))
+            {
+                return parsed;
+            }
+        }
+        return Stretch.Uniform;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is Stretch s ? s.ToString() : "Uniform";
+}
+
+public class StringToImageSourceConverterImpl : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is ImageSource src) return src;
+        if (value is not string path || string.IsNullOrWhiteSpace(path)) return null;
+
+        try
+        {
+            // 支持 URI 协议 (http, https, pack)
+            if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == "pack"))
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = uri;
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+                bitmap.Freeze();
+                return bitmap;
+            }
+
+            // 支持本地绝对路径或相对路径
+            string fullPath = Path.IsPathRooted(path) ? path : Path.GetFullPath(path);
+            if (File.Exists(fullPath))
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(fullPath, UriKind.Absolute);
+                bitmap.CacheOption = BitmapCacheOption.OnLoad; // 避免占用文件锁
+                bitmap.EndInit();
+                bitmap.Freeze();
+                return bitmap;
+            }
+        }
+        catch
+        {
+            // 忽略图像加载解析异常，回退呈现空占位
+        }
+
+        return null;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }
 

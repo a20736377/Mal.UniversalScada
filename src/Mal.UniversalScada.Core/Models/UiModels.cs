@@ -88,6 +88,11 @@ public enum WidgetType
     GaugeArc = 16,
 
     /// <summary>
+    /// 静态/动态图片图元 (支持设备工艺图、现场照片、拓扑底图与监控快照)
+    /// </summary>
+    Image = 17,
+
+    /// <summary>
     /// 自定义或第三方扩展组件 (配合 CustomTypeName 进行唯一定位)
     /// </summary>
     Custom = 999
