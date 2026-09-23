@@ -1,0 +1,110 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.DeviceStatusPropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:DeviceStatusWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,10">
+        <StackPanel>
+            <TextBlock Text="🖥️ 设备状态卡片专属参数 (DeviceStatusProps)" FontWeight="SemiBold" FontSize="11" Foreground="#0284C7" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="目标设备ID (DeviceId):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <TextBox Text="{Binding Props.TargetDeviceId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="设备名称 (DeviceName):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <TextBox Text="{Binding Props.DeviceName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="协议类型:" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <TextBox Text="{Binding Props.ProtocolType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="通信通道:" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <TextBox Text="{Binding Props.ChannelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="从站地址 (Station):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <TextBox Text="{Binding Props.StationAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="轮询周期 (ms):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <TextBox Text="{Binding Props.PollIntervalMs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="测点总数 (TagCount):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <TextBox Text="{Binding Props.TagCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="通信延迟 (ms):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <TextBox Text="{Binding Props.ResponseLatencyMs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="在线发光色:" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.ActiveColor, Mode=TwoWay}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="离线指示色:" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.OfflineColor, Mode=TwoWay}"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="告警/超时色:" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.WarningColor, Mode=TwoWay}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" VerticalAlignment="Bottom" Margin="0,0,0,4">
+                    <CheckBox Content="卡片紧凑模式" IsChecked="{Binding Props.IsCompact, Mode=TwoWay}" FontSize="11" FontWeight="SemiBold" Foreground="#1E293B"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

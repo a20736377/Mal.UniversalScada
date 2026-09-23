@@ -1,0 +1,34 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.NumericCardPropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:NumericCardWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="📟 数显科技卡片专属组合参数 (NumericCardProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <TextBlock Text="物理工程单位 (Unit, 如 mm/s / kW / ℃):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <TextBox Text="{Binding Props.Unit, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="小数保留位数 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="数显发光色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.ColorHex, Mode=TwoWay}"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

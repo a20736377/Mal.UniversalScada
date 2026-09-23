@@ -1,0 +1,53 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.PanelContainerPropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:PanelContainerWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="📦 容器分组框专属参数 (PanelContainerProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <TextBlock Text="分组标题 (GroupTitle):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <TextBox Text="{Binding Props.GroupTitle, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="边框圆角 (CornerRadius):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.CornerRadius, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="边框粗细 (BorderThickness):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.BorderThickness, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="边框线条颜色 (BorderColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.BorderColor, Mode=TwoWay}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="底板背景颜色 (FillColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.FillColor, Mode=TwoWay}"/>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="标题栏底色 (HeaderBgColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <controls:ColorPickerBox ColorHex="{Binding Props.HeaderBgColor, Mode=TwoWay}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

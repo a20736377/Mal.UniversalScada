@@ -10,12 +10,20 @@ using CommunityToolkit.Mvvm.Input;
 using Mal.UniversalScada.Core.Configuration;
 using Mal.UniversalScada.Core.Enums;
 using Mal.UniversalScada.Core.Models;
+using Mal.UniversalScada.UI.Controls.Metadata;
 using Mal.UniversalScada.UI.Controls.ViewModels;
 using Mal.UniversalScada.UI.Controls.Widgets;
 
 namespace Mal.UniversalScada.Configurator.Wpf.ViewModels;
 
-public record ToolboxItemRecord(WidgetType Type, string Name, string Icon, string Description);
+public record ToolboxItemRecord(
+    WidgetType Type,
+    string Name,
+    string Icon,
+    string Description,
+    string TypeId = "",
+    string Category = "通用组件",
+    int Order = 100);
 
 public partial class UiDesignerViewModel : ObservableObject
 {
@@ -53,28 +61,29 @@ public partial class UiDesignerViewModel : ObservableObject
         {
             if (SetProperty(ref _selectedDeviceOption, value))
             {
-                if (SelectedWidget is DeviceStatusWidgetViewModel devVm && value != null)
+                if (SelectedWidget?.DeviceProps is not null && value != null)
                 {
+                    var devProps = SelectedWidget.DeviceProps;
                     if (!string.IsNullOrEmpty(value.DeviceId))
                     {
-                        devVm.TargetDeviceId = value.DeviceId;
-                        devVm.DeviceName = value.Name;
-                        devVm.ChannelId = value.ChannelId;
-                        devVm.Protocol = value.ProtocolType.ToString();
-                        devVm.StationAddress = value.StationAddress;
-                        devVm.PollIntervalMs = value.DefaultPollIntervalMs;
-                        devVm.TagCount = value.TagCount;
-                        if (string.IsNullOrWhiteSpace(devVm.Title) || devVm.Title.StartsWith("工位") || devVm.Title == "设备状态监视卡片")
+                        devProps.TargetDeviceId = value.DeviceId;
+                        devProps.DeviceName = value.Name;
+                        devProps.ChannelId = value.ChannelId;
+                        devProps.ProtocolType = value.ProtocolType.ToString();
+                        devProps.StationAddress = value.StationAddress;
+                        devProps.PollIntervalMs = value.DefaultPollIntervalMs;
+                        devProps.TagCount = value.TagCount;
+                        if (string.IsNullOrWhiteSpace(SelectedWidget.Title) || SelectedWidget.Title.StartsWith("工位") || SelectedWidget.Title == "设备状态监视卡片")
                         {
-                            devVm.Title = value.Name;
+                            SelectedWidget.Title = value.Name;
                         }
                     }
                     else
                     {
-                        devVm.TargetDeviceId = string.Empty;
-                        devVm.DeviceName = "未关联设备";
+                        devProps.TargetDeviceId = string.Empty;
+                        devProps.DeviceName = "未关联设备";
                     }
-                    devVm.SyncPropertiesFromFields();
+                    SelectedWidget.SyncPropertiesFromFields();
                 }
             }
         }
@@ -85,24 +94,26 @@ public partial class UiDesignerViewModel : ObservableObject
     [ObservableProperty]
     private string _statusMessage = "就绪";
 
-    public ObservableCollection<ToolboxItemRecord> ToolboxItems { get; } = new()
+    public ObservableCollection<ToolboxItemRecord> ToolboxItems { get; } = new();
+
+    /// <summary>
+    /// 从 WidgetRegistry 反射中心动态载入所有已注册类库组件
+    /// </summary>
+    public void ReloadToolboxItems()
     {
-        new(WidgetType.TextLabel, "文本标签", "🏷️", "工位说明、静态标题或点位文本标注"),
-        new(WidgetType.DisplayBox, "普通显示框", "🔲", "标准工控单行数值/文本显示框"),
-        new(WidgetType.TrendChart, "实时趋势图", "📈", "模拟量实时动态波形折线图"),
-        new(WidgetType.PanelContainer, "容器分组框", "📦", "工位区域分组边框与背景底板"),
-        new(WidgetType.GaugeCircular, "270° 圆形仪表", "⏱️", "模拟量表盘展示，带量程刻度"),
-        new(WidgetType.GaugeArc, "180° 拱形仪表", "🧭", "半圆高精弧形表盘，霓虹发光指针与双行读数"),
-        new(WidgetType.LevelTank, "立体液体储罐", "🛢️", "动态液位柱状指示，带百分比"),
-        new(WidgetType.NumericCard, "数显科技卡片", "📟", "大号数显，带单位徽章与品质状态"),
-        new(WidgetType.IoMatrix, "8路 IO 状态板", "🎛️", "8路开关量点阵矩阵，状态自感"),
-        new(WidgetType.StatusLed, "工业状态指示灯", "💡", "三态高光状态灯，带运行/告警标识"),
-        new(WidgetType.ControlButton, "普通按钮", "🔘", "下发置位控制指令至下位机点位"),
-        new(WidgetType.Pipe, "工艺管道", "🌊", "P&ID 工业工艺管道，带动态介质流动动效"),
-        new(WidgetType.Valve, "工业控制阀", "🚰", "P&ID 工业控制阀，开闭状态流道光效与反转控制"),
-        new(WidgetType.Pump, "离心旋转泵", "🌀", "动力旋转泵，360°旋转叶轮动效与启停控制"),
-        new(WidgetType.DeviceStatus, "设备状态卡片", "🖥️", "通信节点状态监视，展示在线/延时/协议/通道")
-    };
+        ToolboxItems.Clear();
+        foreach (var desc in WidgetRegistry.Instance.GetAllWidgets())
+        {
+            ToolboxItems.Add(new ToolboxItemRecord(
+                desc.Type,
+                desc.DisplayName,
+                desc.Icon,
+                desc.Description,
+                desc.TypeId,
+                desc.Category,
+                desc.Order));
+        }
+    }
 
     #region 撤销重做 (Undo / Redo) 历史栈
 
@@ -181,6 +192,12 @@ public partial class UiDesignerViewModel : ObservableObject
     public UiDesignerViewModel(IConfigurationService configService)
     {
         _configService = configService;
+
+        ReloadToolboxItems();
+        WidgetRegistry.Instance.RegistryChanged += (_, _) =>
+        {
+            Application.Current?.Dispatcher?.Invoke(ReloadToolboxItems);
+        };
 
         // 订阅组件选中与删除全局事件 (支持 Ctrl 多选与多选拖拽)
         WidgetHost.WidgetSelectionRequested += OnWidgetSelectionRequested;
@@ -955,7 +972,7 @@ public partial class UiDesignerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public void AddWidget(WidgetType type)
+    public void AddWidget(object? arg)
     {
         if (SelectedView == null) return;
 
@@ -970,31 +987,57 @@ public partial class UiDesignerViewModel : ObservableObject
             if (nextX < 50) nextY += 150;
         }
 
-        AddWidgetAtPosition(type, nextX, nextY);
+        if (arg is string typeId)
+        {
+            AddWidgetAtPosition(typeId, nextX, nextY);
+        }
+        else if (arg is WidgetType wt)
+        {
+            AddWidgetAtPosition(wt, nextX, nextY);
+        }
+        else if (arg is ToolboxItemRecord record)
+        {
+            if (!string.IsNullOrEmpty(record.TypeId))
+                AddWidgetAtPosition(record.TypeId, nextX, nextY);
+            else
+                AddWidgetAtPosition(record.Type, nextX, nextY);
+        }
+        else
+        {
+            AddWidgetAtPosition(WidgetType.NumericCard, nextX, nextY);
+        }
     }
 
-    public void AddWidgetAtPosition(WidgetType type, double x, double y)
+    public void AddWidgetAtPosition(string typeId, double x, double y)
     {
         if (SelectedView == null) return;
+
+        var desc = WidgetRegistry.Instance.GetDescriptor(typeId);
+        if (desc == null && Enum.TryParse<WidgetType>(typeId, true, out var parsedEnum))
+        {
+            AddWidgetAtPosition(parsedEnum, x, y);
+            return;
+        }
 
         PushHistorySnapshot();
 
         var wConfig = new WidgetConfig
         {
             WidgetId = Guid.NewGuid().ToString("N")[..8],
-            Type = type,
-            Title = GetDefaultTitle(type),
+            Type = desc?.Type ?? WidgetType.Custom,
+            CustomTypeName = (desc?.Type == WidgetType.Custom) ? typeId : null,
+            Title = desc?.DefaultTitle ?? "新组件",
             X = x,
             Y = y,
-            Width = WidgetViewModel.GetDefaultWidth(type),
-            Height = WidgetViewModel.GetDefaultHeight(type)
+            Width = desc?.DefaultWidth ?? 180,
+            Height = desc?.DefaultHeight ?? 140
         };
 
-        if (type == WidgetType.PanelContainer)
+        if (desc?.Type == WidgetType.PanelContainer)
         {
             wConfig.PrimaryTagId = 0;
         }
-        else if (type == WidgetType.DeviceStatus)
+        else if (desc?.Type == WidgetType.DeviceStatus)
         {
             wConfig.PrimaryTagId = 0;
             if (AvailableDevices.Count > 1)
@@ -1023,6 +1066,17 @@ public partial class UiDesignerViewModel : ObservableObject
         Widgets.Add(vm);
         OnWidgetSelected(vm);
         StatusMessage = $"已添加控件: {vm.Title} 到坐标 ({x}, {y})";
+    }
+
+    public void AddWidgetAtPosition(WidgetType type, double x, double y)
+    {
+        var desc = WidgetRegistry.Instance.GetDescriptor(type);
+        if (desc != null)
+        {
+            AddWidgetAtPosition(desc.TypeId, x, y);
+            return;
+        }
+        AddWidgetAtPosition(type.ToString(), x, y);
     }
 
     [RelayCommand]
@@ -1068,25 +1122,17 @@ public partial class UiDesignerViewModel : ObservableObject
         StatusMessage = "已清除画布背景底图";
     }
 
-    private static string GetDefaultTitle(WidgetType type) => type switch
+    private static string GetDefaultTitle(WidgetType type)
     {
-        WidgetType.TextLabel => "工位说明标签",
-        WidgetType.DisplayBox => "实时测控显示",
-        WidgetType.TrendChart => "实时趋势折线图",
-        WidgetType.PanelContainer => "工位分区容器",
-        WidgetType.GaugeCircular => "主轴转速 / 压力表",
-        WidgetType.GaugeArc => "180° 拱形表盘",
-        WidgetType.LevelTank => "储罐液位监测",
-        WidgetType.NumericCard => "温度/流量测量项",
-        WidgetType.IoMatrix => "8路数字量状态板",
-        WidgetType.StatusLed => "运行就绪指示灯",
-        WidgetType.ControlButton => "普通按钮",
-        WidgetType.Pipe => "工艺输送管道",
-        WidgetType.Valve => "工艺管路控制阀",
-        WidgetType.Pump => "离心循环泵",
-        WidgetType.DeviceStatus => "设备状态监视卡片",
-        _ => "监控卡片"
-    };
+        var desc = WidgetRegistry.Instance.GetDescriptor(type);
+        return desc?.DefaultTitle ?? "监控卡片";
+    }
+
+    private static string GetDefaultTitle(string typeId)
+    {
+        var desc = WidgetRegistry.Instance.GetDescriptor(typeId);
+        return desc?.DefaultTitle ?? "监控卡片";
+    }
 
     private static UiViewConfig CreateSampleReflowOvenView()
     {

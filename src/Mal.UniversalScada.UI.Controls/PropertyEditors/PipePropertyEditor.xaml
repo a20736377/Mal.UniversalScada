@@ -1,0 +1,70 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.PipePropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:PipeWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="🌊 工业工艺管道参数 (PipeProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="管道方向 (Orientation):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox SelectedValue="{Binding Props.Orientation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              SelectedValuePath="Tag" Height="26">
+                        <ComboBoxItem Content="横向 (Horizontal)" Tag="Horizontal"/>
+                        <ComboBoxItem Content="纵向 (Vertical)" Tag="Vertical"/>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="流动方向 (FlowDirection):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox SelectedValue="{Binding Props.FlowDirection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              SelectedValuePath="Tag" Height="26">
+                        <ComboBoxItem Content="正向流动 (Forward)" Tag="Forward"/>
+                        <ComboBoxItem Content="反向流动 (Reverse)" Tag="Reverse"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="管壁外壳颜色 (PipeColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.PipeColor, Mode=TwoWay}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="介质流体颜色 (LiquidColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.LiquidColor, Mode=TwoWay}"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="流动周期秒数 (FlowSpeed):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.FlowSpeed, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" VerticalAlignment="Bottom" Margin="0,0,0,4">
+                    <CheckBox Content="开启流动跑马灯" IsChecked="{Binding Props.IsFlowing, Mode=TwoWay}" FontSize="11" FontWeight="SemiBold" Foreground="#1E293B"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

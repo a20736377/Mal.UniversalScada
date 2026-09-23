@@ -1,0 +1,50 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.ArcGaugePropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:ArcGaugeWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="🧭 180° 拱形仪表盘专属组合参数 (ArcGaugeProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="量程下限 (Min):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.MinValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="量程上限 (Max):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.MaxValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="工程单位 (Unit):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.Unit, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="小数精度 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="指针霓虹主题色 (Color):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <controls:ColorPickerBox ColorHex="{Binding Props.ColorHex, Mode=TwoWay}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

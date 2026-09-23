@@ -1,0 +1,49 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.StatusLedPropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:StatusLedWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="💡 工业状态指示灯专属组合参数 (StatusLedProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="点亮激活颜色 (Active):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.ActiveColor, Mode=TwoWay}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="熄灭底色 (Inactive):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.InactiveColor, Mode=TwoWay}"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="导通提示文案 (OnText):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.OnText, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="熄灭提示文案 (OffText):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.OffText, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <CheckBox Content="🚨 异常呼吸闪烁提醒 (EnableBlink)" IsChecked="{Binding Props.EnableBlink}" Margin="0,4,0,0"/>
+        </StackPanel>
+    </Border>
+</UserControl>

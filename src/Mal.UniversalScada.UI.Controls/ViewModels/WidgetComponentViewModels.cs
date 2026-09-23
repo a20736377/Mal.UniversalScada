@@ -5,12 +5,27 @@ using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Mal.UniversalScada.Core.Models;
+using Mal.UniversalScada.UI.Controls.Metadata;
+using Mal.UniversalScada.UI.Controls.PropertyEditors;
+using Mal.UniversalScada.UI.Controls.Widgets;
 
 namespace Mal.UniversalScada.UI.Controls.ViewModels;
 
 /// <summary>
 /// 270° 圆形仪表盘组件视图模型（继承自基类 WidgetViewModel，组合包含 CircularGaugeProps）
 /// </summary>
+[ScadaWidget(
+    WidgetType.GaugeCircular,
+    displayName: "圆形仪表盘",
+    icon: "⏱️",
+    category: "仪表类",
+    description: "270° 工业圆形表盘，带安全/预警/告警分段变色与刻度齿",
+    order: 10,
+    defaultWidth: 180,
+    defaultHeight: 180,
+    defaultTitle: "反应釜压力",
+    viewType: typeof(CircularGaugeControl),
+    propertyEditorType: typeof(CircularGaugePropertyEditor))]
 public partial class CircularGaugeWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -348,6 +363,18 @@ public partial class CircularGaugeWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 立体储罐组件视图模型（继承自基类 WidgetViewModel，组合包含 TankLevelProps）
 /// </summary>
+[ScadaWidget(
+    WidgetType.LevelTank,
+    displayName: "立体储罐",
+    icon: "🛢️",
+    category: "工业图元",
+    description: "动态液体储罐，支持立式/卧式、液位百分比与三色变色",
+    order: 30,
+    defaultWidth: 150,
+    defaultHeight: 220,
+    defaultTitle: "储罐液位",
+    viewType: typeof(TankLevelControl),
+    propertyEditorType: typeof(TankLevelPropertyEditor))]
 public partial class TankLevelWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -579,6 +606,18 @@ public partial class TankLevelWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 科技数显卡片组件视图模型（继承自基类 WidgetViewModel，组合包含 NumericCardProps）
 /// </summary>
+[ScadaWidget(
+    WidgetType.NumericCard,
+    displayName: "数显卡片",
+    icon: "📟",
+    category: "数字测控",
+    description: "大字数显科技卡片，带点位名、大号数值、单位与通信品质",
+    order: 40,
+    defaultWidth: 190,
+    defaultHeight: 130,
+    defaultTitle: "实时温度",
+    viewType: typeof(NumericCardControl),
+    propertyEditorType: typeof(NumericCardPropertyEditor))]
 public partial class NumericCardWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -647,8 +686,46 @@ public partial class NumericCardWidgetViewModel : WidgetViewModel
 }
 
 /// <summary>
+/// 设定值输入卡片组件视图模型
+/// </summary>
+[ScadaWidget(
+    WidgetType.SetpointInput,
+    displayName: "设定值输入",
+    icon: "⌨️",
+    category: "控制交互",
+    description: "目标值下发与参数设定输入框",
+    order: 65,
+    defaultWidth: 180,
+    defaultHeight: 100,
+    defaultTitle: "设定值",
+    viewType: typeof(NumericCardControl),
+    propertyEditorType: typeof(NumericCardPropertyEditor))]
+public partial class SetpointInputWidgetViewModel : NumericCardWidgetViewModel
+{
+    public SetpointInputWidgetViewModel()
+    {
+        Type = WidgetType.SetpointInput;
+        Width = 180;
+        Height = 100;
+        Title = "设定值";
+    }
+}
+
+/// <summary>
 /// 多路数字量 IO 状态点阵板组件视图模型（继承自基类 WidgetViewModel，组合包含 IoMatrixProps）
 /// </summary>
+[ScadaWidget(
+    WidgetType.IoMatrix,
+    displayName: "IO点阵板",
+    icon: "🎛️",
+    category: "数字测控",
+    description: "8/16/24/32 路 DI/DO 矩阵点阵板，支持交互置位",
+    order: 50,
+    defaultWidth: 280,
+    defaultHeight: 115,
+    defaultTitle: "PLC IO 状态",
+    viewType: typeof(IoMatrixControl),
+    propertyEditorType: typeof(IoMatrixPropertyEditor))]
 public partial class IoMatrixWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -764,6 +841,18 @@ public partial class IoMatrixWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 工业高亮状态指示灯组件视图模型（继承自基类 WidgetViewModel，组合包含 StatusLedProps）
 /// </summary>
+[ScadaWidget(
+    WidgetType.StatusLed,
+    displayName: "状态指示灯",
+    icon: "💡",
+    category: "控制交互",
+    description: "单点布尔指示灯，支持高亮发光与异常呼吸闪烁",
+    order: 60,
+    defaultWidth: 130,
+    defaultHeight: 120,
+    defaultTitle: "主电机运行状态",
+    viewType: typeof(StatusLedControl),
+    propertyEditorType: typeof(StatusLedPropertyEditor))]
 public partial class StatusLedWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -851,6 +940,18 @@ public partial class StatusLedWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 普通按钮组件视图模型（继承自基类 WidgetViewModel，组合包含 ControlButtonProps）
 /// </summary>
+[ScadaWidget(
+    WidgetType.ControlButton,
+    displayName: "控制按钮",
+    icon: "🔘",
+    category: "控制交互",
+    description: "点动/自锁控制按钮，支持二次确认与数值写入",
+    order: 70,
+    defaultWidth: 100,
+    defaultHeight: 36,
+    defaultTitle: "急停控制",
+    viewType: typeof(ControlButtonControl),
+    propertyEditorType: typeof(ControlButtonPropertyEditor))]
 public partial class ControlButtonWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -932,6 +1033,18 @@ public partial class ControlButtonWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 文本标签组件视图模型 (支持静态标注与动态点位文本呈现)
 /// </summary>
+[ScadaWidget(
+    WidgetType.TextLabel,
+    displayName: "文本标签",
+    icon: "🏷️",
+    category: "基础图元",
+    description: "纯静态文本标签，用于工段标牌、工艺说明及安全提示",
+    order: 80,
+    defaultWidth: 180,
+    defaultHeight: 46,
+    defaultTitle: "工段标注说明",
+    viewType: typeof(TextLabelControl),
+    propertyEditorType: typeof(TextLabelPropertyEditor))]
 public partial class TextLabelWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -1019,6 +1132,18 @@ public partial class TextLabelWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 普通显示框组件视图模型 (紧凑型标准工控数显/文本框，带前缀标签、实时值、单位及边框样式)
 /// </summary>
+[ScadaWidget(
+    WidgetType.DisplayBox,
+    displayName: "普通显示框",
+    icon: "🔲",
+    category: "基础图元",
+    description: "单行标准工控数值/文本框，带前缀与工程单位",
+    order: 90,
+    defaultWidth: 200,
+    defaultHeight: 58,
+    defaultTitle: "工位参数",
+    viewType: typeof(DisplayBoxControl),
+    propertyEditorType: typeof(DisplayBoxPropertyEditor))]
 public partial class DisplayBoxWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -1097,6 +1222,18 @@ public partial class DisplayBoxWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 实时趋势折线图组件视图模型 (实时多点采样与平滑曲线波形渲染)
 /// </summary>
+[ScadaWidget(
+    WidgetType.TrendChart,
+    displayName: "实时折线图",
+    icon: "📈",
+    category: "仪表类",
+    description: "模拟量实时曲线监控，带渐变波形与时间视窗",
+    order: 100,
+    defaultWidth: 380,
+    defaultHeight: 220,
+    defaultTitle: "温度波动曲线",
+    viewType: typeof(TrendChartControl),
+    propertyEditorType: typeof(TrendChartPropertyEditor))]
 public partial class TrendChartWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -1254,6 +1391,18 @@ public partial class TrendChartWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 区域容器分组框组件视图模型 (工位边框、组件容器卡片与背景框)
 /// </summary>
+[ScadaWidget(
+    WidgetType.PanelContainer,
+    displayName: "区域容器框",
+    icon: "📦",
+    category: "基础图元",
+    description: "工位分组边框与背景卡片，用于画面模块化排版",
+    order: 110,
+    defaultWidth: 360,
+    defaultHeight: 260,
+    defaultTitle: "1号反应工段",
+    viewType: typeof(PanelContainerControl),
+    propertyEditorType: typeof(PanelContainerPropertyEditor))]
 public partial class PanelContainerWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -1306,6 +1455,18 @@ public partial class PanelContainerWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 工业工艺管道组件视图模型 (支持横向/纵向介质流向、流动跑马灯速度、管径与介质颜色)
 /// </summary>
+[ScadaWidget(
+    WidgetType.Pipe,
+    displayName: "工艺管道",
+    icon: "🌊",
+    category: "工业图元",
+    description: "P&ID 工艺管道，带流体介质颜色与跑马灯流动动效",
+    order: 120,
+    defaultWidth: 240,
+    defaultHeight: 24,
+    defaultTitle: "冷却水输送管道",
+    viewType: typeof(PipeControl),
+    propertyEditorType: typeof(PipePropertyEditor))]
 public partial class PipeWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -1430,6 +1591,18 @@ public partial class PipeWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 工业设备状态监视卡片组件视图模型（继承自基类 WidgetViewModel，组合包含 DeviceStatusProps）
 /// </summary>
+[ScadaWidget(
+    WidgetType.DeviceStatus,
+    displayName: "设备状态卡",
+    icon: "🖥️",
+    category: "数字测控",
+    description: "工业通信设备健康卡片，展示延迟、协议、拓扑与状态",
+    order: 150,
+    defaultWidth: 280,
+    defaultHeight: 140,
+    defaultTitle: "PLC 控制站状态",
+    viewType: typeof(DeviceStatusControl),
+    propertyEditorType: typeof(DeviceStatusPropertyEditor))]
 public partial class DeviceStatusWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -1605,6 +1778,18 @@ public partial class DeviceStatusWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 工业控制阀门组件视图模型
 /// </summary>
+[ScadaWidget(
+    WidgetType.Valve,
+    displayName: "控制阀门",
+    icon: "🚰",
+    category: "工业图元",
+    description: "P&ID 工业阀门（球阀/气动调节阀/闸阀），开闭动态指示",
+    order: 130,
+    defaultWidth: 140,
+    defaultHeight: 90,
+    defaultTitle: "进水调节阀",
+    viewType: typeof(ValveControl),
+    propertyEditorType: typeof(ValvePropertyEditor))]
 public partial class ValveWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -1695,6 +1880,18 @@ public partial class ValveWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 工业旋转离心泵组件视图模型
 /// </summary>
+[ScadaWidget(
+    WidgetType.Pump,
+    displayName: "离心泵",
+    icon: "⚙️",
+    category: "工业图元",
+    description: "工业旋转泵（离心泵/真空泵/齿轮泵），叶轮旋转与运行状态",
+    order: 140,
+    defaultWidth: 140,
+    defaultHeight: 140,
+    defaultTitle: "主循环离心泵",
+    viewType: typeof(PumpControl),
+    propertyEditorType: typeof(PumpPropertyEditor))]
 public partial class PumpWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]
@@ -1785,6 +1982,18 @@ public partial class PumpWidgetViewModel : WidgetViewModel
 /// <summary>
 /// 180° 半圆弧形/拱形仪表盘组件视图模型（继承自基类 WidgetViewModel，持有 ArcGaugeProps）
 /// </summary>
+[ScadaWidget(
+    WidgetType.GaugeArc,
+    displayName: "180° 拱形仪表",
+    icon: "🧭",
+    category: "仪表类",
+    description: "180° 半圆弧形/拱形仪表盘，发光青蓝指针与密集刻度齿",
+    order: 20,
+    defaultWidth: 200,
+    defaultHeight: 140,
+    defaultTitle: "主轴转速监控",
+    viewType: typeof(ArcGaugeControl),
+    propertyEditorType: typeof(ArcGaugePropertyEditor))]
 public partial class ArcGaugeWidgetViewModel : WidgetViewModel
 {
     [ObservableProperty]

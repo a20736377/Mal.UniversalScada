@@ -117,7 +117,7 @@ public partial class UiDesignerView : UserControl
     {
         if (sender is ListBox lb && lb.SelectedItem is ToolboxItemRecord record && DataContext is UiDesignerViewModel vm)
         {
-            vm.AddWidgetCommand.Execute(record.Type);
+            vm.AddWidget(record.TypeId);
         }
     }
 
@@ -135,7 +135,11 @@ public partial class UiDesignerView : UserControl
             if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
                 Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
             {
-                DragDrop.DoDragDrop(lb, record.Type, DragDropEffects.Copy);
+                var data = new DataObject();
+                data.SetData(typeof(ToolboxItemRecord), record);
+                data.SetData(DataFormats.StringFormat, record.TypeId);
+                data.SetData(typeof(WidgetType), record.Type);
+                DragDrop.DoDragDrop(lb, data, DragDropEffects.Copy);
             }
         }
     }
@@ -146,7 +150,9 @@ public partial class UiDesignerView : UserControl
 
     private void OnCanvasDragOver(object sender, DragEventArgs e)
     {
-        if (e.Data.GetDataPresent(typeof(WidgetType)))
+        if (e.Data.GetDataPresent(typeof(ToolboxItemRecord)) ||
+            e.Data.GetDataPresent(DataFormats.StringFormat) ||
+            e.Data.GetDataPresent(typeof(WidgetType)))
         {
             e.Effects = DragDropEffects.Copy;
             e.Handled = true;
@@ -159,7 +165,26 @@ public partial class UiDesignerView : UserControl
 
     private void OnCanvasDrop(object sender, DragEventArgs e)
     {
-        if (e.Data.GetData(typeof(WidgetType)) is WidgetType widgetType && DataContext is UiDesignerViewModel vm)
+        if (DataContext is not UiDesignerViewModel vm) return;
+
+        string? typeId = null;
+        WidgetType? widgetType = null;
+
+        if (e.Data.GetData(typeof(ToolboxItemRecord)) is ToolboxItemRecord record)
+        {
+            typeId = record.TypeId;
+            widgetType = record.Type;
+        }
+        else if (e.Data.GetData(DataFormats.StringFormat) is string s && !string.IsNullOrWhiteSpace(s))
+        {
+            typeId = s;
+        }
+        else if (e.Data.GetData(typeof(WidgetType)) is WidgetType wt)
+        {
+            widgetType = wt;
+        }
+
+        if (typeId != null || widgetType != null)
         {
             var targetElement = sender as IInputElement;
             var pos = e.GetPosition(targetElement);
@@ -168,7 +193,15 @@ public partial class UiDesignerView : UserControl
             var snapX = Math.Max(0, Math.Round(pos.X / 10.0) * 10.0);
             var snapY = Math.Max(0, Math.Round(pos.Y / 10.0) * 10.0);
 
-            vm.AddWidgetAtPosition(widgetType, snapX, snapY);
+            if (!string.IsNullOrEmpty(typeId))
+            {
+                vm.AddWidgetAtPosition(typeId, snapX, snapY);
+            }
+            else if (widgetType.HasValue)
+            {
+                vm.AddWidgetAtPosition(widgetType.Value, snapX, snapY);
+            }
+
             e.Handled = true;
         }
     }

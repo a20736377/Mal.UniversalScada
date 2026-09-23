@@ -1,0 +1,59 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.ValvePropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:ValveWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="🚰 工业控制阀门参数 (ValveProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="阀门朝向 (Orientation):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox SelectedValue="{Binding Props.Orientation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              SelectedValuePath="Tag" Height="26">
+                        <ComboBoxItem Content="横向 (Horizontal)" Tag="Horizontal"/>
+                        <ComboBoxItem Content="纵向 (Vertical)" Tag="Vertical"/>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="阀体类型 (ValveType):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox SelectedValue="{Binding Props.ValveType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              SelectedValuePath="Tag" Height="26">
+                        <ComboBoxItem Content="球阀 (Ball)" Tag="Ball"/>
+                        <ComboBoxItem Content="气动调节阀 (Pneumatic)" Tag="Pneumatic"/>
+                        <ComboBoxItem Content="闸阀 (Gate)" Tag="Gate"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="开启颜色 (OpenColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.OpenColor, Mode=TwoWay}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="关闭颜色 (CloseColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.CloseColor, Mode=TwoWay}"/>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="故障颜色 (FaultColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <controls:ColorPickerBox ColorHex="{Binding Props.FaultColor, Mode=TwoWay}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

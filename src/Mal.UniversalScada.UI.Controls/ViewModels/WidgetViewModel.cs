@@ -71,6 +71,20 @@ public partial class WidgetViewModel : ObservableObject
     /// </summary>
     public Dictionary<string, string> Properties { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// 当 Type 为 WidgetType.Custom 时，第三方扩展类库组件的全局唯一类型标识符
+    /// </summary>
+    public string? CustomTypeName
+    {
+        get => Properties.TryGetValue("_CustomTypeId", out var val) ? val : null;
+        set
+        {
+            if (value != null) Properties["_CustomTypeId"] = value;
+            else Properties.Remove("_CustomTypeId");
+            OnPropertyChanged();
+        }
+    }
+
     // ==========================================
     // 3. 专属组合属性类的多态访问接口
     // ==========================================
@@ -569,6 +583,7 @@ public partial class WidgetViewModel : ObservableObject
             WidgetId = Id,
             GroupId = GroupId,
             Type = Type,
+            CustomTypeName = Type == WidgetType.Custom && Properties.TryGetValue("_CustomTypeId", out var ctid) ? ctid : null,
             Title = Title,
             PrimaryTagId = PrimaryTagId,
             X = Math.Round(X, 1),
@@ -593,100 +608,33 @@ public partial class WidgetViewModel : ObservableObject
     }
 
     // ==========================================
-    // 6. 工厂方法（根据 WidgetType 实例化具体的派生组件）
+    // 6. 工厂方法（委托给 WidgetRegistry 反射中心，支持多类库动态扩展）
     // ==========================================
 
     public static WidgetViewModel Create(WidgetType type, bool isDesignMode = false)
     {
-        WidgetViewModel vm = type switch
-        {
-            WidgetType.GaugeCircular => new CircularGaugeWidgetViewModel(),
-            WidgetType.GaugeArc => new ArcGaugeWidgetViewModel(),
-            WidgetType.LevelTank => new TankLevelWidgetViewModel(),
-            WidgetType.NumericCard => new NumericCardWidgetViewModel(),
-            WidgetType.IoMatrix => new IoMatrixWidgetViewModel(),
-            WidgetType.StatusLed => new StatusLedWidgetViewModel(),
-            WidgetType.ControlButton => new ControlButtonWidgetViewModel(),
-            WidgetType.TextLabel => new TextLabelWidgetViewModel(),
-            WidgetType.DisplayBox => new DisplayBoxWidgetViewModel(),
-            WidgetType.TrendChart => new TrendChartWidgetViewModel(),
-            WidgetType.PanelContainer => new PanelContainerWidgetViewModel(),
-            WidgetType.Pipe => new PipeWidgetViewModel(),
-            WidgetType.DeviceStatus => new DeviceStatusWidgetViewModel(),
-            WidgetType.Valve => new ValveWidgetViewModel(),
-            WidgetType.Pump => new PumpWidgetViewModel(),
-            _ => new NumericCardWidgetViewModel()
-        };
+        return Metadata.WidgetRegistry.Instance.Create(type, isDesignMode);
+    }
 
-        vm.Type = type;
-        vm.IsDesignMode = isDesignMode;
-        vm.Width = GetDefaultWidth(type);
-        vm.Height = GetDefaultHeight(type);
-        return vm;
+    public static WidgetViewModel Create(string typeId, bool isDesignMode = false)
+    {
+        return Metadata.WidgetRegistry.Instance.Create(typeId, isDesignMode);
     }
 
     public static WidgetViewModel FromConfig(WidgetConfig config, bool isDesignMode = false)
     {
-        var vm = Create(config.Type, isDesignMode);
-        vm.Id = config.WidgetId;
-        vm.GroupId = config.GroupId;
-        vm.Title = config.Title;
-        vm.PrimaryTagId = config.PrimaryTagId;
-        vm.X = config.X;
-        vm.Y = config.Y;
-        vm.Width = config.Width > 0 ? config.Width : GetDefaultWidth(config.Type);
-        vm.Height = config.Height > 0 ? config.Height : GetDefaultHeight(config.Type);
-
-        foreach (var kvp in config.Properties)
-        {
-            vm.Properties[kvp.Key] = kvp.Value;
-        }
-
-        vm.LoadProperties(vm.Properties);
-        vm.UpdateRuntimeValue(0);
-
-        return vm;
+        return Metadata.WidgetRegistry.Instance.FromConfig(config, isDesignMode);
     }
 
-    public static double GetDefaultWidth(WidgetType type) => type switch
+    public static double GetDefaultWidth(WidgetType type)
     {
-        WidgetType.GaugeCircular => 180,
-        WidgetType.GaugeArc => 200,
-        WidgetType.LevelTank => 150,
-        WidgetType.NumericCard => 190,
-        WidgetType.IoMatrix => 280,
-        WidgetType.StatusLed => 130,
-        WidgetType.ControlButton => 100,
-        WidgetType.SetpointInput => 180,
-        WidgetType.TextLabel => 180,
-        WidgetType.DisplayBox => 200,
-        WidgetType.TrendChart => 380,
-        WidgetType.PanelContainer => 360,
-        WidgetType.Pipe => 240,
-        WidgetType.DeviceStatus => 280,
-        WidgetType.Valve => 140,
-        WidgetType.Pump => 140,
-        _ => 160
-    };
+        var desc = Metadata.WidgetRegistry.Instance.GetDescriptor(type);
+        return desc?.DefaultWidth ?? 160;
+    }
 
-    public static double GetDefaultHeight(WidgetType type) => type switch
+    public static double GetDefaultHeight(WidgetType type)
     {
-        WidgetType.GaugeCircular => 180,
-        WidgetType.GaugeArc => 140,
-        WidgetType.LevelTank => 220,
-        WidgetType.NumericCard => 130,
-        WidgetType.IoMatrix => 115,
-        WidgetType.StatusLed => 120,
-        WidgetType.ControlButton => 36,
-        WidgetType.SetpointInput => 100,
-        WidgetType.TextLabel => 46,
-        WidgetType.DisplayBox => 58,
-        WidgetType.TrendChart => 220,
-        WidgetType.PanelContainer => 260,
-        WidgetType.Pipe => 24,
-        WidgetType.DeviceStatus => 140,
-        WidgetType.Valve => 90,
-        WidgetType.Pump => 140,
-        _ => 140
-    };
+        var desc = Metadata.WidgetRegistry.Instance.GetDescriptor(type);
+        return desc?.DefaultHeight ?? 140;
+    }
 }

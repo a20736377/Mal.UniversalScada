@@ -1,0 +1,59 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.PumpPropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:PumpWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="⚙️ 工业离心泵参数 (PumpProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="安装方向 (Orientation):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox SelectedValue="{Binding Props.Orientation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              SelectedValuePath="Tag" Height="26">
+                        <ComboBoxItem Content="横向 (Horizontal)" Tag="Horizontal"/>
+                        <ComboBoxItem Content="纵向 (Vertical)" Tag="Vertical"/>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="泵体类型 (PumpType):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox SelectedValue="{Binding Props.PumpType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              SelectedValuePath="Tag" Height="26">
+                        <ComboBoxItem Content="离心泵 (Centrifugal)" Tag="Centrifugal"/>
+                        <ComboBoxItem Content="真空泵 (Vacuum)" Tag="Vacuum"/>
+                        <ComboBoxItem Content="齿轮泵 (Gear)" Tag="Gear"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="运行颜色 (RunColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.RunColor, Mode=TwoWay}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="停止颜色 (StopColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.StopColor, Mode=TwoWay}"/>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="故障颜色 (FaultColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <controls:ColorPickerBox ColorHex="{Binding Props.FaultColor, Mode=TwoWay}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

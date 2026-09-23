@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 
-namespace Mal.UniversalScada.Configurator.Wpf.Controls;
+namespace Mal.UniversalScada.UI.Controls.Controls;
 
 /// <summary>
 /// 工业可视化高颜值颜色拾取器控件（支持色块预览、Hex手动输入、经典工业预设色板、RGB滑块微调及原生系统调色盘）
@@ -68,22 +68,29 @@ public partial class ColorPickerBox : UserControl
     private void UpdateVisuals(string? hex)
     {
         if (string.IsNullOrWhiteSpace(hex))
+        {
             hex = "#0284C7";
+        }
 
-        var color = ParseColor(hex);
-        var brush = new SolidColorBrush(color);
+        if (!hex.StartsWith('#'))
+        {
+            hex = "#" + hex;
+        }
 
-        _isUpdatingInternally = true;
         try
         {
-            if (HexTextBox.Text != hex)
-            {
-                HexTextBox.Text = hex;
-            }
+            var color = (Color)ColorConverter.ConvertFromString(hex);
+            _isUpdatingInternally = true;
 
+            var brush = new SolidColorBrush(color);
             ColorPreviewBorder.Background = brush;
             PopupCurrentPreview.Background = brush;
             PopupHexLabel.Text = hex.ToUpperInvariant();
+
+            if (HexTextBox.Text != hex.ToUpperInvariant())
+            {
+                HexTextBox.Text = hex.ToUpperInvariant();
+            }
 
             RSlider.Value = color.R;
             GSlider.Value = color.G;
@@ -93,28 +100,14 @@ public partial class ColorPickerBox : UserControl
             GValueLabel.Text = color.G.ToString();
             BValueLabel.Text = color.B.ToString();
         }
+        catch
+        {
+            // 输入格式暂不合法时保持输入框编辑，不抛异常
+        }
         finally
         {
             _isUpdatingInternally = false;
         }
-    }
-
-    private static Color ParseColor(string hex)
-    {
-        try
-        {
-            hex = hex.Trim();
-            if (!hex.StartsWith("#"))
-                hex = "#" + hex;
-
-            if (ColorConverter.ConvertFromString(hex) is Color c)
-                return c;
-        }
-        catch
-        {
-            // fallback
-        }
-        return Color.FromRgb(2, 132, 199);
     }
 
     private void OnTogglePopupClick(object sender, RoutedEventArgs e)
@@ -124,42 +117,40 @@ public partial class ColorPickerBox : UserControl
 
     private void OnHexTextBoxChanged(object sender, TextChangedEventArgs e)
     {
-        if (_isUpdatingInternally)
-            return;
+        if (_isUpdatingInternally) return;
 
         var text = HexTextBox.Text?.Trim() ?? string.Empty;
-        if (text.Length is 4 or 7 or 9)
+        if (!text.StartsWith('#'))
+        {
+            text = "#" + text;
+        }
+
+        if (text.Length == 7 || text.Length == 9)
         {
             try
             {
-                var color = ParseColor(text);
-                var formattedHex = text.StartsWith("#") ? text : "#" + text;
-
+                var color = (Color)ColorConverter.ConvertFromString(text);
                 _isUpdatingInternally = true;
-                try
-                {
-                    ColorHex = formattedHex;
-                    var brush = new SolidColorBrush(color);
-                    ColorPreviewBorder.Background = brush;
-                    PopupCurrentPreview.Background = brush;
-                    PopupHexLabel.Text = formattedHex.ToUpperInvariant();
+                ColorHex = text.ToUpperInvariant();
+                var brush = new SolidColorBrush(color);
+                ColorPreviewBorder.Background = brush;
+                PopupCurrentPreview.Background = brush;
+                PopupHexLabel.Text = ColorHex;
 
-                    RSlider.Value = color.R;
-                    GSlider.Value = color.G;
-                    BSlider.Value = color.B;
-
-                    RValueLabel.Text = color.R.ToString();
-                    GValueLabel.Text = color.G.ToString();
-                    BValueLabel.Text = color.B.ToString();
-                }
-                finally
-                {
-                    _isUpdatingInternally = false;
-                }
+                RSlider.Value = color.R;
+                GSlider.Value = color.G;
+                BSlider.Value = color.B;
+                RValueLabel.Text = color.R.ToString();
+                GValueLabel.Text = color.G.ToString();
+                BValueLabel.Text = color.B.ToString();
             }
             catch
             {
-                // ignore transient typing
+                // 忽略解析错误
+            }
+            finally
+            {
+                _isUpdatingInternally = false;
             }
         }
     }
@@ -169,44 +160,50 @@ public partial class ColorPickerBox : UserControl
         if (sender is Button btn && btn.Tag is string hex)
         {
             ApplyColor(hex);
-            PickerPopup.IsOpen = false;
         }
     }
 
     private void OnRgbSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        if (_isUpdatingInternally)
-            return;
+        if (_isUpdatingInternally) return;
 
         byte r = (byte)Math.Clamp(RSlider.Value, 0, 255);
         byte g = (byte)Math.Clamp(GSlider.Value, 0, 255);
         byte b = (byte)Math.Clamp(BSlider.Value, 0, 255);
 
-        string hex = $"#{r:X2}{g:X2}{b:X2}";
+        RValueLabel.Text = r.ToString();
+        GValueLabel.Text = g.ToString();
+        BValueLabel.Text = b.ToString();
+
+        var hex = $"#{r:X2}{g:X2}{b:X2}";
         ApplyColor(hex);
     }
 
     private void ApplyColor(string hex)
     {
-        _isUpdatingInternally = true;
         try
         {
-            ColorHex = hex;
-            var color = ParseColor(hex);
-            var brush = new SolidColorBrush(color);
+            var color = (Color)ColorConverter.ConvertFromString(hex);
+            _isUpdatingInternally = true;
 
-            HexTextBox.Text = hex;
+            ColorHex = hex.ToUpperInvariant();
+            HexTextBox.Text = ColorHex;
+            PopupHexLabel.Text = ColorHex;
+
+            var brush = new SolidColorBrush(color);
             ColorPreviewBorder.Background = brush;
             PopupCurrentPreview.Background = brush;
-            PopupHexLabel.Text = hex.ToUpperInvariant();
 
             RSlider.Value = color.R;
             GSlider.Value = color.G;
             BSlider.Value = color.B;
-
             RValueLabel.Text = color.R.ToString();
             GValueLabel.Text = color.G.ToString();
             BValueLabel.Text = color.B.ToString();
+        }
+        catch
+        {
+            // 忽略异常
         }
         finally
         {
@@ -218,34 +215,37 @@ public partial class ColorPickerBox : UserControl
     {
         try
         {
-            var currentColor = ParseColor(ColorHex);
-            int initRgb = currentColor.R | (currentColor.G << 8) | (currentColor.B << 16);
-
-            var window = Window.GetWindow(this);
-            var hwnd = window != null ? new WindowInteropHelper(window).Handle : IntPtr.Zero;
-
-            var cc = new CHOOSECOLOR
+            var currentHex = ColorHex;
+            int initialRgb = 0x0284C7;
+            try
             {
-                lStructSize = Marshal.SizeOf<CHOOSECOLOR>(),
-                hwndOwner = hwnd,
-                rgbResult = initRgb,
-                lpCustColors = _customColorsHandle.AddrOfPinnedObject(),
-                Flags = CC_RGBINIT | CC_FULLOPEN
-            };
+                var curColor = (Color)ColorConverter.ConvertFromString(currentHex);
+                // Win32 COLORREF format is 0x00bbggrr
+                initialRgb = curColor.R | (curColor.G << 8) | (curColor.B << 16);
+            }
+            catch
+            {
+            }
+
+            var cc = new CHOOSECOLOR();
+            cc.lStructSize = Marshal.SizeOf(typeof(CHOOSECOLOR));
+            cc.hwndOwner = (HwndSource.FromVisual(this) as HwndSource)?.Handle ?? IntPtr.Zero;
+            cc.rgbResult = initialRgb;
+            cc.lpCustColors = _customColorsHandle.AddrOfPinnedObject();
+            cc.Flags = CC_RGBINIT | CC_FULLOPEN;
 
             if (ChooseColor(ref cc))
             {
                 byte r = (byte)(cc.rgbResult & 0xFF);
                 byte g = (byte)((cc.rgbResult >> 8) & 0xFF);
                 byte b = (byte)((cc.rgbResult >> 16) & 0xFF);
-                string hex = $"#{r:X2}{g:X2}{b:X2}";
-                ApplyColor(hex);
-                PickerPopup.IsOpen = false;
+                var pickedHex = $"#{r:X2}{g:X2}{b:X2}";
+                ApplyColor(pickedHex);
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"ChooseColor error: {ex.Message}");
+            MessageBox.Show($"调出系统调色盘失败: {ex.Message}", "调色盘错误", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 }

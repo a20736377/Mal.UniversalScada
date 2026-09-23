@@ -85,7 +85,12 @@ public enum WidgetType
     /// <summary>
     /// 180° 半圆弧形/拱形仪表盘 (模拟量展示，带发光青蓝指针与密集刻度齿)
     /// </summary>
-    GaugeArc = 16
+    GaugeArc = 16,
+
+    /// <summary>
+    /// 自定义或第三方扩展组件 (配合 CustomTypeName 进行唯一定位)
+    /// </summary>
+    Custom = 999
 }
 
 /// <summary>
@@ -138,6 +143,11 @@ public class WidgetConfig
     /// 控件类型
     /// </summary>
     public WidgetType Type { get; set; } = WidgetType.NumericCard;
+
+    /// <summary>
+    /// 自定义或第三方扩展组件的唯一类型标识 (当 Type 为 Custom 或用于类库外部定位)
+    /// </summary>
+    public string? CustomTypeName { get; set; }
 
     /// <summary>
     /// 画布绝对横坐标 X (像素)

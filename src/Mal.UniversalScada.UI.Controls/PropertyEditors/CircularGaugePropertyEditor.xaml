@@ -1,0 +1,127 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.CircularGaugePropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:CircularGaugeWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="⏱️ 圆形仪表盘专属组合参数 (CircularGaugeProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="量程下限 (Min):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.MinValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="量程上限 (Max):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.MaxValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="工程单位 (Unit, 如 ℃ / bar / rpm):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <TextBox Text="{Binding Props.Unit, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="高限告警阈值 (HighAlarm):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.HighAlarm, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="低限告警阈值 (LowAlarm):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.LowAlarm, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="小数位数 (Decimals):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.Decimals, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="表盘默认主题色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <controls:ColorPickerBox ColorHex="{Binding Props.ColorHex, Mode=TwoWay}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- 低中高三段数值与对应颜色设置 -->
+            <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,4,0,0">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,6">
+                        <TextBlock Text="🎨 低/中/高三段数值与对应颜色" FontWeight="Bold" FontSize="11" Foreground="#0369A1" VerticalAlignment="Center"/>
+                        <CheckBox Content="启用三色自适应" IsChecked="{Binding Props.EnableThresholdColor}" HorizontalAlignment="Right" FontSize="10"/>
+                    </DockPanel>
+
+                    <!-- 低段设置 -->
+                    <Grid Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="低值阈值 (Low Value):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                            <TextBox Text="{Binding Props.LowValue, UpdateSourceTrigger=PropertyChanged}" Height="24" FontSize="11"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="低段颜色 (Low Color):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                            <controls:ColorPickerBox ColorHex="{Binding Props.LowColor, Mode=TwoWay}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 中段设置 -->
+                    <Grid Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="中值基准 (Mid Value):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                            <TextBox Text="{Binding Props.MidValue, UpdateSourceTrigger=PropertyChanged}" Height="24" FontSize="11"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="中段颜色 (Mid Color):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                            <controls:ColorPickerBox ColorHex="{Binding Props.MidColor, Mode=TwoWay}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 高段设置 -->
+                    <Grid Margin="0,0,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="高值阈值 (High Value):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                            <TextBox Text="{Binding Props.HighValue, UpdateSourceTrigger=PropertyChanged}" Height="24" FontSize="11"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="高段颜色 (High Color):" FontSize="10" Foreground="#64748B" Margin="0,0,0,2"/>
+                            <controls:ColorPickerBox ColorHex="{Binding Props.HighColor, Mode=TwoWay}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

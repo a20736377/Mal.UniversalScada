@@ -1,0 +1,54 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.ControlButtonPropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:ControlButtonWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="🔘 普通按钮专属参数 (ControlButtonProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <TextBlock Text="按钮显示文字 (ButtonText):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <TextBox Text="{Binding Props.ButtonText, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="动作模式 (Mode):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox Text="{Binding Props.ButtonMode, UpdateSourceTrigger=PropertyChanged}" Height="26" IsEditable="True">
+                        <ComboBoxItem Content="DirectWrite"/>
+                        <ComboBoxItem Content="Toggle"/>
+                        <ComboBoxItem Content="Momentary"/>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="写入数值 (Value):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.WriteValue, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                    <Grid Margin="0,3,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="4"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="置 1 (导通)" Height="18" FontSize="9" Background="#DCFCE7" Foreground="#15803D" BorderBrush="#86EFAC" Click="OnSetWriteValue1Click"/>
+                        <Button Grid.Column="2" Content="置 0 (断开)" Height="18" FontSize="9" Background="#F1F5F9" Foreground="#475569" BorderBrush="#CBD5E1" Click="OnSetWriteValue0Click"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="按钮底色 (ColorHex):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <controls:ColorPickerBox ColorHex="{Binding Props.ColorHex, Mode=TwoWay}" Margin="0,0,0,8"/>
+
+            <CheckBox Content="🛡️ 下发前弹出二次确认窗口 (防误触)" IsChecked="{Binding Props.RequireConfirm}" Margin="0,2,0,4"/>
+            <TextBox Text="{Binding Props.ConfirmMessage, UpdateSourceTrigger=PropertyChanged}" Height="26"
+                     IsEnabled="{Binding Props.RequireConfirm}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

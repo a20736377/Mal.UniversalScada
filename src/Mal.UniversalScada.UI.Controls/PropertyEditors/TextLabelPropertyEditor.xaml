@@ -1,0 +1,43 @@
+<UserControl x:Class="Mal.UniversalScada.UI.Controls.PropertyEditors.TextLabelPropertyEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mal.UniversalScada.UI.Controls.Controls"
+             xmlns:vm="clr-namespace:Mal.UniversalScada.UI.Controls.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:TextLabelWidgetViewModel}">
+    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
+        <StackPanel>
+            <TextBlock Text="🏷️ 文本标签专属参数 (TextLabelProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+
+            <TextBlock Text="文本内容 (Text):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <TextBox Text="{Binding Props.Text, UpdateSourceTrigger=PropertyChanged}" Height="26" Margin="0,0,0,8"/>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="文本字号 (FontSize):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <TextBox Text="{Binding Props.FontSize, UpdateSourceTrigger=PropertyChanged}" Height="26"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="水平对齐 (Alignment):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+                    <ComboBox Text="{Binding Props.Alignment, UpdateSourceTrigger=PropertyChanged}" Height="26" IsEditable="True">
+                        <ComboBoxItem Content="Left"/>
+                        <ComboBoxItem Content="Center"/>
+                        <ComboBoxItem Content="Right"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="文本字体颜色 (TextColor):" FontSize="10" Foreground="#64748B" Margin="0,0,0,3"/>
+            <controls:ColorPickerBox ColorHex="{Binding Props.TextColor, Mode=TwoWay}" Margin="0,0,0,8"/>
+
+            <CheckBox Content="🔤 文本粗体展示 (IsBold)" IsChecked="{Binding Props.IsBold}" Margin="0,2,0,0"/>
+        </StackPanel>
+    </Border>
+</UserControl>
