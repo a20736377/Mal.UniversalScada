@@ -1783,7 +1783,7 @@ public partial class DeviceStatusWidgetViewModel : WidgetViewModel
     displayName: "控制阀门",
     icon: "🚰",
     category: "工业图元",
-    description: "P&ID 工业阀门（球阀/气动调节阀/闸阀），开闭动态指示",
+    description: "P&ID 工业阀门（球阀/气动调节阀/闸阀），开闭动态指示（仅支持Bool开关量点位）",
     order: 130,
     defaultWidth: 140,
     defaultHeight: 90,
@@ -1858,20 +1858,15 @@ public partial class ValveWidgetViewModel : WidgetViewModel
         {
             Props.UpdateState(b, isFault: false);
         }
-        else if (rawValue is int or short or byte or long or double or float)
+        else if (rawValue is string s && bool.TryParse(s, out var bParsed))
         {
-            double val = Convert.ToDouble(rawValue);
-            Props.UpdateState(val > 0.5, isFault: false);
+            Props.UpdateState(bParsed, isFault: false);
         }
-        else if (rawValue is string s)
+        else if (rawValue is null)
         {
-            if (s.Equals("Open", StringComparison.OrdinalIgnoreCase) || s == "1")
-                Props.UpdateState(true, false);
-            else if (s.Equals("Closed", StringComparison.OrdinalIgnoreCase) || s == "0")
-                Props.UpdateState(false, false);
-            else if (s.Equals("Fault", StringComparison.OrdinalIgnoreCase))
-                Props.UpdateState(false, true);
+            Props.UpdateState(false, isFault: false);
         }
+        // 控制阀门仅支持 bool 型点位，非布尔数据不触发状态转换
 
         OnPropertyChanged(nameof(CurrentColor));
     }
@@ -1885,7 +1880,7 @@ public partial class ValveWidgetViewModel : WidgetViewModel
     displayName: "离心泵",
     icon: "⚙️",
     category: "工业图元",
-    description: "工业旋转泵（离心泵/真空泵/齿轮泵），叶轮旋转与运行状态",
+    description: "工业旋转泵（离心泵/真空泵/齿轮泵），叶轮旋转与运行状态（仅支持Bool开关量点位）",
     order: 140,
     defaultWidth: 140,
     defaultHeight: 140,
@@ -1960,20 +1955,15 @@ public partial class PumpWidgetViewModel : WidgetViewModel
         {
             Props.UpdateState(b, isFault: false);
         }
-        else if (rawValue is int or short or byte or long or double or float)
+        else if (rawValue is string s && bool.TryParse(s, out var bParsed))
         {
-            double val = Convert.ToDouble(rawValue);
-            Props.UpdateState(val > 0.5, isFault: false);
+            Props.UpdateState(bParsed, isFault: false);
         }
-        else if (rawValue is string s)
+        else if (rawValue is null)
         {
-            if (s.Equals("Run", StringComparison.OrdinalIgnoreCase) || s.Equals("Running", StringComparison.OrdinalIgnoreCase) || s == "1")
-                Props.UpdateState(true, false);
-            else if (s.Equals("Stop", StringComparison.OrdinalIgnoreCase) || s.Equals("Stopped", StringComparison.OrdinalIgnoreCase) || s == "0")
-                Props.UpdateState(false, false);
-            else if (s.Equals("Fault", StringComparison.OrdinalIgnoreCase))
-                Props.UpdateState(false, true);
+            Props.UpdateState(false, isFault: false);
         }
+        // 离心泵仅支持 bool 型点位，非布尔数据不触发状态转换
 
         OnPropertyChanged(nameof(CurrentColor));
     }

@@ -201,6 +201,56 @@ public class WidgetRegistryAndDecouplingTests
     }
 
     [Fact]
+    public void ValveAndPump_OnlySupportBoolRuntimeValues_NonBoolIgnored()
+    {
+        RunInSta(() =>
+        {
+            var valve = new ValveWidgetViewModel();
+            var pump = new PumpWidgetViewModel();
+
+            // 初始状态 (Valve 默认开启，Pump 默认运行)
+            Assert.True(valve.Props.IsOpen);
+            Assert.True(pump.Props.IsRunning);
+
+            // 1. 布尔值更新：正常生效
+            valve.UpdateRuntimeValue(true);
+            pump.UpdateRuntimeValue(true);
+            Assert.True(valve.Props.IsOpen);
+            Assert.True(pump.Props.IsRunning);
+
+            valve.UpdateRuntimeValue(false);
+            pump.UpdateRuntimeValue(false);
+            Assert.False(valve.Props.IsOpen);
+            Assert.False(pump.Props.IsRunning);
+
+            // 2. 布尔文本更新："True"/"False" 正常解析
+            valve.UpdateRuntimeValue("True");
+            pump.UpdateRuntimeValue("True");
+            Assert.True(valve.Props.IsOpen);
+            Assert.True(pump.Props.IsRunning);
+
+            // 3. 非布尔类型输入（如数值 123.45、非布尔字符串等）被忽略，不改变状态
+            valve.Props.IsOpen = false;
+            pump.Props.IsRunning = false;
+
+            valve.UpdateRuntimeValue(123.45);
+            pump.UpdateRuntimeValue(123.45);
+            Assert.False(valve.Props.IsOpen);
+            Assert.False(pump.Props.IsRunning);
+
+            valve.UpdateRuntimeValue(1);
+            pump.UpdateRuntimeValue(1);
+            Assert.False(valve.Props.IsOpen);
+            Assert.False(pump.Props.IsRunning);
+
+            valve.UpdateRuntimeValue("InvalidText");
+            pump.UpdateRuntimeValue("InvalidText");
+            Assert.False(valve.Props.IsOpen);
+            Assert.False(pump.Props.IsRunning);
+        });
+    }
+
+    [Fact]
     public void ImageWidget_DiscoveredAndRendersCorrectly()
     {
         RunInSta(() =>

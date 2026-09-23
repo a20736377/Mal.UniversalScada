@@ -419,6 +419,24 @@ public class UiConfigurationTests
         // 4. PanelContainer (容器) 纯装饰与分组容器，不匹配任何点位
         Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.PanelContainer, TagDataType.Float));
         Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.PanelContainer, TagDataType.Bool));
+
+        // 5. Valve (控制阀门) 仅支持 Bool 型点位
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.Valve, TagDataType.Bool));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Valve, TagDataType.Float));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Valve, TagDataType.Double));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Valve, TagDataType.Int16));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Valve, TagDataType.Int32));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Valve, TagDataType.UInt32));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Valve, TagDataType.String));
+
+        // 6. Pump (离心泵) 仅支持 Bool 型点位
+        Assert.True(TagOptionItem.IsCompatibleWithWidget(WidgetType.Pump, TagDataType.Bool));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Pump, TagDataType.Float));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Pump, TagDataType.Double));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Pump, TagDataType.Int16));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Pump, TagDataType.Int32));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Pump, TagDataType.UInt32));
+        Assert.False(TagOptionItem.IsCompatibleWithWidget(WidgetType.Pump, TagDataType.String));
     }
 
     [Fact]

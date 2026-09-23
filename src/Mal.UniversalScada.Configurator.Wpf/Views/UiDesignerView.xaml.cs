@@ -237,7 +237,14 @@ public partial class UiDesignerView : UserControl
     {
         if (DataContext is UiDesignerViewModel vm && vm.SelectedWidget != null)
         {
-            vm.SelectedWidget.UpdateRuntimeValue(1);
+            if (vm.SelectedWidget.Type is WidgetType.StatusLed or WidgetType.Valve or WidgetType.Pump)
+            {
+                vm.SelectedWidget.UpdateRuntimeValue(true);
+            }
+            else
+            {
+                vm.SelectedWidget.UpdateRuntimeValue(1);
+            }
         }
     }
 
@@ -245,7 +252,14 @@ public partial class UiDesignerView : UserControl
     {
         if (DataContext is UiDesignerViewModel vm && vm.SelectedWidget != null)
         {
-            vm.SelectedWidget.UpdateRuntimeValue(0);
+            if (vm.SelectedWidget.Type is WidgetType.StatusLed or WidgetType.Valve or WidgetType.Pump)
+            {
+                vm.SelectedWidget.UpdateRuntimeValue(false);
+            }
+            else
+            {
+                vm.SelectedWidget.UpdateRuntimeValue(0);
+            }
         }
     }
 

@@ -515,9 +515,9 @@
                                          </DockPanel>
                                      </StackPanel>
 
-                                     <!-- 3.2 开关量快速置位按钮 (针对 StatusLed 状态指示灯) -->
+                                     <!-- 3.2 开关量快速置位按钮 (针对 StatusLed 状态指示灯、Valve 控制阀门、Pump 离心泵) -->
                                      <Grid Margin="0,2,0,0"
-                                           Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='StatusLed'}">
+                                           Visibility="{Binding SelectedWidget.Type, Converter={x:Static vm:DesignerUiConverters.WidgetTypeVisibility}, ConverterParameter='StatusLed,Valve,Pump'}">
                                          <Grid.ColumnDefinitions>
                                              <ColumnDefinition Width="*"/>
                                              <ColumnDefinition Width="6"/>

@@ -50,8 +50,10 @@ public class TagOptionItem
         {
             WidgetType.GaugeCircular or WidgetType.GaugeArc or WidgetType.LevelTank or WidgetType.NumericCard or WidgetType.TrendChart
                 => isNumeric,
-            WidgetType.StatusLed
+            WidgetType.StatusLed or WidgetType.Valve or WidgetType.Pump
                 => isBool,
+            WidgetType.Pipe
+                => isBool || isNumeric,
             WidgetType.IoMatrix
                 => isWordOrInteger,
             WidgetType.ControlButton
@@ -60,7 +62,7 @@ public class TagOptionItem
                 => isNumeric && accessMode != TagAccessMode.ReadOnly,
             WidgetType.DisplayBox
                 => isNumeric || isBool || dataType == TagDataType.String,
-            WidgetType.TextLabel or WidgetType.PanelContainer
+            WidgetType.TextLabel or WidgetType.PanelContainer or WidgetType.Image or WidgetType.DeviceStatus
                 => false, // 纯静态展示标签与容器组件，无需绑定采集点位
             _ => true
         };

@@ -822,15 +822,18 @@ public partial class UiDesignerViewModel : ObservableObject
             return;
         }
 
-        // 针对已经删除的点位，在组件里清除对应的选择
-        if (SelectedWidget.PrimaryTagId > 0 &&
-            !_allRawTags.Any(t => t.Id == SelectedWidget.PrimaryTagId))
-        {
-            SelectedWidget.PrimaryTagId = 0;
-            SelectedWidget.UpdateRuntimeValue(null);
-        }
-
         var targetType = SelectedWidget.Type;
+
+        // 针对已经删除或与当前组件类型不兼容的点位，在组件里清除对应的选择
+        if (SelectedWidget.PrimaryTagId > 0)
+        {
+            var currentTag = _allRawTags.FirstOrDefault(t => t.Id == SelectedWidget.PrimaryTagId);
+            if (currentTag == null || !TagOptionItem.IsCompatibleWithWidget(targetType, currentTag.DataType, currentTag.AccessMode))
+            {
+                SelectedWidget.PrimaryTagId = 0;
+                SelectedWidget.UpdateRuntimeValue(null);
+            }
+        }
 
         foreach (var tag in _allRawTags)
         {
@@ -1053,13 +1056,14 @@ public partial class UiDesignerViewModel : ObservableObject
                 wConfig.Properties["TagCount"] = dev.TagCount.ToString();
             }
         }
-        else if (FilteredAvailableTags.Count > 1)
+        else if (desc?.Type is WidgetType.TextLabel or WidgetType.Image)
         {
-            wConfig.PrimaryTagId = FilteredAvailableTags[1].Id;
+            wConfig.PrimaryTagId = 0;
         }
-        else if (AvailableTagIds.Count > 1)
+        else
         {
-            wConfig.PrimaryTagId = AvailableTagIds[1];
+            var firstCompatible = _allRawTags.FirstOrDefault(t => TagOptionItem.IsCompatibleWithWidget(wConfig.Type, t.DataType, t.AccessMode));
+            wConfig.PrimaryTagId = firstCompatible?.Id ?? 0;
         }
 
         var vm = WidgetViewModel.FromConfig(wConfig, isDesignMode: true);

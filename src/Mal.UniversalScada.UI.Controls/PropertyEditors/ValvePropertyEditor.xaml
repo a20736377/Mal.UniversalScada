@@ -9,7 +9,10 @@
              d:DataContext="{d:DesignInstance vm:ValveWidgetViewModel}">
     <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,12">
         <StackPanel>
-            <TextBlock Text="🚰 工业控制阀门参数 (ValveProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,8"/>
+            <TextBlock Text="🚰 工业控制阀门参数 (ValveProps)" FontWeight="Bold" FontSize="11" Foreground="#0369A1" Margin="0,0,0,6"/>
+            <Border Background="#F0F9FF" BorderBrush="#BAE6FD" BorderThickness="1" CornerRadius="4" Padding="6,4" Margin="0,0,0,8">
+                <TextBlock Text="💡 说明：控制阀门仅支持绑定 Bool 开关量点位（True: 开启 / False: 关闭）" FontSize="10" Foreground="#0284C7"/>
+            </Border>
 
             <Grid Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
