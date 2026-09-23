@@ -48,3 +48,8 @@ Thumbs.db
 appsettings.Development.json
 appsettings.local.json
 /Mal.Adx.Api/对接文档
+
+# SQLite database (runtime config, do not commit)
+*.db
+*.db-shm
+*.db-wal
